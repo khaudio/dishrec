@@ -1,0 +1,8 @@
+.vscode/
+__pycache__/
+.DS_Store
+sftp.json
+*.log
+*.pyc
+*.egg-info
+Private.h

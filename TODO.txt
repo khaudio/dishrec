@@ -1,0 +1,34 @@
+hardware codec
+    research
+    iterate
+
+audio input
+    choose connector
+        complexity vs necessity
+        start with three pin mic level
+            ta3m or 3.5mm
+
+variable sample rate/bit depth
+
+sd card
+    hardware
+    buffer/write
+        ring buffer
+    wav format
+        lpcm
+        metadata
+            bwf header
+            modify metadata with timecode
+        close file in sudden shutdown
+            cmos battery?
+
+possible future features
+    interleaved multichannel
+        ta5m connector
+    different signal levels
+        mic
+        line
+        -10
+        variable inline resistance for hotter mics
+    timecode output to sync older devices without dish.timecode
+    wav64
