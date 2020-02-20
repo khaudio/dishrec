@@ -8,7 +8,9 @@ audio input
         start with three pin mic level
             ta3m or 3.5mm
 
-variable sample rate/bit depth
+user options
+    variable sample rate
+    variable bit depth
 
 sd card
     hardware

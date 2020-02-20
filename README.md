@@ -10,7 +10,7 @@ TODO notes can be found in `TODO.txt`.
 
 ### Self-contained
 
-The aim is to be a self-contained recorder.  There should be no mobile app required, and arbitrary options should be based on necessecity; i.e., the user needs not to be overwhelmed with options, that are not conducive to a faster and more accurate workflow.
+The aim is to be a self-contained recorder.  There should be no mobile app required, and arbitrary options should be based on necessecity; i.e., the user needs not to be overwhelmed with options that are not conducive to a faster and more accurate workflow.
 
 ### Scalability
 
