@@ -22,7 +22,12 @@ bool EspSDWavFile::initialize_sd()
     return this->sdInitialized;
 }
 
-bool EspSDWavFile::open(std::string filename)
+void EspSDWavFile::set_filename()
+{
+    this->filename = filename;
+}
+
+bool EspSDWavFile::open()
 {
     if (!this->sdInitialized)
     {
@@ -32,7 +37,6 @@ bool EspSDWavFile::open(std::string filename)
             return false;
         }
     }
-    this->filename = filename;
     this->file = SD.open(this->filename.c_str(), FILE_WRITE);
     if (!file)
     {
@@ -49,9 +53,10 @@ bool EspSDWavFile::open(std::string filename)
     return true;
 }
 
-bool EspSDWavFile::open(const char* filename)
+bool EspSDWavFile::open(std::string filename)
 {
-    return open(std::string(filename));
+    set_filename(filename);
+    return open();
 }
 
 void EspSDWavFile::seek(uint32_t position)

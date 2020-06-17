@@ -34,10 +34,10 @@ int write_to_stream(std::ostream& stream, T obj, bool reversed)
 }
 
 WavHeader::WavHeader(
-        uint32_t rate, uint16_t bitsPerSample, bool isFloat, uint16_t channels
+        uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels
     )
 {
-    set_format(rate, bitsPerSample, isFloat, channels);
+    set_format(samplerate, bitsPerSample, isFloat, channels);
     set_header_size();
 }
 
@@ -64,11 +64,11 @@ void WavHeader::set_header_size(uint32_t length)
 }
 
 void WavHeader::set_format(
-        uint32_t rate, uint16_t bitsPerSample, bool isFloat, uint16_t channels
+        uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels
     )
 {
     this->isFloatingPoint = isFloat;
-    set_sample_rate(rate);
+    set_sample_rate(samplerate);
     set_bit_depth(bitsPerSample, isFloat);
     set_channels(channels);
     set_data_rates();
@@ -131,10 +131,10 @@ void WavHeader::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
     #endif
 }
 
-void WavHeader::set_sample_rate(uint32_t rate)
+void WavHeader::set_sample_rate(uint32_t samplerate)
 {
     this->sampleRateIsStandard = false;
-    this->sampleRate = rate;
+    this->sampleRate = samplerate;
     for (auto stdSampleRate: stdSampleRates)
     {
         if (this->sampleRate == stdSampleRate)

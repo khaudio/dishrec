@@ -18,8 +18,9 @@ public:
     EspSDWavFile(WavParameters parameters);
     EspSDWavFile();
     ~EspSDWavFile();
-    bool open(std::string filename);
-    bool open(const char* filename);
+    virtual void set_filename(std::string filename);
+    bool open();
+    bool open(std::string filename)
     void seek(uint32_t position);
     void close();
     void write_header();

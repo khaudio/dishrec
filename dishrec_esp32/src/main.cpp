@@ -1,4 +1,5 @@
 #include "I2SInput.h"
+#include "WavHeader.h"
 
 #define REC_STOP_BUTTON     (GPIO_NUM_14)
 
@@ -10,7 +11,6 @@ int main();
 void app_main();
 
 void check_button_state(void* pvParameter);
-void fill_buffer();
 
 void setup(void)
 {
@@ -66,15 +66,5 @@ void check_button_state(void* state)
         *button = digitalRead(REC_STOP_BUTTON);
         delay(1000);
         std::cout << "Button is " << (*button ? "HIGH" : "LOW") << std::endl;
-    }
-}
-
-void fill_buffer()
-{
-    static float rads(0);
-    while (buff.writable())
-    {
-        DATATYPE sample(sine_sample<DATATYPE>(1000.0, f.sampleRate, 0.5, rads));
-        buff.write(sample);
     }
 }
