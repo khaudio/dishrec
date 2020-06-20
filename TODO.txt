@@ -13,14 +13,16 @@ user options
     variable bit depth
 
 sd card
-    hardware
-    buffer/write
-        ring buffer
+    sdmmc vs spi+sd
+        speed
+        complexity
     wav format
         lpcm
+        float
         metadata
             bwf header
-            modify metadata with timecode
+            bext
+            open and parse existing file
         close file in sudden shutdown
             cmos battery?
 
@@ -34,3 +36,15 @@ possible future features
         variable inline resistance for hotter mics
     timecode output to sync older devices without dish.timecode
     wav64
+    metadata magic
+        reinterpret SR/BD
+            1% speedup or slowdowns
+            other diabolical manipulation
+    dsp
+        limiter
+        compressor (separate from limiter)
+        reference audio out 1k sine
+        1k notch for device reference
+        auto gain to tone
+        auto gain to mic
+

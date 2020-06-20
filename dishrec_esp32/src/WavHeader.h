@@ -1,5 +1,5 @@
-#ifndef DEBUG
-#define DEBUG           true
+#ifndef _DEBUG
+#define _DEBUG
 #endif
 
 #ifndef WAVHEADER_H

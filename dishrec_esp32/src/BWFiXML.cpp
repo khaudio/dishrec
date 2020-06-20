@@ -2,7 +2,7 @@
 
 using namespace BWFiXML;
 
-const char* IXML::_ubits_valid_chars = "ABCDEFabcdef0123456789";
+const char* IXML::_ubits_valid_chars = "abcdef0123456789";
 
 Base::Base(XMLDocument* xmldoc, const char* elementName)
 {
@@ -46,42 +46,49 @@ void TakeType::set_default(bool flagged)
 void TakeType::no_good(bool flagged)
 {
     this->_no_good = flagged;
+    if (flagged) this->_default = false;
     _apply();
 }
 
 void TakeType::false_start(bool flagged)
 {
     this->_false_start = flagged;
+    if (flagged) this->_default = false;
     _apply();
 }
 
 void TakeType::wild_track(bool flagged)
 {
     this->_wild_track = flagged;
+    if (flagged) this->_default = false;
     _apply();
 }
 
 void TakeType::pickup(bool flagged)
 {
     this->_pickup = flagged;
+    if (flagged) this->_default = false;
     _apply();
 }
 
 void TakeType::rehearsal(bool flagged)
 {
     this->_rehearsal = flagged;
+    if (flagged) this->_default = false;
     _apply();
 }
 
 void TakeType::announcement(bool flagged)
 {
     this->_announcement = flagged;
+    if (flagged) this->_default = false;
     _apply();
 }
 
 void TakeType::sound_guide(bool flagged)
 {
     this->_sound_guide = flagged;
+    if (flagged) this->_default = false;
     _apply();
 }
 
@@ -367,7 +374,7 @@ void IXML::set_ubits(const char* userbits)
         }
         if (!valid)
         {
-            throw -1;
+            throw INVALID_UBITS_CHARS;
         }
     }
     this->ubits->SetText(userbits);
@@ -377,3 +384,66 @@ void IXML::set_note(const char* message)
 {
     this->note->SetText(message);
 }
+
+void IXML::set_sample_rate(uint32_t samplerate)
+{
+    this->speed->file_sample_rate->SetText(samplerate);
+    this->speed->digitizer_sample_rate->SetText(samplerate);
+    this->speed->timestamp_sample_rate->SetText(samplerate);
+}
+
+void IXML::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
+{
+    this->speed->audio_bit_depth->SetText(bitsPerSample);
+}
+
+
+void IXML::_set_framerate(const char* fps)
+{
+    this->speed->master_speed->SetText(fps);
+    this->speed->current_speed->SetText(fps);
+    this->speed->timecode_rate->SetText(fps);
+}
+
+void IXML::set_framerate(float fps, bool isDropframe)
+{
+    this->speed->timecode_flag->SetText(isDropframe ? "DF" : "NDF");
+    if ((fps == 23.98) || (fps == 23.976))
+    {
+        _set_framerate("24000/1001");
+    }
+    else if (fps == 29.97)
+    {
+        _set_framerate("30000/1001");
+    }
+    else
+    {
+        throw INVALID_FRAMERATE;
+    }
+}
+
+void IXML::set_framerate(uint32_t fps, bool isDropframe)
+{
+    this->speed->timecode_flag->SetText(isDropframe ? "DF" : "NDF");
+    switch (fps)
+    {
+        case (24):
+            _set_framerate("24/1");
+            break;
+        case (25):
+            _set_framerate("25/1");
+            break;
+        case (30):
+            _set_framerate("30/1");
+            break;
+        default:
+            throw INVALID_FRAMERATE;
+    }
+}
+
+void IXML::set_filename(const char* filename)
+{
+    this->history->original_filename->SetText(filename);
+    this->history->current_filename->SetText(filename);
+}
+

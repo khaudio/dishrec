@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "ErrorEnums.h"
 
 using namespace tinyxml2;
 
@@ -151,6 +152,7 @@ class IXML
 {
 protected:
     static const char* _ubits_valid_chars;
+    void _set_framerate(const char* fps);
     // virtual void _increment_file_uid();
 public:
     XMLDocument ixml;
@@ -172,13 +174,14 @@ public:
     ~IXML();
     virtual void set_default();
     const char* c_str();
-    // virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
-    // virtual void set_sample_rate(uint32_t samplerate);
+    virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
+    virtual void set_sample_rate(uint32_t samplerate);
     // virtual void set_channels(uint16_t channels);
-    // virtual void set_framerate(float fps, bool isDropframe);
-    // virtual void set_framerate(uint32_t fps, bool isDropframe);
-    // virtual void set_filename(const char* filename);
-    // virtual void set_timecode(uint8_t hours, uint8_t minutes, uint8_t seconds, uint8_t frames);
+    virtual void set_framerate(double fps, bool isDropframe);
+    virtual void set_framerate(int fps, bool isDropframe);
+    virtual void set_filename(const char* filename);
+    // virtual void set_timecode(int hr, int min, int sec, int frm);
+    // virtual void set_timecode(int numFrames);
     // Track* create_track();
     // SyncPoint* create_sync_point();
     // virtual void set_take_type(TakeType* type);
