@@ -9,9 +9,9 @@
 class EspSDWavFile : public WavHeader
 {
 protected:
-    bool sdInitialized = false, fileIsOpen = false;
-    uint32_t dataIndex;
-    bool initialize_sd();
+    bool _sdInitialized = false, _fileIsOpen = false;
+    uint32_t _dataIndex;
+    bool _initialize_sd();
 public:
     File file;
     std::string filename;
@@ -21,6 +21,7 @@ public:
     virtual void set_filename(std::string filename);
     bool open();
     bool open(std::string filename)
+    bool is_open();
     void seek(uint32_t position);
     void close();
     void write_header();
@@ -31,10 +32,6 @@ public:
     void write(std::vector<T>& data);
     template <typename T>
     void write(std::vector<T>* data);
-    bool is_open();
-
-    void reinterpret_sample_rate(uint32_t rate);
-    void reinterpret_bit_depth(uint16_t bitsPerSecond, bool isFloat);
 };
 
 #endif

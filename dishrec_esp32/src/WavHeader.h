@@ -1,7 +1,3 @@
-#ifndef _DEBUG
-#define _DEBUG
-#endif
-
 #ifndef WAVHEADER_H
 #define WAVHEADER_H
 
@@ -31,9 +27,6 @@ protected:
     bool sampleRateIsStandard, bitDepthIsStandard;
     uint16_t formatCode, dataSize, frameSize;
     uint32_t byteRate, fileSize, samplesPerSecond;
-    virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
-    virtual void set_sample_rate(uint32_t samplerate);
-    virtual void set_channels(uint16_t channels);
     void set_data_rates();
     uint8_t* headerData = nullptr;
 public:
@@ -42,10 +35,13 @@ public:
     static std::array<uint32_t, 4> stdSampleRates;
     static std::array<uint16_t, 3> stdIntBitDepths;
     static std::array<uint16_t, 2> stdFloatBitDepths;
-    WavHeader(uint32_t samplerate=48000, uint16_t bitsPerSample=32, bool isFloat=true, uint16_t channels=1);
+    WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
     WavHeader(WavParameters);
     ~WavHeader();
-    void set_header_size(uint32_t length=44);
+    virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
+    virtual void set_sample_rate(uint32_t samplerate);
+    virtual void set_channels(uint16_t channels);
+    virtual void set_header_size(uint32_t length=44);
     virtual void set_format(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
     virtual void set_format(WavParameters params);
     WavParameters get_format();

@@ -2,24 +2,27 @@
 
 EspSDWavFile::EspSDWavFile(WavParameters parameters) :
 WavHeader(parameters)
-{}
+{
+}
 
-EspSDWavFile::EspSDWavFile() {}
+EspSDWavFile::EspSDWavFile()
+{
+}
 
 EspSDWavFile::~EspSDWavFile()
 {
     close();
 }
 
-bool EspSDWavFile::initialize_sd()
+bool EspSDWavFile::_initialize_sd()
 {
     if (!SD.begin(SD_CS_PIN))
     {
         std::cerr << "SD initialization failed" << std::endl;
-        this->sdInitialized = false;
+        this->_sdInitialized = false;
     }
-    this->sdInitialized = true;
-    return this->sdInitialized;
+    this->_sdInitialized = true;
+    return this->_sdInitialized;
 }
 
 void EspSDWavFile::set_filename()
@@ -29,9 +32,9 @@ void EspSDWavFile::set_filename()
 
 bool EspSDWavFile::open()
 {
-    if (!this->sdInitialized)
+    if (!this->_sdInitialized)
     {
-        if (!initialize_sd())
+        if (!_initialize_sd())
         {
             std::cerr << "Aborting";
             return false;
@@ -43,7 +46,7 @@ bool EspSDWavFile::open()
         std::cerr << "File failed to open" << std::endl;
         return false;
     }
-    this->fileIsOpen = true;
+    this->_fileIsOpen = true;
     seek(0);
     for (int i(0); i < this->headerSize; ++i)
     {
@@ -59,13 +62,18 @@ bool EspSDWavFile::open(std::string filename)
     return open();
 }
 
+bool EspSDWavFile::is_open()
+{
+    return this->_fileIsOpen;
+}
+
 void EspSDWavFile::seek(uint32_t position)
 {
     if (!this->file.seek(position))
     {
         std::cerr << "Seek error" << std::endl;
     }
-    this->dataIndex = (
+    this->_dataIndex = (
             (position >= this->headerSize)
             ? (position - this->headerSize) : 0
         );
@@ -73,13 +81,13 @@ void EspSDWavFile::seek(uint32_t position)
 
 void EspSDWavFile::close()
 {
-    if (!this->fileIsOpen)
+    if (!this->_fileIsOpen)
     {
         return;
     }
     write_header();
     this->file.close();
-    this->fileIsOpen = false;
+    this->_fileIsOpen = false;
 }
 
 void EspSDWavFile::write_header()
@@ -94,10 +102,10 @@ void EspSDWavFile::write_header()
 
 void EspSDWavFile::reinitialize()
 {
-    if (this->fileIsOpen)
+    if (this->_fileIsOpen)
     {
         this->file.close();
-        this->fileIsOpen = false;
+        this->_fileIsOpen = false;
     }
     set_size(0);
     seek(0);
@@ -106,12 +114,12 @@ void EspSDWavFile::reinitialize()
 void EspSDWavFile::write(uint8_t* data, uint32_t length)
 {
     set_size(this->dataSize + length);
-    seek(this->headerSize + this->dataIndex);
+    seek(this->headerSize + this->_dataIndex);
     for (uint32_t i(0); i < length; ++i)
     {
         this->file.write(data[i]);
     }
-    this->dataIndex += length;
+    this->_dataIndex += length;
 }
 
 template <typename T>
@@ -128,19 +136,6 @@ void EspSDWavFile::write(std::vector<T>* data)
     uint32_t length(data->size() * sizeof(T));
     uint8_t* recast = reinterpret_cast<uint8_t*>(data[0]);
     write(recast, length);
-}
-
-bool EspSDWavFile::is_open()
-{
-    return this->fileIsOpen;
-}
-
-void EspSDWavFile::reinterpret_sample_rate(uint32_t rate)
-{
-}
-
-void EspSDWavFile::reinterpret_bit_depth(uint16_t bitsPerSample, bool isFloat)
-{
 }
 
 template void EspSDWavFile::write<float>(std::vector<float>&);

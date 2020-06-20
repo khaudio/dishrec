@@ -6,3 +6,5 @@ sftp.json
 *.pyc
 *.egg-info
 Private.h
+bin/
+build/

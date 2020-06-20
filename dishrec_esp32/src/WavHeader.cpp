@@ -181,23 +181,41 @@ bool WavHeader::is_nonstandard()
 
 uint8_t* WavHeader::get_header()
 {
-    std::stringstream header;
-    header << "RIFF";
-    write_to_stream(header, this->fileSize);
-    header << "WAVEfmt ";
-    write_to_stream(header, this->formatLength);
-    write_to_stream(header, this->formatCode);
-    write_to_stream(header, this->numChannels);
-    write_to_stream(header, this->sampleRate);
-    write_to_stream(header, this->byteRate);
-    write_to_stream(header, this->frameSize);
-    write_to_stream(header, this->bitDepth);
-    header << "data";
-    write_to_stream(header, this->dataSize);
-    header.seekp(0);
+    std::stringstream stream;
+    stream << "RIFF";
+    write_to_stream(stream, this->fileSize);
+    stream << "WAVEfmt ";
+    write_to_stream(stream, this->formatLength);
+    write_to_stream(stream, this->formatCode);
+    write_to_stream(stream, this->numChannels);
+    write_to_stream(stream, this->sampleRate);
+    write_to_stream(stream, this->byteRate);
+    write_to_stream(stream, this->frameSize);
+    write_to_stream(stream, this->bitDepth);
+    stream << "data";
+    write_to_stream(stream, this->dataSize);
+    stream.seekp(0);
     for (uint32_t i(0); i < this->headerSize; ++i)
     {
-        this->headerData[i] = header.get();
+        this->headerData[i] = stream.get();
     }
     return this->headerData;
+}
+
+std::string WavHeader::str()
+{
+    std::stringstream stream;
+    stream << "RIFF";
+    write_to_stream(stream, this->fileSize);
+    stream << "WAVEfmt ";
+    write_to_stream(stream, this->formatLength);
+    write_to_stream(stream, this->formatCode);
+    write_to_stream(stream, this->numChannels);
+    write_to_stream(stream, this->sampleRate);
+    write_to_stream(stream, this->byteRate);
+    write_to_stream(stream, this->frameSize);
+    write_to_stream(stream, this->bitDepth);
+    stream << "data";
+    write_to_stream(stream, this->dataSize);
+    return stream.str();
 }

@@ -3,7 +3,7 @@
 template <typename T>
 void _getZero(T& var)
 {
-    static constexpr T half = (
+    static T half = (
             std::numeric_limits<T>::is_integer
             && std::is_unsigned<T>()
         ) ? pow(2, (sizeof(var) * 8) - 1) - 1 : 0;

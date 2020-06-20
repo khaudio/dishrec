@@ -1,0 +1,17 @@
+#ifndef ERRORENUMS_H
+#define ERRORENUMS_H
+
+enum timecode_err
+{
+    INVALID_FRAMERATE=10,
+    TIMEBASE_UNINITIALIZED=11,
+    INVALID_TC_STRING_LENGTH=12,
+    SAMPLERATE_UNINITIALIZED=13,
+};
+
+enum ubits_err
+{
+    INVALID_UBITS_CHARS=20,
+};
+
+#endif

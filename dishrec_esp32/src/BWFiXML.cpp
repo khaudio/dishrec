@@ -387,27 +387,27 @@ void IXML::set_note(const char* message)
 
 void IXML::set_sample_rate(uint32_t samplerate)
 {
-    this->speed->file_sample_rate->SetText(samplerate);
-    this->speed->digitizer_sample_rate->SetText(samplerate);
-    this->speed->timestamp_sample_rate->SetText(samplerate);
+    this->speed.file_sample_rate->SetText(samplerate);
+    this->speed.digitizer_sample_rate->SetText(samplerate);
+    this->speed.timestamp_sample_rate->SetText(samplerate);
 }
 
 void IXML::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
 {
-    this->speed->audio_bit_depth->SetText(bitsPerSample);
+    this->speed.audio_bit_depth->SetText(bitsPerSample);
 }
 
 
 void IXML::_set_framerate(const char* fps)
 {
-    this->speed->master_speed->SetText(fps);
-    this->speed->current_speed->SetText(fps);
-    this->speed->timecode_rate->SetText(fps);
+    this->speed.master_speed->SetText(fps);
+    this->speed.current_speed->SetText(fps);
+    this->speed.timecode_rate->SetText(fps);
 }
 
-void IXML::set_framerate(float fps, bool isDropframe)
+void IXML::set_framerate(double fps, bool isDropframe)
 {
-    this->speed->timecode_flag->SetText(isDropframe ? "DF" : "NDF");
+    this->speed.timecode_flag->SetText(isDropframe ? "DF" : "NDF");
     if ((fps == 23.98) || (fps == 23.976))
     {
         _set_framerate("24000/1001");
@@ -422,9 +422,9 @@ void IXML::set_framerate(float fps, bool isDropframe)
     }
 }
 
-void IXML::set_framerate(uint32_t fps, bool isDropframe)
+void IXML::set_framerate(int fps, bool isDropframe)
 {
-    this->speed->timecode_flag->SetText(isDropframe ? "DF" : "NDF");
+    this->speed.timecode_flag->SetText(isDropframe ? "DF" : "NDF");
     switch (fps)
     {
         case (24):
@@ -443,7 +443,7 @@ void IXML::set_framerate(uint32_t fps, bool isDropframe)
 
 void IXML::set_filename(const char* filename)
 {
-    this->history->original_filename->SetText(filename);
-    this->history->current_filename->SetText(filename);
+    this->history.original_filename->SetText(filename);
+    this->history.current_filename->SetText(filename);
 }
 
