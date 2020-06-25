@@ -38,11 +38,9 @@ std::string TimecodeBase::tc_to_string(std::array<int, 4> values, bool isDropfra
     return stream.str();
 }
 
-#include <iostream>
-
 std::array<int, 4> TimecodeBase::string_to_tc(std::string formatted, bool* isDropframe)
 {
-    #if _DEBUG
+    #ifdef _DEBUG
     if (formatted.size() != 11)
     {
         throw INVALID_TC_STRING_LENGTH;
@@ -62,17 +60,14 @@ std::array<int, 4> TimecodeBase::string_to_tc(std::string formatted, bool* isDro
 }
 
 Base::Base() :
-_hours(0),
-_minutes(0),
-_seconds(0),
-_frames(0),
-_dropped(0),
-_initialized(false)
+_initialized(false),
+_dropped(0)
 {
-    this->_value[0] = &(this->_hours);
-    this->_value[1] = &(this->_minutes);
-    this->_value[2] = &(this->_seconds);
-    this->_value[3] = &(this->_frames);
+    this->_value = {0, 0, 0, 0};
+    this->_hours = &(this->_value[0]);
+    this->_minutes = &(this->_value[1]);
+    this->_seconds = &(this->_value[2]);
+    this->_frames = &(this->_value[3]);
     this->_divisors[0] = 24;
     this->_divisors[1] = 60;
     this->_divisors[2] = 60;
@@ -80,6 +75,14 @@ _initialized(false)
 
 Base::~Base()
 {
+}
+
+void Base::_set_value(std::array<int, 4> tc)
+{
+    for (uint8_t i(0); i < 4; ++i)
+    {
+        this->_value[i] = tc[i];
+    }
 }
 
 void Base::_check_initialization()
@@ -133,6 +136,18 @@ std::array<int, 4> Base::_increment(std::array<int, 4> values, std::array<int, 4
     return output;
 }
 
+std::array<int, 4> Base::_reconcile(std::array<int, 4> tc)
+{
+    static std::array<int, 4> _zeroTC = {0, 0, 0, 0};
+    return _increment(_zeroTC, tc);
+}
+
+std::array<int, 4> Base::_reconcile(int hr, int min, int sec, int frm)
+{
+    std::array<int, 4> tc = {hr, min, sec, frm};
+    return _reconcile(tc);
+}
+
 int Base::_to_frames(int hr, int min, int sec, int frm)
 {
     int accumulated(hr * this->_divisors[1]);
@@ -144,12 +159,15 @@ int Base::_to_frames(int hr, int min, int sec, int frm)
     return accumulated;
 }
 
+int Base::_to_frames(std::array<int, 4> tc)
+{
+    return _to_frames(tc[0], tc[1], tc[2], tc[3]);
+}
+
 std::array<int, 4> Base::_from_frames(int numFrames)
 {
-    std::array<int, 4>
-        values = {0, 0, 0, 0},
-        offset = {0, 0, 0, numFrames};
-    return _increment(values, offset);
+    std::array<int, 4> offset = {0, 0, 0, numFrames};
+    return _reconcile(offset);
 }
 
 void Base::set_framerate(double fps, bool isDropframe)
@@ -213,10 +231,7 @@ void Base::set_timecode(int hr, int min, int sec, int frm)
     #ifdef _DEBUG
     _check_initialization();
     #endif
-    this->_hours = hr;
-    this->_minutes = min;
-    this->_seconds = sec;
-    this->_frames = frm;
+    _set_value(_reconcile(hr, min, sec, frm));
 }
 
 void Base::set_timecode(std::array<int, 4> tc)
@@ -226,7 +241,7 @@ void Base::set_timecode(std::array<int, 4> tc)
 
 void Base::set_timecode(int numFrames)
 {
-    std::array<int, 4> tc(_from_frames(numFrames));
+    std::array<int, 4> tc = _from_frames(numFrames);
     set_timecode(tc[0], tc[1], tc[2], tc[3]);
 }
 
@@ -238,7 +253,7 @@ std::array<int, 4> Base::get_timecode()
     std::array<int, 4> output;
     for (uint8_t i(0); i < 4; ++i)
     {
-        output[i] = *(this->_value[i]);
+        output[i] = this->_value[i];
     }
     return output;
 }
@@ -246,16 +261,64 @@ std::array<int, 4> Base::get_timecode()
 int Base::get_frames()
 {
     return _to_frames(
-            this->_hours,
-            this->_minutes,
-            this->_seconds,
-            this->_frames
+            *(this->_hours),
+            *(this->_minutes),
+            *(this->_seconds),
+            *(this->_frames)
         );
 }
 
 std::string Base::str()
 {
     return tc_to_string(get_timecode(), this->_dropframe);
+}
+
+
+Base TimecodeBase::operator-(const Base& b)
+{
+    Base output(b);
+    for (uint8_t i(0); i < 4; ++i)
+    {
+        output._value[i] *= -1;
+    }
+    return output;
+}
+
+Base TimecodeBase::operator+(Base& b1, const Base& b2)
+{
+    Base output(b1);
+    std::array<int, 4> sum = output._increment(b1._value, b2._value);
+    output.set_timecode(sum);
+    return output;
+}
+
+Base TimecodeBase::operator-(Base& b1, const Base& b2)
+{
+    Base output(b1);
+    std::array<int, 4> sum = output._increment(b1._value, (-b2)._value);
+    output.set_timecode(sum);
+    return output;
+}
+
+Base TimecodeBase::operator+(Base& b1, const std::array<int, 4>& tc)
+{
+    Base output(b1);
+    std::array<int, 4> sum = output._increment(b1._value, tc);
+    output.set_timecode(sum);
+    return output;
+}
+
+Base TimecodeBase::operator-(Base& b1, const std::array<int, 4>& tc)
+{
+    Base output(b1);
+    std::array<int, 4> negative(tc);
+    for (uint8_t i(0); i < 4; ++i)
+    {
+        negative[i] *= -1;
+    }
+    std::array<int, 4> sum = output._increment(b1._value, negative);
+    output.set_timecode(sum);
+    return output;
 }
 
 Clock::Clock() :
@@ -316,6 +379,17 @@ void Clock::_check_initialization()
 void Clock::set_timecode(int hr, int min, int sec, int frm)
 {
     Base::set_timecode(hr, min, sec, frm);
+    _set_samples_since_midnight();
+}
+
+void Clock::set_timecode(std::array<int, 4> tc)
+{
+    set_timecode(tc[0], tc[1], tc[2], tc[3]);
+}
+
+void Clock::set_timecode(int numFrames)
+{
+    Base::set_timecode(numFrames);
     _set_samples_since_midnight();
 }
 

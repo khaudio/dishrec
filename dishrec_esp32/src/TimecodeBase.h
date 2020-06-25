@@ -1,9 +1,13 @@
+#ifndef TIMECODEBASE_H
+#define TIMECODEBASE_H
+
 #include <array>
 #include <cstdint>
+#include <cstdlib>
+#include <iostream>
 #include <iomanip>
 #include <string>
 #include <sstream>
-#include <map>
 #include "ErrorEnums.h"
 
 namespace TimecodeBase
@@ -25,15 +29,17 @@ protected:
     bool _dropframe, _initialized;
     std::string _framerateString;
     double _framerate;
-    int _hours, _minutes, _seconds, _frames;
-    int _dropped;
-    std::array<int*, 4> _value;
-    std::array<int, 4> _divisors, _maximum;
+    int *_hours, *_minutes, *_seconds, *_frames, _dropped;
+    std::array<int, 4> _value, _divisors, _maximum;
+    virtual void _set_value(std::array<int, 4> vals);
     virtual void _check_initialization();
     virtual bool _drop_frame(std::array<int, 4> tc);
     virtual std::array<int, 4> _increment(std::array<int, 4> values, std::array<int, 4> offset);
-    virtual int _to_frames(int hr, int min, int sec, int frm);
-    virtual std::array<int, 4> _from_frames(int numFrames);
+    std::array<int, 4> _reconcile(std::array<int, 4> tc);
+    std::array<int, 4> _reconcile(int hr, int min, int sec, int frm);
+    int _to_frames(int hr, int min, int sec, int frm);
+    int _to_frames(std::array<int, 4> tc);
+    std::array<int, 4> _from_frames(int numFrames);
 public:
     Base();
     ~Base();
@@ -45,6 +51,11 @@ public:
     virtual std::array<int, 4> get_timecode();
     virtual int get_frames();
     virtual std::string str();
+    friend Base operator-(const Base& b);
+    friend Base operator+(Base& b1, const Base& b2);
+    friend Base operator-(Base& b1, const Base& b2);
+    friend Base operator+(Base& b1, const std::array<int, 4>& tc);
+    friend Base operator-(Base& b1, const std::array<int, 4>& tc);
 };
 
 class Clock : public Base
@@ -63,7 +74,11 @@ public:
     void set_framerate(double fps, bool isDropframe) override;
     void set_framerate(int fps, bool isDropframe) override;
     void set_timecode(int hr, int min, int sec, int frm) override;
+    void set_timecode(std::array<int, 4> tc) override;
+    void set_timecode(int numFrames) override;
     virtual void set_sample_rate(uint32_t samplerate);
 };
 
 };
+
+#endif

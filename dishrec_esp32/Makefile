@@ -1,10 +1,10 @@
 CXX = g++
-CXXFLAGS = -fPIC -g -std=gnu++2a -Wall -Wextra -I$(INC) -L$(LIB) -D _DEBUG
-LDFLAGS = -lpthread
+CXXFLAGS = -std=gnu++2a -Wall -Wextra -O0 -D _DEBUG -g
+LDFLAGS = $(INC) -L$(LIB)
 SRC = $(PWD)/src
 BUILD = $(PWD)/build
 OUT = $(PWD)/bin
-INC = $(PWD)/include
+INC = -I. -I$(PWD)/include/ -I/usr/local/include
 LIB = $(PWD)/lib
 MKDIR = mkdir -p
 NAME = dishrec_dev_test
@@ -26,11 +26,11 @@ $(BUILD)/WavHeader.o: | $(BUILD)
 $(BUILD)/TimecodeBase.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/TimecodeBase.cpp -o $(BUILD)/TimecodeBase.o $(LDFLAGS)
 
-$(BUILD)/BWFiXML.o: $(BUILD)/tinyxml2.so | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/BWFiXML.cpp -o $(BUILD)/BWFiXML.o $(LDFLAGS)
+$(BUILD)/BWFiXML.o: $(BUILD)/tinyxml2.o | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(BUILD)/tinyxml2.o $(SRC)/BWFiXML.cpp -o $(BUILD)/BWFiXML.o $(LDFLAGS)
 
-$(BUILD)/tinyxml2.so: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(LIB)/tinyxml2/tinyxml2.cpp -o $(BUILD)/tinyxml2.so $(LDFLAGS) -shared
+$(BUILD)/tinyxml2.o: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(LIB)/tinyxml2/tinyxml2.cpp -o $(BUILD)/tinyxml2.o $(LDFLAGS)
 
 $(OUT) $(BUILD):
 	$(MKDIR) $@

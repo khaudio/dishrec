@@ -41,7 +41,7 @@ std::vector<I> floatToInt(std::vector<F> values)
     size_t length(values.size());
     std::vector<I> converted;
     converted.reserve(length);
-    for (int i(0); i < length; ++i)
+    for (size_t i(0); i < length; ++i)
     {
         converted.emplace_back(floatToInt(values[i]));
     }
@@ -66,7 +66,7 @@ bufferLength(bufferSize)
     {
         this->ring.emplace_back(std::vector<T>());
         this->ring[i].reserve(this->bufferLength);
-        for (int j(0); j < this->bufferLength; ++j)
+        for (uint32_t j(0); j < this->bufferLength; ++j)
         {
             this->ring[i].emplace_back(this->_zero);
         }

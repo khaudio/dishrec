@@ -1,3 +1,6 @@
+#ifndef BWFIXML_H
+#define BWFIXML_H
+
 #include <tinyxml2.h>
 #include <string>
 #include <iostream>
@@ -198,3 +201,5 @@ public:
 };
 
 };
+
+#endif

@@ -1,8 +1,41 @@
-#ifndef WAVFILE_H
-#define WAVFILE_H
+#ifndef ESPSDWAVFILE_H
+#define ESPSDWAVFILE_H
 
 #include "WavHeader.h"
 #include <SD.h>
+
+/*
+GPIO pinout for SD card
+
+SPI:
+
+    CS          5
+    MOSI        23
+    MISO        19
+    CLK         18
+
+SDMMC:
+
+SDMMC_HOST_SLOT_0
+    8-bit
+    Unusable on WROOM and WROVER modules (Shares pins with SPI flash memory)
+SDMMC_HOST_SLOT_1
+    4-bit
+
+    Signal      Slot 0      Slot 1
+    CMD         11          15
+    CLK         6           14
+    D0          7           2
+    D1          8           4
+    D2          9           12
+    D3          10          13
+    D4          16
+    D5          17
+    D6          5
+    D7          18
+    CD          Any
+    WP          Any
+*/
 
 #define SD_CS_PIN           5
 
@@ -20,7 +53,7 @@ public:
     ~EspSDWavFile();
     virtual void set_filename(std::string filename);
     bool open();
-    bool open(std::string filename)
+    bool open(std::string filename);
     bool is_open();
     void seek(uint32_t position);
     void close();

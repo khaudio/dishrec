@@ -1,60 +1,56 @@
-#include "BWFiXML.h"
-#include "I2SInput.h"
-#include "TimecodeBase.h"
-#include "WavHeader.h"
+#include "I2SIO.h"
+// #include "BWFiXML.h"
+// #include "TimecodeBase.h"
 
 #define REC_STOP_BUTTON     (GPIO_NUM_14)
 
 bool* buttonState = new bool(true);
 
-BWFiXML::IXML ixml;
-TimecodeBase::Clock tc;
+// BWFiXML::IXML ixml;
+// TimecodeBase::Clock tc;
 
 void setup();
 void loop();
-int main();
-
-void check_button_state(void* pvParameter);
+void check_button_state(void* state);
 
 void setup(void)
 {
-    std::cout << "Starting" << std::endl;
+    std::cout << "Initializing" << std::endl;
 
-    // pinMode(REC_STOP_BUTTON, INPUT_PULLUP);
-    // xTaskCreate(
-    //         &check_button_state,
-    //         "buttonStateChecker",
-    //         1024,
-    //         reinterpret_cast<void*>(buttonState),
-    //         6,
-    //         NULL
-    //     );
+    pinMode(REC_STOP_BUTTON, INPUT_PULLUP);
+    xTaskCreate(
+            &check_button_state,
+            "buttonStateChecker",
+            1024,
+            reinterpret_cast<void*>(buttonState),
+            6,
+            NULL
+        );
 
-    // std::cout << "Delaying 1s..." << std::endl;
-    // ets_delay_us(1000000);
-    // std::cout << "Opening file" << std::endl;
+    std::cout << "Delaying 500ms..." << std::endl;
+    ets_delay_us(500000);
+    std::cout << "Opening file" << std::endl;
 
-    // if (!f.open("/arbitrary_filename_001.wav")) exit(1);
+    if (!f.open("/arbitrary_filename_001.wav")) exit(1);
 
-    // configI2S();
+    std::cout << "Delaying 500ms..." << std::endl;
+    ets_delay_us(500000);
+    std::cout << "Starting I2S" << std::endl;
 
-    // std::cout << "Delaying 3s..." << std::endl;
-    // ets_delay_us(3000000);
-    // std::cout << "Starting i2s read loop" << std::endl;
+    I2S::start();
 
-    // starti2sInputLoop();
-
-    // std::cout << "I2s read loop started" << std::endl;
-    // std::cout << "Starting card write loop" << std::endl;
-    // xTaskCreate(
-    //         &write_if_buffered_button,
-    //         "cardWriterFromBuffer",
-    //         2048,
-    //         reinterpret_cast<void*>(buttonState),
-    //         7,
-    //         NULL
-    //     );
-    // std::cout << "Card write loop started" << std::endl;
+    std::cout << "I2S started" << std::endl;
+    std::cout << "Starting card write loop" << std::endl;
+    
+    xTaskCreate(
+            &write_if_buffered_button,
+            "cardWriterFromBuffer",
+            2048,
+            reinterpret_cast<void*>(buttonState),
+            7,
+            NULL
+        );
+    std::cout << "Card write loop started" << std::endl;
 
     std::cout << "Initialized" << std::endl;
 }
@@ -63,23 +59,15 @@ void loop()
 {
 }
 
-int main()
-{
-    setup();
-    while (true)
-    {
-        loop();
-    }
-    return 1;
-}
-
 void check_button_state(void* state)
 {
     bool* button = reinterpret_cast<bool*>(state);
     while (true)
     {
         *button = digitalRead(REC_STOP_BUTTON);
-        delay(1000);
+        ets_delay_us(100000);
+        #ifdef _DEBUG
         std::cout << "Button is " << (*button ? "HIGH" : "LOW") << std::endl;
+        #endif
     }
 }

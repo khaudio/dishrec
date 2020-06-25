@@ -5,7 +5,8 @@ WavHeader(parameters)
 {
 }
 
-EspSDWavFile::EspSDWavFile()
+EspSDWavFile::EspSDWavFile() :
+WavHeader()
 {
 }
 
@@ -25,7 +26,7 @@ bool EspSDWavFile::_initialize_sd()
     return this->_sdInitialized;
 }
 
-void EspSDWavFile::set_filename()
+void EspSDWavFile::set_filename(std::string filename)
 {
     this->filename = filename;
 }

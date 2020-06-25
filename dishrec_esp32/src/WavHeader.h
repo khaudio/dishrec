@@ -21,10 +21,23 @@ struct WavParameters
     uint16_t numChannels;
 };
 
+/*
+TODO 
+
+remove
+WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
+virtual void set_format(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
+and write a new default uninitialized constructor
+
+Set format with WavParameters
+
+*/
+
+
 class WavHeader : public WavParameters
 {
 protected:
-    bool sampleRateIsStandard, bitDepthIsStandard;
+    bool _initialized, sampleRateIsStandard, bitDepthIsStandard;
     uint16_t formatCode, dataSize, frameSize;
     uint32_t byteRate, fileSize, samplesPerSecond;
     void set_data_rates();
@@ -32,11 +45,12 @@ protected:
 public:
     uint8_t sampleWidth;
     uint32_t headerSize, formatLength = 16;
-    static std::array<uint32_t, 4> stdSampleRates;
+    static std::array<uint32_t, 3> stdSampleRates;
     static std::array<uint16_t, 3> stdIntBitDepths;
     static std::array<uint16_t, 2> stdFloatBitDepths;
     WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
     WavHeader(WavParameters);
+    WavHeader();
     ~WavHeader();
     virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
     virtual void set_sample_rate(uint32_t samplerate);

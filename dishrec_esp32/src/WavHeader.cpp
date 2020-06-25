@@ -1,7 +1,7 @@
 #include "WavHeader.h"
 
-std::array<uint32_t, 4> WavHeader::stdSampleRates = {
-        44100, 48000, 96000, 192000
+std::array<uint32_t, 3> WavHeader::stdSampleRates = {
+        48000, 96000, 192000
     };
 std::array<uint16_t, 3> WavHeader::stdIntBitDepths = {8, 16, 24};
 std::array<uint16_t, 2> WavHeader::stdFloatBitDepths = {32, 64};
@@ -47,6 +47,12 @@ WavHeader::WavHeader(WavParameters params)
     set_header_size();
 }
 
+WavHeader::WavHeader()
+{
+    this->_initialized = false;
+    set_header_size();
+}
+
 WavHeader::~WavHeader()
 {
     delete this->headerData;
@@ -67,11 +73,11 @@ void WavHeader::set_format(
         uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels
     )
 {
-    this->isFloatingPoint = isFloat;
     set_sample_rate(samplerate);
     set_bit_depth(bitsPerSample, isFloat);
     set_channels(channels);
     set_data_rates();
+    this->_initialized = true;
 }
 
 void WavHeader::set_format(WavParameters params)
@@ -80,6 +86,7 @@ void WavHeader::set_format(WavParameters params)
     set_bit_depth(params.bitDepth, params.isFloatingPoint);
     set_channels(params.numChannels);
     set_data_rates();
+    this->_initialized = false;
 }
 
 void WavHeader::set_data_rates()
@@ -120,7 +127,7 @@ void WavHeader::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
             }
         }
     }
-    #if DEBUG
+    #ifdef _DEBUG
     if (!this->bitDepthIsStandard)
     {
         std::cout << "Non-standard bit depth selected" << std::endl;
@@ -143,7 +150,7 @@ void WavHeader::set_sample_rate(uint32_t samplerate)
             break;
         }
     }
-    #if DEBUG
+    #ifdef _DEBUG
     if (!this->sampleRateIsStandard)
     {
         std::cout << "Non-standard sample rate selected" << std::endl;
