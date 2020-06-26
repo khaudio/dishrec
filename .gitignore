@@ -1,4 +1,5 @@
 .vscode/
+.pio/
 __pycache__/
 .DS_Store
 sftp.json

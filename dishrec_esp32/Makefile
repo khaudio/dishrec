@@ -4,8 +4,9 @@ LDFLAGS = $(INC) -L$(LIB)
 SRC = $(PWD)/src
 BUILD = $(PWD)/build
 OUT = $(PWD)/bin
-INC = -I. -I$(PWD)/include/ -I/usr/local/include
-LIB = $(PWD)/lib
+LIB = $(PWD)/.pio/libdeps/esp-wrover-kit
+REMOTE_LIBS := $(foreach dir, $(LIB), -I$(wildcard $(dir)/*))
+INC := -I. -I/usr/local/include -I$(PWD)/include/ $(REMOTE_LIBS)
 MKDIR = mkdir -p
 NAME = dishrec_dev_test
 
