@@ -1,12 +1,19 @@
-hardware codec
-    research
-    iterate
+hardware
+    Op-Amp(s)
+        TI OPA1611/OPA1612
+    ADC
+        TI PCM4222
 
 audio input
     choose connector
         complexity vs necessity
         start with three pin mic level
             ta3m or 3.5mm
+    dual ADCs per channel
+        second channel at fixed -20dB or so relative to first
+        auto splice and gain up if 0dBFS exceeded
+        save as 32float
+        come up with a catchy name for this behavior
 
 user options
     variable sample rate
@@ -27,6 +34,7 @@ sd card
             cmos battery?
 
 possible future features
+    low power standby for quick power on
     interleaved multichannel
         ta5m connector
     different signal levels
@@ -45,6 +53,5 @@ possible future features
         compressor (separate from limiter)
         reference audio out 1k sine
         1k notch for device reference
-        auto gain to tone
+        auto gain to tone RMS
         auto gain to mic
-
