@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "ErrorEnums.h"
 
 template <typename T>
 T reverse_endianness(T& source);
@@ -21,18 +22,33 @@ struct WavParameters
     uint16_t numChannels;
 };
 
-/*
-TODO 
+/* TODO 
 
 remove
 WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
 virtual void set_format(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
 and write a new default uninitialized constructor
 
-Set format with WavParameters
+Set format with WavParameters */
 
-*/
-
+enum wav_header_offset
+{
+    /*                      Endianness              Size in bytes */
+    CHUNK_ID = 0,           // Big endian           4
+    CHUNK_SIZE = 4,         // Little endian        4
+    FORMAT = 8,             // Big endian           4
+    SUBCHUNK_1_ID = 12,     // Big endian           4
+    SUBCHUNK_1_SIZE = 16,   // Little endian        4
+    AUDIO_FORMAT = 20,      // Little endian        2
+    NUM_CHANNELS = 22,      // Little endian        2
+    SAMPLE_RATE = 24,       // Little endian        4
+    BYTE_RATE = 28,         // Little endian        4
+    BLOCK_ALIGN = 32,       // Little endian        2
+    BITS_PER_SAMPLE = 34,   // Little endian        2
+    SUBCHUNK_2_ID = 36,     // Big endian           4
+    SUBCHUNK_2_SIZE = 40,   // Little endian        4
+    DATA_START = 44         // Little endian        4
+};
 
 class WavHeader : public WavParameters
 {
@@ -42,6 +58,7 @@ protected:
     uint32_t byteRate, fileSize, samplesPerSecond;
     void set_data_rates();
     uint8_t* headerData = nullptr;
+    std::string _chunkID = "RIFF", _subchunk1ID = "WAVEfmt ", _subchunkDataID = "data";
 public:
     uint8_t sampleWidth;
     uint32_t headerSize, formatLength = 16;
@@ -64,8 +81,9 @@ public:
     void set_size(std::vector<T>& data);
     uint32_t size();
     bool is_nonstandard();
-    uint8_t* get_header();
     virtual std::string str();
+    const uint8_t* get_header();
+    void import_header(uint8_t* data);
 };
 
 #endif

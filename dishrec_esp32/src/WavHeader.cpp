@@ -186,35 +186,12 @@ bool WavHeader::is_nonstandard()
     return !(this->sampleRateIsStandard && this->bitDepthIsStandard);
 }
 
-uint8_t* WavHeader::get_header()
-{
-    std::stringstream stream;
-    stream << "RIFF";
-    write_to_stream(stream, this->fileSize);
-    stream << "WAVEfmt ";
-    write_to_stream(stream, this->formatLength);
-    write_to_stream(stream, this->formatCode);
-    write_to_stream(stream, this->numChannels);
-    write_to_stream(stream, this->sampleRate);
-    write_to_stream(stream, this->byteRate);
-    write_to_stream(stream, this->frameSize);
-    write_to_stream(stream, this->bitDepth);
-    stream << "data";
-    write_to_stream(stream, this->dataSize);
-    stream.seekp(0);
-    for (uint32_t i(0); i < this->headerSize; ++i)
-    {
-        this->headerData[i] = stream.get();
-    }
-    return this->headerData;
-}
-
 std::string WavHeader::str()
 {
     std::stringstream stream;
-    stream << "RIFF";
+    stream << this->_chunkID;
     write_to_stream(stream, this->fileSize);
-    stream << "WAVEfmt ";
+    stream << this->_subchunk1ID;
     write_to_stream(stream, this->formatLength);
     write_to_stream(stream, this->formatCode);
     write_to_stream(stream, this->numChannels);
@@ -222,7 +199,28 @@ std::string WavHeader::str()
     write_to_stream(stream, this->byteRate);
     write_to_stream(stream, this->frameSize);
     write_to_stream(stream, this->bitDepth);
-    stream << "data";
+    stream << this->_subchunkDataID;
     write_to_stream(stream, this->dataSize);
     return stream.str();
+}
+
+const uint8_t* WavHeader::get_header()
+{
+    return reinterpret_cast<const uint8_t*>(str().c_str());
+}
+
+void WavHeader::import_header(uint8_t* data)
+{
+    WavParameters readFormat;
+    this->_chunkID.assign(data[CHUNK_ID], 4);
+    this->_subchunk1ID.assign(data[SUBCHUNK_1_ID], 4);
+    this->formatLength = *reinterpret_cast<uint32_t*>(data[SUBCHUNK_1_SIZE]);
+    this->formatCode = *reinterpret_cast<uint16_t*>(data[AUDIO_FORMAT]);
+    readFormat.numChannels = *reinterpret_cast<uint16_t*>(data[NUM_CHANNELS]);
+    readFormat.sampleRate = *reinterpret_cast<uint32_t*>(data[SAMPLE_RATE]);
+    readFormat.bitDepth = *reinterpret_cast<uint16_t*>(data[BITS_PER_SAMPLE]);
+    this->_subchunkDataID.assign(data[SUBCHUNK_2_ID], 4);
+    set_size(*reinterpret_cast<uint32_t*>(data[SUBCHUNK_2_SIZE]));
+    readFormat.isFloatingPoint = this->formatCode == 0x0003;
+    set_format(readFormat);
 }

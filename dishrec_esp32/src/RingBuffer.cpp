@@ -81,9 +81,25 @@ RingBuffer<T>::~RingBuffer()
 }
 
 template <typename T>
+int RingBuffer<T>::sub_buffers_full()
+{
+    // Total number of unread readable buffers
+    return (this->_buffered / this->bufferLength);
+}
+
+template <typename T>
 int RingBuffer<T>::buffered()
 {
-    // Total number of samples buffered but unread
+    /* Total number of samples buffered but unread,
+    excluding the current write buffer */
+    return (this->_buffered / this->bufferLength) * this->bufferLength;
+}
+
+template <typename T>
+int RingBuffer<T>::samples_buffered()
+{
+    /* Total number of samples buffered but unread,
+    including written to the current write buffer */
     return this->_buffered;
 }
 
@@ -95,7 +111,7 @@ int RingBuffer<T>::available()
 }
 
 template <typename T>
-void RingBuffer<T>::rotateReadBuffer()
+void RingBuffer<T>::rotate_read_buffer()
 {
     // Rotates read buffer and forces write buffer forward if overrun
     if (++this->readIndex >= this->ringLength)
@@ -106,12 +122,12 @@ void RingBuffer<T>::rotateReadBuffer()
     this->_buffered = (this->_buffered < 0) ? 0 : this->_buffered;
     if (!writable())
     {
-        rotateWriteBuffer();
+        rotate_write_buffer();
     }
 }
 
 template <typename T>
-void RingBuffer<T>::rotateWriteBuffer()
+void RingBuffer<T>::rotate_write_buffer()
 {
     if (++this->writeIndex >= this->ringLength)
     {
@@ -174,11 +190,11 @@ void* RingBuffer<T>::get_read_void_ptr()
 template <typename T>
 void RingBuffer<T>::rotate_write_buffer_manual()
 {
-    rotateWriteBuffer();
+    rotate_write_buffer();
     this->_buffered += this->bufferLength;
     if (!writable())
     {
-        rotateReadBuffer();
+        rotate_read_buffer();
     }
 }
 
@@ -187,7 +203,7 @@ std::vector<T> RingBuffer<T>::read()
 {
     // Returns current read buffer and rotates
     std::vector<T> output(_read());
-    rotateReadBuffer();
+    rotate_read_buffer();
     return output;
 }
 
@@ -203,12 +219,11 @@ int RingBuffer<T>::_write(T data, bool force)
     ++this->samplesWritten;
     if (--this->samplesRemaining <= 0)
     {
-        rotateWriteBuffer();
+        rotate_write_buffer();
     }
     ++this->_buffered;
     return 1;
 }
-
 
 template <typename T>
 int RingBuffer<T>::_write(std::vector<T> data, bool force)
@@ -227,7 +242,7 @@ int RingBuffer<T>::_write(std::vector<T> data, bool force)
                 );
             written += this->samplesRemaining;
             remaining -= this->samplesRemaining;
-            rotateWriteBuffer();
+            rotate_write_buffer();
         }
         else
         {
@@ -242,7 +257,7 @@ int RingBuffer<T>::_write(std::vector<T> data, bool force)
             remaining = 0;
             if (this->samplesRemaining <= 0)
             {
-                rotateWriteBuffer();
+                rotate_write_buffer();
             }
         }
     }
@@ -250,7 +265,7 @@ int RingBuffer<T>::_write(std::vector<T> data, bool force)
 }
 
 template <typename T>
-int RingBuffer<T>::_writeTrim(std::vector<T>& data, bool force)
+int RingBuffer<T>::_write_trim(std::vector<T>& data, bool force)
 {
     // Writes along ring and removes samples from input vector
     int written = _write(data, force);
@@ -268,14 +283,13 @@ int RingBuffer<T>::_writeTrim(std::vector<T>& data, bool force)
 }
 
 template <typename T>
-int RingBuffer<T>::write(std::vector<T>& data, bool trim, bool force)
+int RingBuffer<T>::write(T data, bool force)
 {
-    // Write method that optionally trims input vector
-    return trim ? _writeTrim(data, force) : _write(data, force);
+    return _write(data, force);
 }
 
 template <typename T>
-int RingBuffer<T>::write(T data, bool force)
+int RingBuffer<T>::write(std::vector<T> data, bool force)
 {
     return _write(data, force);
 }

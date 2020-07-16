@@ -1,8 +1,11 @@
 hardware
-    Op-Amp(s)
-        TI OPA1611/OPA1612
+    Op-Amps
+        Preamp(s)
+            TI OPA1632
+        Buffers
+            TI OPA1611/OPA1612
     ADC
-        TI PCM4222
+        TI PCM4220
 
 audio input
     choose connector

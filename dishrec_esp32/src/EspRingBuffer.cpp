@@ -1,15 +1,15 @@
 #include "EspRingBuffer.h"
 
-// Default WAV file parameters (save/load EEPROM or SD)
-WavParameters defaultWavFormat
+// Default WAV file parameters (save/load EEPROM and/or SD)
+WavParameters currentWavFormat
 {
-    .sampleRate = SAMPLE_RATE,
-    .bitDepth = BIT_DEPTH,
-    .isFloatingPoint = IS_FLOAT,
-    .numChannels = 1
+    sampleRate : CURRENT_SAMPLE_RATE,
+    bitDepth : CURRENT_BIT_DEPTH,
+    isFloatingPoint : IS_FLOAT,
+    numChannels : CURRENT_NUM_CHANNELS
 };
 
-// Rotatable ring buffers to store samples
+/* Rotatable ring buffers to store samples */
 
 // In from microphone
 RingBuffer<DATATYPE> inBuffer(BUFFER_LENGTH, RING_LENGTH);
@@ -18,14 +18,34 @@ RingBuffer<DATATYPE> inBuffer(BUFFER_LENGTH, RING_LENGTH);
 RingBuffer<DATATYPE> outBuffer(BUFFER_LENGTH, RING_LENGTH);
 
 // File object to save data
-EspSDWavFile f(defaultWavFormat);
+std::shared_ptr<EspSDWavFile> currentFile;
+std::string currentFilename("arbitrary_filename");
+std::string filenameDelimiter("_");
+int currentFilenumber = 0;
+
+void open_new_file()
+{
+    std::stringstream ss;
+    currentFile = std::make_shared<EspSDWavFile>(currentWavFormat);
+    ss << currentFilename << filenameDelimiter << std::setw(3);
+    ss << std::setfill('0') << ++currentFilenumber;
+    currentFile->set_filename(ss.str());
+    if (!currentFile->open_write())
+    {
+        std::cerr << "Could not open new file" << std::endl;
+        exit(1);
+    }
+    else
+    {
+        std::cout << "New file opened" << std::endl;
+    }
+}
 
 void write_to_file()
 {
     // Write from buffer to file
-    static uint8_t* currentBufferPtr;
-    currentBufferPtr = inBuffer.get_read_ptr();
-    f.write(currentBufferPtr, inBuffer.bytesPerBuffer);
+    uint8_t* currentReadBufferPtr = inBuffer.get_read_ptr();
+    currentFile->write(currentReadBufferPtr, inBuffer.bytesPerBuffer);
 }
 
 bool write_if_buffered()
@@ -35,31 +55,34 @@ bool write_if_buffered()
     while (inBuffer.buffered())
     {
         write_to_file();
-        inBuffer.rotateReadBuffer();
+        inBuffer.rotate_read_buffer();
         written = true;
+        esp_task_wdt_reset();
     }
     return written;
 }
 
-void write_if_buffered_button(void* pvParameter)
+void read_to_buffer(size_t length)
 {
-    bool* recording = reinterpret_cast<bool*>(pvParameter);
-    while (true)
+    while (length)
     {
-        if (*recording && f.is_open())
+        if (outBuffer.writable())
         {
-            if (inBuffer.buffered())
-            {
-                write_to_file();
-                inBuffer.rotateReadBuffer();
-            }
-        }
-        else if (f.is_open())
-        {
-            #ifdef _DEBUG
-            std::cout << "Closing file" << std::endl;
-            #endif
-            f.close();
+            size_t iterationSize = (length >= outBuffer.bytesPerBuffer) ? outBuffer.bytesPerBuffer : length;
+            std::vector<DATATYPE> data = currentFile->read<DATATYPE>(iterationSize);
+            outBuffer.write(data);
+            length -= iterationSize;
         }
     }
+}
+
+void print_buffer()
+{
+    uint8_t* readPtr = inBuffer.get_read_ptr();
+    std::cout << "Buffer contents: ";
+    for (int i(0); i < inBuffer.bufferLength; ++i)
+    {
+        std::cout << +(readPtr[i]);
+    }
+    std::cout << std::endl;
 }
