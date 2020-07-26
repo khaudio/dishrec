@@ -91,16 +91,17 @@ extern RingBuffer<DATATYPE> inBuffer;
 extern RingBuffer<DATATYPE> outBuffer;
 
 // Wav file currently open for read or write
-extern std::shared_ptr<EspSDWavFile> currentFile;
+extern std::shared_ptr<EspSDWavFile> currentWriteFile;
+extern std::shared_ptr<EspSDWavFile> currentReadFile;
 
 // Filename of current wav file
-extern std::string currentFilename;
+extern std::string currentWriteFilename;
 
 // Delimiter between filename scene and take
 extern std::string filenameDelimiter;
 
 // Take number for current wav file
-extern int currentFilenumber;
+extern int currentWriteFileNumber;
 
 // iXML data written to or read from broadcast wav
 BWFiXML::IXML ixml;
@@ -111,20 +112,27 @@ TimecodeBase::Clock tc;
 
 /*                              Prototypes                          */
 
+// esp-idf entry point
+void app_main(void);
+
 // Arduino entry point
 void setup();
 
 // Arduino loop
 void loop();
 
-// esp-idf entry point
-void app_main(void);
-
 void set_button_gpio();
 void check_button_state(std::shared_ptr<bool> state);
 void open_file();
+void close_file();
 void write_if_buffered_button(std::shared_ptr<bool> state);
 
+
+void app_main(void)
+{
+    setup();
+    loop();
+}
 
 void setup()
 {
@@ -140,11 +148,11 @@ void setup()
     set_button_gpio();
     
     std::cout << "Record button GPIO set" << std::endl;
-    std::cout << "Creating file" << std::endl;
+    std::cout << "Creating file objects..." << std::endl;
 
-    currentFile = std::make_shared<EspSDWavFile>(currentWavFormat);
+    init_wav_file_objects();
 
-    std::cout << "File created" << std::endl;
+    std::cout << "File objects created" << std::endl;
     std::cout << "Delaying 500ms..." << std::endl;
     ets_delay_us(500000);
     std::cout << "Starting I2S" << std::endl;
@@ -157,15 +165,9 @@ void setup()
 
 void loop()
 {
-    if (*buttonState) I2S::read_to_buffer(reinterpret_cast<void*>(&inBuffer));
+    I2S::read_to_buffer(&inBuffer);
     *buttonState = gpio_get_level(REC_STOP_BUTTON);
     write_if_buffered_button(buttonState);
-}
-
-void app_main(void)
-{
-    setup();
-    loop();
 }
 
 void set_button_gpio()
@@ -185,22 +187,23 @@ void open_file()
     open_new_file();
     ets_delay_us(500000); // 500ms debounce
     #ifdef _DEBUG
-    std::cout << "Recording " << currentFile->filename << std::endl;
+    std::cout << "Recording " << currentWriteFile->filename << "..." << std::endl;
     #endif
 }
 
 void close_file()
 {
     #ifdef _DEBUG
-    std::cout << "Closing file " << currentFile->filename << std::endl;
+    std::cout << "Closing file " << currentWriteFile->filename << "..." << std::endl;
     #endif
-    currentFile->close();
+    currentWriteFile->close();
+    std::cout << "Closed file" << currentWriteFile->filename << std::endl;
     ets_delay_us(500000); // 500ms debounce
 }
 
 void write_if_buffered_button(std::shared_ptr<bool> state)
 {
-    if (*state && currentFile->is_open())
+    if (*state && currentWriteFile->is_open())
     {
         while (inBuffer.sub_buffers_full() > 0)
         {
@@ -208,11 +211,11 @@ void write_if_buffered_button(std::shared_ptr<bool> state)
             inBuffer.rotate_read_buffer();
         }
     }
-    else if (!*state && currentFile->is_open())
+    else if (!*state && currentWriteFile->is_open())
     {
         close_file();
     }
-    else if (!*state && !currentFile->is_open())
+    else if (!*state && !currentWriteFile->is_open())
     {
         open_file();
     }

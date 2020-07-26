@@ -40,7 +40,8 @@
 extern WavParameters currentWavFormat;
 extern RingBuffer<DATATYPE> inBuffer;
 extern RingBuffer<DATATYPE> outBuffer;
-extern std::shared_ptr<EspSDWavFile> currentFile;
+extern std::shared_ptr<EspSDWavFile> currentWriteFile;
+extern std::shared_ptr<EspSDWavFile> currentReadFile;
 
 namespace I2S
 {
@@ -53,8 +54,12 @@ enum i2s_buffer_type
 
 void config_read(RingBuffer<DATATYPE>* buff);
 void config_write(RingBuffer<DATATYPE>* buff);
-void read_to_buffer(void* pvParameter);
-void write_from_buffer(void* pvParameter);
+template <typename T>
+void read_to_buffer(RingBuffer<T>*);
+template <typename T>
+void write_from_buffer(RingBuffer<T>*);
+// void read_to_buffer(void* pvParameter);
+// void write_from_buffer(void* pvParameter);
 void start();
 void check_bytes_read(RingBuffer<DATATYPE>* buff);
 void check_bytes_written(RingBuffer<DATATYPE>* buff);

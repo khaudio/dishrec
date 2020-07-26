@@ -27,6 +27,7 @@
 // External template delcarations
 extern template class RingBuffer<DATATYPE>;
 
+void init_wav_file_objects();
 void open_new_file();
 void write_to_file();
 bool write_if_buffered();

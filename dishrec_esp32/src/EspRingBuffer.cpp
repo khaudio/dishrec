@@ -18,19 +18,26 @@ RingBuffer<DATATYPE> inBuffer(BUFFER_LENGTH, RING_LENGTH);
 RingBuffer<DATATYPE> outBuffer(BUFFER_LENGTH, RING_LENGTH);
 
 // File object to save data
-std::shared_ptr<EspSDWavFile> currentFile;
-std::string currentFilename("arbitrary_filename");
+std::shared_ptr<EspSDWavFile> currentWriteFile;
+std::shared_ptr<EspSDWavFile> currentReadFile;
+std::string currentWriteFilename("arbitrary_filename");
 std::string filenameDelimiter("_");
-int currentFilenumber = 0;
+int currentWriteFileNumber = 0;
+
+void init_wav_file_objects()
+{
+    currentWriteFile = std::make_shared<EspSDWavFile>(currentWavFormat);
+    currentReadFile = std::make_shared<EspSDWavFile>(currentWavFormat);
+}
 
 void open_new_file()
 {
     std::stringstream ss;
-    currentFile = std::make_shared<EspSDWavFile>(currentWavFormat);
-    ss << currentFilename << filenameDelimiter << std::setw(3);
-    ss << std::setfill('0') << ++currentFilenumber;
-    currentFile->set_filename(ss.str());
-    if (!currentFile->open_write())
+    currentWriteFile = std::make_shared<EspSDWavFile>(currentWavFormat);
+    ss << currentWriteFilename << filenameDelimiter << std::setw(3);
+    ss << std::setfill('0') << ++currentWriteFileNumber;
+    currentWriteFile->set_filename(ss.str());
+    if (!currentWriteFile->open_write())
     {
         std::cerr << "Could not open new file" << std::endl;
         exit(1);
@@ -45,7 +52,7 @@ void write_to_file()
 {
     // Write from buffer to file
     uint8_t* currentReadBufferPtr = inBuffer.get_read_ptr();
-    currentFile->write(currentReadBufferPtr, inBuffer.bytesPerBuffer);
+    currentWriteFile->write(currentReadBufferPtr, inBuffer.bytesPerBuffer);
 }
 
 bool write_if_buffered()
@@ -64,7 +71,7 @@ bool write_if_buffered()
 
 void read_file_to_buffer(size_t length)
 {
-    while (currentFile->is_open() && length)
+    while (currentReadFile->is_open() && length)
     {
         if (outBuffer.writable())
         {
@@ -72,7 +79,7 @@ void read_file_to_buffer(size_t length)
                     (length >= outBuffer.bytesPerBuffer)
                     ? outBuffer.bytesPerBuffer : length
                 );
-            std::vector<DATATYPE> data = currentFile->read<DATATYPE>(iterationSize);
+            std::vector<DATATYPE> data = currentReadFile->read<DATATYPE>(iterationSize);
             outBuffer.write(data);
             length -= iterationSize;
         }
