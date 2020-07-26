@@ -1,55 +1,150 @@
+/*----------------------------------------------------------------------------
+ * Copyright 2020 K Hughes Production, LLC
+ * All Rights Reserved.
+ *----------------------------------------------------------------------------
+
+Dishrec configures an external ADC (PCM4220/PCM4222) via pin configs,
+receives audio via I2S input from the ADC, writes it to a ring buffer,
+then reads from the ring buffer and writes to an SD card
+when recording is enabled and armed.
+
+Input:
+ADC --(I2S)--> Input Ring Buffer --(SPI)--> SD Card
+
+There is a separate ring buffer for the output.
+The ESP32 internal DAC can be used for file playback, if desired.
+
+Output:
+SD Card --(SPI)--> Output Ring Buffer --(I2S)--> Internal/Discrete DAC
+
+                            ESP32 pin connections
+
+    Connection                      Input/Output    Pin #               Description
+
+SD Card (SPI)
+    CS                              O               5                   SD Chip Select
+    MOSI                            O               23                  Data to SD
+    MISO                            I               19                  Data from SD
+    CLK                             O               18                  SPI Clock
+
+ESP32 I2S
+    I2S_IN_WS                       I               32                  I2S input WS
+    I2S_IN_BCK                      I               33                  I2S input SCK
+    I2S_IN_DI                       I               39                  I2S input data
+    I2S_OUT_WS                      O               4                   I2S output WS
+    I2S_OUT_BCK                     O               16                  I2S output SCK
+    I2S_OUT_DO                      O               25                  I2S output data
+    I2S_MCK                         O               0                   I2S MCK output
+    I2S_SHUTDOWN                    O               21                  I2S shutdown signal
+
+PCM4220/PCM4222
+    PCM422X_PCMEN                   O               22                  Pcm output enable
+    PCM422X_HPFDR/PCM422X_MOD1      O               2                   Right channel high-pass filter disable/modulator data 1 output
+    PCM422X_HPFDL/PCM422X_MOD2      O               15                  Input left channel high-pass filter disable/modulator data 2 output
+    PCM422X_FS0/PCM422X_MOD3        O               9                   Sampling mode config 0/modulator data 3 output
+    PCM422X_FS1/PCM422X_MOD4        O               10                  Sampling mode config 1/modulator data 4 output
+    PCM422X_DF/PCM422X_MOD5         O               27                  Digital decimation filter response/modulator data 5 output
+    PCM422X_SUB0/PCM422X_WCKO       O               17                  TDM active sub-frame config 0/modulator left/right word clock output
+    PCM422X_SUB1/PCM422X_MCK0       O               1                   TDM active sub-frame config 1/master clock output
+    PCM422X_DATA                    I/O             (I2S_IN_DI)         ADC I2S data
+    PCM422X_BCK                     I/O             (I2S_IN_BCK)        ADC I2S SCK
+    PCM422X_LRCK                    I/O             (I2S_IN_WS)         ADC I2S WS
+    PCM422X_MCKI                    O               (I2S_MCK)           ADC I2S MCK
+    PCM422X_RST                     O               13                  ADC reset and power-down
+    PCM422X_OVFL                    I               34                  Left channel overflow flag
+    PCM422X_OVFR                    I               35                  Right channel overflow flag
+    PCM422X_SM                      O               26                  ADC I2S slave/master mode
+    PCM422X_OWL0                    O               14                  Output word length config 0
+    PCM422X_OWL1                    O               12                  Output word length config 1
+    PCM422X_FMT0                    O               8                   Audio data format config 0
+    PCM422X_FMT1                    O               7                   Audio data format config 1
+    PCM422X_DSDEN/PCM422X_MOD6      O               3                   DSD output enable/modulator data 6 output
+    PCM422X_MODEN                   O               6                   Multi-bit modulator output enable
+    PCM422X_DSDMODE                 O               11                  DSD mode output/rate
+
+Button
+    REC_STOP_BUTTON                 I               22                 Button to start/stop record to SD */
+
 #include "I2SIO.h"
 #include "driver/gpio.h"
 #include "BWFiXML.h"
 #include "TimecodeBase.h"
 
-#define REC_STOP_BUTTON         (GPIO_NUM_22)
+/*                              Macros                              */
 
-bool* buttonState = new bool(true);
+// Record/Stop button; active low
+#define REC_STOP_BUTTON             (GPIO_NUM_22)
 
+
+/*                          Global variables                        */
+
+// Button to initiate or stop recording
+std::shared_ptr<bool> buttonState = std::make_shared<bool>(false); // Not recording at boot
+
+// Default wav file parameters
+extern WavParameters currentWavFormat;
+
+// Input ring buffer
+extern RingBuffer<DATATYPE> inBuffer;
+
+// Output ring buffer
+extern RingBuffer<DATATYPE> outBuffer;
+
+// Wav file currently open for read or write
 extern std::shared_ptr<EspSDWavFile> currentFile;
 
+// Filename of current wav file
+extern std::string currentFilename;
+
+// Delimiter between filename scene and take
+extern std::string filenameDelimiter;
+
+// Take number for current wav file
+extern int currentFilenumber;
+
+// iXML data written to or read from broadcast wav
 BWFiXML::IXML ixml;
+
+// Timecode value of file
 TimecodeBase::Clock tc;
 
-void app_main(void);
-void setup();
-void loop();
-void set_button_gpio();
-void check_button_state(void* state);
-void write_if_buffered_button(void* state);
 
-void app_main(void)
-{
-    setup();
-    loop();
-}
+/*                              Prototypes                          */
+
+// Arduino entry point
+void setup();
+
+// Arduino loop
+void loop();
+
+// esp-idf entry point
+void app_main(void);
+
+void set_button_gpio();
+void check_button_state(std::shared_ptr<bool> state);
+void open_file();
+void write_if_buffered_button(std::shared_ptr<bool> state);
+
 
 void setup()
 {
     std::cout << "Initializing" << std::endl;
     std::cout << "Setting timecode parameters" << std::endl;
 
-    tc.set_sample_rate(currentFile->sampleRate);
+    tc.set_sample_rate(currentWavFormat.sampleRate);
     tc.set_framerate(23.976, true);
 
     std::cout << "Timecode parameters set" << std::endl;
+    std::cout << "Setting record button GPIO" << std::endl;
+    
+    set_button_gpio();
+    
+    std::cout << "Record button GPIO set" << std::endl;
+    std::cout << "Creating file" << std::endl;
 
-    xTaskCreate(
-            &check_button_state,
-            "buttonStateChecker",
-            10000,
-            reinterpret_cast<void*>(buttonState),
-            4,
-            NULL
-        );
+    currentFile = std::make_shared<EspSDWavFile>(currentWavFormat);
 
-    std::cout << "Delaying 500ms..." << std::endl;
-    ets_delay_us(500000);
-    std::cout << "Opening file" << std::endl;
-
-    open_new_file();
-
+    std::cout << "File created" << std::endl;
     std::cout << "Delaying 500ms..." << std::endl;
     ets_delay_us(500000);
     std::cout << "Starting I2S" << std::endl;
@@ -57,94 +152,68 @@ void setup()
     I2S::start();
 
     std::cout << "I2S started" << std::endl;
-    std::cout << "Starting card write loop" << std::endl;
-    
-    xTaskCreatePinnedToCore(
-            &write_if_buffered_button,
-            "cardWriterFromBuffer",
-            8192,
-            reinterpret_cast<void*>(buttonState),
-            configMAX_PRIORITIES - 1,
-            NULL,
-            1
-        );
-    
-    std::cout << "Card write loop started" << std::endl;
-
     std::cout << "Initialized" << std::endl;
 }
 
 void loop()
 {
-    #ifdef _DEBUG
-    I2S::check_bytes_read(&inBuffer);
-    #endif
-    feedLoopWDT();
+    if (*buttonState) I2S::read_to_buffer(reinterpret_cast<void*>(&inBuffer));
+    *buttonState = gpio_get_level(REC_STOP_BUTTON);
+    write_if_buffered_button(buttonState);
+}
+
+void app_main(void)
+{
+    setup();
+    loop();
 }
 
 void set_button_gpio()
 {
-    gpio_config_t ioConf;
-    ioConf.intr_type = (gpio_int_type_t)GPIO_PIN_INTR_DISABLE;
-    ioConf.mode = GPIO_MODE_INPUT;
-    ioConf.pin_bit_mask = (1ULL << REC_STOP_BUTTON);
-    ioConf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    ioConf.pull_up_en = GPIO_PULLUP_ENABLE;
-    gpio_config(&ioConf);
+    gpio_config_t buttonGpioConf = {
+            pin_bit_mask : (1ULL << REC_STOP_BUTTON),
+            mode : GPIO_MODE_INPUT,
+            pull_up_en : GPIO_PULLUP_ENABLE,
+            pull_down_en : GPIO_PULLDOWN_DISABLE,
+            intr_type : static_cast<gpio_int_type_t>(GPIO_PIN_INTR_DISABLE)
+        };
+    gpio_config(&buttonGpioConf);
 }
 
-void check_button_state(void* state)
+void open_file()
 {
-    bool* button = reinterpret_cast<bool*>(state);
-    set_button_gpio();
-    while (true)
+    open_new_file();
+    ets_delay_us(500000); // 500ms debounce
+    #ifdef _DEBUG
+    std::cout << "Recording " << currentFile->filename << std::endl;
+    #endif
+}
+
+void close_file()
+{
+    #ifdef _DEBUG
+    std::cout << "Closing file " << currentFile->filename << std::endl;
+    #endif
+    currentFile->close();
+    ets_delay_us(500000); // 500ms debounce
+}
+
+void write_if_buffered_button(std::shared_ptr<bool> state)
+{
+    if (*state && currentFile->is_open())
     {
-        vTaskDelay(50);
-        *button = gpio_get_level(REC_STOP_BUTTON);
+        while (inBuffer.sub_buffers_full() > 0)
+        {
+            write_to_file();
+            inBuffer.rotate_read_buffer();
+        }
     }
-}
-
-void write_if_buffered_button(void* state)
-{
-    bool* buttonIsNotBeingPressed = reinterpret_cast<bool*>(state);
-    while (true)
+    else if (!*state && currentFile->is_open())
     {
-        if (*buttonIsNotBeingPressed && currentFile->is_open())
-        {
-            int subBuffersAvailable = inBuffer.sub_buffers_full();
-            int written = 0;
-            while (subBuffersAvailable > 0)
-            {
-                // #ifdef _DEBUG
-                // std::cout << "Sub-buffers available: " << subBuffersAvailable << "\t";
-                // #endif
-                write_to_file();
-                inBuffer.rotate_read_buffer();
-                written++;
-                // #ifdef _DEBUG
-                // std::cout << "Input Buffer has " << inBuffer.sub_buffers_full();
-                // std::cout << " sub-buffers waiting to be written to SD\t";
-                // std::cout << "Wrote " << (subBuffersAvailable - inBuffer.sub_buffers_full());
-                // std::cout << " sub-buffers already\n" << std::endl;
-                // #endif
-            }
-        }
-        else if (!*buttonIsNotBeingPressed && currentFile->is_open())
-        {
-            #ifdef _DEBUG
-            std::cout << "Closing file " << currentFile->filename << std::endl;
-            #endif
-            currentFile->close();
-            ets_delay_us(500000); // 500ms debounce
-        }
-        else if (!*buttonIsNotBeingPressed && !currentFile->is_open())
-        {
-            open_new_file();
-            ets_delay_us(500000); // 500ms debounce
-            #ifdef _DEBUG
-            std::cout << "Recording " << currentFile->filename << std::endl;
-            #endif
-        }
-        esp_task_wdt_reset();
+        close_file();
+    }
+    else if (!*state && !currentFile->is_open())
+    {
+        open_file();
     }
 }

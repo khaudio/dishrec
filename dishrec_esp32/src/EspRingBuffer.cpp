@@ -5,7 +5,7 @@ WavParameters currentWavFormat
 {
     sampleRate : CURRENT_SAMPLE_RATE,
     bitDepth : CURRENT_BIT_DEPTH,
-    isFloatingPoint : IS_FLOAT,
+    isFloatingPoint : CURRENT_IS_FLOAT,
     numChannels : CURRENT_NUM_CHANNELS
 };
 
@@ -62,13 +62,16 @@ bool write_if_buffered()
     return written;
 }
 
-void read_to_buffer(size_t length)
+void read_file_to_buffer(size_t length)
 {
-    while (length)
+    while (currentFile->is_open() && length)
     {
         if (outBuffer.writable())
         {
-            size_t iterationSize = (length >= outBuffer.bytesPerBuffer) ? outBuffer.bytesPerBuffer : length;
+            size_t iterationSize = (
+                    (length >= outBuffer.bytesPerBuffer)
+                    ? outBuffer.bytesPerBuffer : length
+                );
             std::vector<DATATYPE> data = currentFile->read<DATATYPE>(iterationSize);
             outBuffer.write(data);
             length -= iterationSize;

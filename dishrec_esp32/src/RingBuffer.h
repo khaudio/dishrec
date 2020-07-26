@@ -10,13 +10,17 @@
 #include <vector>
 
 template <typename T>
-void _getZero(T&);
-template <typename T = double>
-void clipFloat(T&);
-template <typename F = double, typename I = int16_t>
-I floatToInt(F);
-template <typename F = double, typename I = int16_t>
-std::vector<I> floatToInt(std::vector<F>);
+constexpr T get_zero();
+template <typename T>
+void clip_float(T& value);
+template <typename F, typename I>
+I float_to_int(F value);
+template <typename F, typename I>
+std::vector<I> float_to_int(std::vector<F> values);
+template <typename I, typename F>
+F int_to_float(I value);
+template <typename I, typename F>
+std::vector<F> int_to_float(std::vector<I> values);
 
 template <typename T = double>
 class RingBuffer

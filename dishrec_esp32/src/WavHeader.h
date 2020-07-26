@@ -33,7 +33,7 @@ Set format with WavParameters */
 
 enum wav_header_offset
 {
-    /*                      Endianness              Size in bytes */
+/*                          Endianness              Size in bytes */
     CHUNK_ID = 0,           // Big endian           4
     CHUNK_SIZE = 4,         // Little endian        4
     FORMAT = 8,             // Big endian           4

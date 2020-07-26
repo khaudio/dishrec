@@ -1,3 +1,15 @@
+TODO:
+    filename extension stuff for when a filename is not provided
+        get list of wav files
+            play them alphabetically
+            parse filenames and strip both extension and leading "/" and directory
+    
+    FINISH EspSDWavFile::_parse_filename() and clean it all up
+
+    is i2s r/w in a task a bug or needs other core?
+    is it only i2s i/o or ring buffer i/o as well?
+    MOVE MODIFIED FILES BACK FROM noise_machine_esp
+
 hardware
     Op-Amps
         Preamp(s)
@@ -34,7 +46,8 @@ sd card
             bext
             open and parse existing file
         close file in sudden shutdown
-            cmos battery?
+            small internal battery?
+        recover file if not closed
 
 possible future features
     low power standby for quick power on

@@ -7,28 +7,37 @@
 
 /* I2S physical pin assignment */
 
-#define I2S_IN_NUM              (I2S_NUM_0)
-#define I2S_OUT_NUM             (I2S_NUM_1)
+// I2S port number
+#define I2S_IN_NUM                  (I2S_NUM_1)
 
-// Word Select
-#define I2S_WS_IO               (GPIO_NUM_32)
+// Internal DAC only supported on I2S_NUM_0
+#define I2S_OUT_NUM                 (I2S_NUM_0)
 
-// Bit clock
-#define I2S_BCK_IO              (GPIO_NUM_33)
+// Input word select
+#define I2S_IN_WS                   (GPIO_NUM_32)
 
-// Data output
-#define I2S_DO_IO               (GPIO_NUM_12)
+// Input bit clock
+#define I2S_IN_BCK                  (GPIO_NUM_33)
 
-// Data input
-#define I2S_DI_IO               (GPIO_NUM_25)
+// Input data
+#define I2S_IN_DI                   (GPIO_NUM_39)
 
-// Shutdown signal output
-#define I2S_SHUTDOWN            (GPIO_NUM_21)
+// Output word select
+#define I2S_OUT_WS                  (GPIO_NUM_4)
+
+// Output bit clock
+#define I2S_OUT_BCK                 (GPIO_NUM_16)
+
+// Output data
+#define I2S_OUT_DO                  (GPIO_NUM_25)
 
 // Master clock output (MCK == 256 * BCK; out on GPIO0 only)
-#define I2S_MCK                 (GPIO_NUM_0)
+#define I2S_MCK                     (GPIO_NUM_0)
 
-extern WavParameters defaultWavFormat;
+// Shutdown signal output
+#define I2S_SHUTDOWN                (GPIO_NUM_21)
+
+extern WavParameters currentWavFormat;
 extern RingBuffer<DATATYPE> inBuffer;
 extern RingBuffer<DATATYPE> outBuffer;
 extern std::shared_ptr<EspSDWavFile> currentFile;
@@ -42,8 +51,8 @@ enum i2s_buffer_type
     WRITE_BUFFER = 2,
 };
 
-void config(RingBuffer<DATATYPE>* buff, i2s_buffer_type bufferType);
-void read_config(RingBuffer<DATATYPE>* buff);
+void config_read(RingBuffer<DATATYPE>* buff);
+void config_write(RingBuffer<DATATYPE>* buff);
 void read_to_buffer(void* pvParameter);
 void write_from_buffer(void* pvParameter);
 void start();

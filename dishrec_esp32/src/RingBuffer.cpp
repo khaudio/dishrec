@@ -1,17 +1,16 @@
 #include "RingBuffer.h"
 
 template <typename T>
-void _getZero(T& var)
+constexpr T get_zero()
 {
-    static T half = (
+    return (
             std::numeric_limits<T>::is_integer
             && std::is_unsigned<T>()
-        ) ? pow(2, (sizeof(var) * 8) - 1) - 1 : 0;
-    var = half;
+        ) ? pow(2, (sizeof(T) * 8) - 1) - 1 : 0;
 }
 
 template <typename T>
-void clipFloat(T& value)
+void clip_float(T& value)
 {
     if (value > 1.0)
     {
@@ -24,37 +23,68 @@ void clipFloat(T& value)
 }
 
 template <typename F, typename I>
-I floatToInt(F value)
+I float_to_int(F value)
 {
-    I zero;
-    _getZero(zero);
+    I zero = get_zero<I>();
     return round(
-            value *
-            ((value >= 0) ? (zero - 1) : zero)
+            value
+            * ((value >= 0) ? (zero - 1) : zero)
             + (std::is_signed<I>() ? 0 : zero)
         );
 }
 
 template <typename F, typename I>
-std::vector<I> floatToInt(std::vector<F> values)
+std::vector<I> float_to_int(std::vector<F> values)
 {
-    size_t length(values.size());
+    size_t length = values.size();
     std::vector<I> converted;
     converted.reserve(length);
     for (size_t i(0); i < length; ++i)
     {
-        converted.emplace_back(floatToInt(values[i]));
+        converted.emplace_back(float_to_int<F, I>(values[i]));
     }
     return converted;
 }
 
+template <typename I, typename F>
+F int_to_float(I value)
+{
+    I zero = get_zero<I>();
+    if (std::is_signed<I>())
+    {
+        return (
+                static_cast<F>(value)
+                / static_cast<F>(std::numeric_limits<I>::max())
+            );
+    }
+    else
+    {
+        return (
+                static_cast<F>(value - zero)
+                / static_cast<F>(zero)
+            );
+    }
+}
+
+template <typename I, typename F>
+std::vector<F> int_to_float(std::vector<I> values)
+{
+    size_t length = values.size();
+    std::vector<F> converted;
+    converted.reserve(length);
+    for (size_t i(0); i < length; ++i)
+    {
+        converted.emplace_back(int_to_float<I, F>(values[i]));
+    }
+    return converted;
+}
 
 template <typename T>
 RingBuffer<T>::RingBuffer(int bufferSize, uint8_t ringSize) :
 ringLength(ringSize),
 bufferLength(bufferSize)
 {
-    _getZero<T>(this->_zero);
+    this->_zero = get_zero<T>();
     this->totalRingSampleLength = this->ringLength * this->bufferLength;
     this->_totalWritableLength = this->totalRingSampleLength - this->bufferLength;
     this->bytesPerBuffer = this->bufferLength * sizeof(T);
@@ -73,6 +103,10 @@ bufferLength(bufferSize)
     }
     this->readIndex = 0;
     this->writeIndex = 1;
+    #ifdef _DEBUG
+    std::cout << "" << std::endl;
+    std::cout << "Bytes per buffer: " << this->bytesPerBuffer << std::endl;
+    #endif
 }
 
 template <typename T>
@@ -303,6 +337,130 @@ int RingBuffer<T>::write(uint8_t* data, size_t numBytes, bool force)
         );
     return _write(converted, force);
 }
+
+template float get_zero<float>();
+template double get_zero<double>();
+template long double get_zero<long double>();
+template int8_t get_zero<int8_t>();
+template uint8_t get_zero<uint8_t>();
+template int16_t get_zero<int16_t>();
+template uint16_t get_zero<uint16_t>();
+template int32_t get_zero<int32_t>();
+template uint32_t get_zero<uint32_t>();
+template int64_t get_zero<int64_t>();
+template uint64_t get_zero<uint64_t>();
+
+template void clip_float(float& value);
+template void clip_float(double& value);
+template void clip_float(long double& value);
+
+template int8_t float_to_int(float value);
+template uint8_t float_to_int(float value);
+template int16_t float_to_int(float value);
+template uint16_t float_to_int(float value);
+template int32_t float_to_int(float value);
+template uint32_t float_to_int(float value);
+template int64_t float_to_int(float value);
+template uint64_t float_to_int(float value);
+
+template int8_t float_to_int(double value);
+template uint8_t float_to_int(double value);
+template int16_t float_to_int(double value);
+template uint16_t float_to_int(double value);
+template int32_t float_to_int(double value);
+template uint32_t float_to_int(double value);
+template int64_t float_to_int(double value);
+template uint64_t float_to_int(double value);
+
+template int8_t float_to_int(long double value);
+template uint8_t float_to_int(long double value);
+template int16_t float_to_int(long double value);
+template uint16_t float_to_int(long double value);
+template int32_t float_to_int(long double value);
+template uint32_t float_to_int(long double value);
+template int64_t float_to_int(long double value);
+template uint64_t float_to_int(long double value);
+
+template std::vector<int8_t> float_to_int(std::vector<float> values);
+template std::vector<uint8_t> float_to_int(std::vector<float> values);
+template std::vector<int16_t> float_to_int(std::vector<float> values);
+template std::vector<uint16_t> float_to_int(std::vector<float> values);
+template std::vector<int32_t> float_to_int(std::vector<float> values);
+template std::vector<uint32_t> float_to_int(std::vector<float> values);
+template std::vector<int64_t> float_to_int(std::vector<float> values);
+template std::vector<uint64_t> float_to_int(std::vector<float> values);
+
+template std::vector<int8_t> float_to_int(std::vector<double> values);
+template std::vector<uint8_t> float_to_int(std::vector<double> values);
+template std::vector<int16_t> float_to_int(std::vector<double> values);
+template std::vector<uint16_t> float_to_int(std::vector<double> values);
+template std::vector<int32_t> float_to_int(std::vector<double> values);
+template std::vector<uint32_t> float_to_int(std::vector<double> values);
+template std::vector<int64_t> float_to_int(std::vector<double> values);
+template std::vector<uint64_t> float_to_int(std::vector<double> values);
+
+template std::vector<int8_t> float_to_int(std::vector<long double> values);
+template std::vector<uint8_t> float_to_int(std::vector<long double> values);
+template std::vector<int16_t> float_to_int(std::vector<long double> values);
+template std::vector<uint16_t> float_to_int(std::vector<long double> values);
+template std::vector<int32_t> float_to_int(std::vector<long double> values);
+template std::vector<uint32_t> float_to_int(std::vector<long double> values);
+template std::vector<int64_t> float_to_int(std::vector<long double> values);
+template std::vector<uint64_t> float_to_int(std::vector<long double> values);
+
+template float int_to_float(int8_t value);
+template float int_to_float(uint8_t value);
+template float int_to_float(int16_t value);
+template float int_to_float(uint16_t value);
+template float int_to_float(int32_t value);
+template float int_to_float(uint32_t value);
+template float int_to_float(int64_t value);
+template float int_to_float(uint64_t value);
+
+template double int_to_float(int8_t value);
+template double int_to_float(uint8_t value);
+template double int_to_float(int16_t value);
+template double int_to_float(uint16_t value);
+template double int_to_float(int32_t value);
+template double int_to_float(uint32_t value);
+template double int_to_float(int64_t value);
+template double int_to_float(uint64_t value);
+
+template long double int_to_float(int8_t value);
+template long double int_to_float(uint8_t value);
+template long double int_to_float(int16_t value);
+template long double int_to_float(uint16_t value);
+template long double int_to_float(int32_t value);
+template long double int_to_float(uint32_t value);
+template long double int_to_float(int64_t value);
+template long double int_to_float(uint64_t value);
+
+template std::vector<float> int_to_float(std::vector<int8_t> values);
+template std::vector<float> int_to_float(std::vector<uint8_t> values);
+template std::vector<float> int_to_float(std::vector<int16_t> values);
+template std::vector<float> int_to_float(std::vector<uint16_t> values);
+template std::vector<float> int_to_float(std::vector<int32_t> values);
+template std::vector<float> int_to_float(std::vector<uint32_t> values);
+template std::vector<float> int_to_float(std::vector<int64_t> values);
+template std::vector<float> int_to_float(std::vector<uint64_t> values);
+
+template std::vector<double> int_to_float(std::vector<int8_t> values);
+template std::vector<double> int_to_float(std::vector<uint8_t> values);
+template std::vector<double> int_to_float(std::vector<int16_t> values);
+template std::vector<double> int_to_float(std::vector<uint16_t> values);
+template std::vector<double> int_to_float(std::vector<int32_t> values);
+template std::vector<double> int_to_float(std::vector<uint32_t> values);
+template std::vector<double> int_to_float(std::vector<int64_t> values);
+template std::vector<double> int_to_float(std::vector<uint64_t> values);
+
+template std::vector<long double> int_to_float(std::vector<int8_t> values);
+template std::vector<long double> int_to_float(std::vector<uint8_t> values);
+template std::vector<long double> int_to_float(std::vector<int16_t> values);
+template std::vector<long double> int_to_float(std::vector<uint16_t> values);
+template std::vector<long double> int_to_float(std::vector<int32_t> values);
+template std::vector<long double> int_to_float(std::vector<uint32_t> values);
+template std::vector<long double> int_to_float(std::vector<int64_t> values);
+template std::vector<long double> int_to_float(std::vector<uint64_t> values);
 
 template class RingBuffer<float>;
 template class RingBuffer<double>;
