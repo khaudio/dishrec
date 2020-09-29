@@ -325,6 +325,8 @@ Clock::Clock() :
 Base(),
 sampleRate(0)
 {
+    this->timestampSSMLo = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
+    this->timestampSSMHi = this->timestampSSMLo + 1;
 }
 
 Clock::~Clock()
@@ -391,6 +393,12 @@ void Clock::set_timecode(int numFrames)
 {
     Base::set_timecode(numFrames);
     _set_samples_since_midnight();
+}
+
+void Clock::tick()
+{
+    int numFrames = get_frames() + 1;
+    set_timecode(numFrames);
 }
 
 void Clock::set_sample_rate(uint32_t samplerate)

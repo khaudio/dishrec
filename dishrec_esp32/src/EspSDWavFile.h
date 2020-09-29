@@ -50,7 +50,7 @@ enum file_open_mode
 {
     FILE_READABLE = 1,
     FILE_WRITABLE = 2,
-    FILE_INACCESSIBLE = 3
+    FILE_INACCESSIBLE = 3,
 };
 
 std::tuple<std::string, std::string> split_filename(std::string name, const char delimiter = '.');

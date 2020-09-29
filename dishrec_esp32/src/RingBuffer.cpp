@@ -169,6 +169,18 @@ void RingBuffer<T>::rotate_write_buffer()
     }
     this->samplesWritten = 0;
     this->samplesRemaining = this->bufferLength;
+
+    this->_buffered += this->bufferLength;
+}
+
+template <typename T>
+void RingBuffer<T>::force_rotate_write_buffer()
+{
+    rotate_write_buffer();
+    if (!writable())
+    {
+        rotate_read_buffer();
+    }
 }
 
 template <typename T>
@@ -219,17 +231,6 @@ void* RingBuffer<T>::get_read_void_ptr()
             &(this->ring[this->readIndex][0])
         );
     return currentReadBuffer;
-}
-
-template <typename T>
-void RingBuffer<T>::rotate_write_buffer_manual()
-{
-    rotate_write_buffer();
-    this->_buffered += this->bufferLength;
-    if (!writable())
-    {
-        rotate_read_buffer();
-    }
 }
 
 template <typename T>

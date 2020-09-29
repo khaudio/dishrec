@@ -14,23 +14,6 @@ T reverse_endianness(T& source);
 template <typename T>
 int write_to_stream(std::ostream& stream, T obj, bool reversed=false);
 
-struct WavParameters
-{
-    uint32_t sampleRate;
-    uint16_t bitDepth;
-    bool isFloatingPoint;
-    uint16_t numChannels;
-};
-
-/* TODO 
-
-remove
-WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
-virtual void set_format(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
-and write a new default uninitialized constructor
-
-Set format with WavParameters */
-
 enum wav_header_offset
 {
 /*                          Endianness              Size in bytes */
@@ -50,6 +33,21 @@ enum wav_header_offset
     DATA_START = 44         // Little endian        4
 };
 
+enum wav_format_codes
+{
+    PCM = 0x0001,
+    FLOATING_POINT = 0x0003,
+    MPEG_1 = 0x0005,
+};
+
+struct WavParameters
+{
+    uint32_t sampleRate;
+    uint16_t bitDepth;
+    bool isFloatingPoint;
+    uint16_t numChannels;
+};
+
 class WavHeader : public WavParameters
 {
 protected:
@@ -58,28 +56,25 @@ protected:
     uint32_t byteRate, fileSize, samplesPerSecond;
     void set_data_rates();
     uint8_t* headerData = nullptr;
-    std::string _chunkID = "RIFF", _subchunk1ID = "WAVEfmt ", _subchunkDataID = "data";
+    std::string _chunkID, _subchunk1ID, _subchunkDataID;
 public:
     uint8_t sampleWidth;
     uint32_t headerSize, formatLength = 16;
     static std::array<uint32_t, 3> stdSampleRates;
-    static std::array<uint16_t, 3> stdIntBitDepths;
-    static std::array<uint16_t, 2> stdFloatBitDepths;
-    WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
+    static std::array<uint16_t, 5> stdBitDepths;
     WavHeader(WavParameters);
     WavHeader();
     ~WavHeader();
     virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
     virtual void set_sample_rate(uint32_t samplerate);
     virtual void set_channels(uint16_t channels);
-    virtual void set_header_size(uint32_t length=44);
-    virtual void set_format(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
+    virtual void set_header_size(uint32_t length = 44);
     virtual void set_format(WavParameters params);
     WavParameters get_format();
     void set_size(uint32_t dataSize);
     template <typename T>
     void set_size(std::vector<T>& data);
-    uint32_t size();
+    virtual uint32_t size();
     bool is_nonstandard();
     virtual std::string str();
     const uint8_t* get_header();

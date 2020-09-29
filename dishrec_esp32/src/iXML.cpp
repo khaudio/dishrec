@@ -1,6 +1,6 @@
-#include "BWFiXML.h"
+#include "iXML.h"
 
-using namespace BWFiXML;
+using namespace iXML;
 
 const char* IXML::_ubits_valid_chars = "abcdef0123456789";
 
@@ -265,6 +265,7 @@ Base(xmldoc, "USER")
 }
 
 IXML::IXML() :
+TimecodeBase::Clock(),
 take_type(&ixml),
 speed(&ixml),
 history(&ixml),
@@ -387,6 +388,7 @@ void IXML::set_note(const char* message)
 
 void IXML::set_sample_rate(uint32_t samplerate)
 {
+    TimecodeBase::Clock::set_sample_rate(samplerate);
     this->speed.file_sample_rate->SetText(samplerate);
     this->speed.digitizer_sample_rate->SetText(samplerate);
     this->speed.timestamp_sample_rate->SetText(samplerate);
@@ -407,6 +409,7 @@ void IXML::_set_framerate(const char* fps)
 
 void IXML::set_framerate(double fps, bool isDropframe)
 {
+    TimecodeBase::Clock::set_framerate(fps, isDropframe);
     this->speed.timecode_flag->SetText(isDropframe ? "DF" : "NDF");
     if ((fps == 23.98) || (fps == 23.976))
     {
@@ -424,6 +427,7 @@ void IXML::set_framerate(double fps, bool isDropframe)
 
 void IXML::set_framerate(int fps, bool isDropframe)
 {
+    TimecodeBase::Clock::set_framerate(fps, isDropframe);
     this->speed.timecode_flag->SetText(isDropframe ? "DF" : "NDF");
     switch (fps)
     {
@@ -439,6 +443,41 @@ void IXML::set_framerate(int fps, bool isDropframe)
         default:
             throw INVALID_FRAMERATE;
     }
+}
+
+void IXML::_set_ixml_samples_since_midnight()
+{
+    this->speed.timestamp_samples_since_midnight_lo->SetText(*(this->timestampSSMLo));
+    this->speed.timestamp_samples_since_midnight_hi->SetText(*(this->timestampSSMHi));
+    this->bext.bwf_time_reference_low->SetText(*(this->timestampSSMLo));
+    this->bext.bwf_time_reference_high->SetText(*(this->timestampSSMHi));
+}
+
+void IXML::_set_samples_since_midnight()
+{
+    TimecodeBase::Clock::_set_samples_since_midnight();
+    _set_ixml_samples_since_midnight();
+}
+
+void IXML::_set_samples_since_midnight(uint64_t numSamples)
+{
+    TimecodeBase::Clock::_set_samples_since_midnight(numSamples);
+    _set_ixml_samples_since_midnight();
+}
+
+void IXML::set_timecode(int hr, int min, int sec, int frm)
+{
+    TimecodeBase::Clock::set_timecode(hr, min, sec, frm);
+}
+
+void IXML::set_timecode(std::array<int, 4> tc)
+{
+    TimecodeBase::Clock::set_timecode(tc);
+}
+
+void IXML::set_timecode(int numFrames)
+{
+    TimecodeBase::Clock::set_timecode(numFrames);
 }
 
 void IXML::set_filename(const char* filename)

@@ -2,23 +2,19 @@
 // #include "TimecodeBase.h"
 
 // BWFiXML::IXML ixml;
-// TimecodeBase::Clock tc;
 
 // int main()
 // {
 //     for (int i(0); i < 4; ++i) std::cout << std::endl;
 
-//     tc.set_sample_rate(48000);
-//     tc.set_framerate(29.97, true);
-//     tc.set_timecode(10, 10, 10, 10);
+//     ixml.set_sample_rate(48000);
+//     ixml.set_framerate(29.97, true);
+//     ixml.set_timecode(23, 59, 59, 29);
 
-//     std::array<int, 4> offset = {0, 0, 0, 4};
-
-//     std::cout << tc.str() << " + ";
-//     std::cout << TimecodeBase::tc_to_string(offset, false) << " = ";
-//     std::cout << (tc + offset).str() << std::endl;
-
-//     for (int i(0); i < 4; ++i) std::cout << std::endl;
+//     std::cout << ixml.str() << '\t';
+//     std::cout << ixml.samplesSinceMidnight << std::endl;
+//     std::cout << ixml.speed.timestamp_samples_since_midnight_hi->GetText() << std::endl;
+//     std::cout << ixml.speed.timestamp_samples_since_midnight_lo->GetText() << '\t';
 
 //     return 0;
 // }

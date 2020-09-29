@@ -3,8 +3,7 @@
 std::array<uint32_t, 3> WavHeader::stdSampleRates = {
         48000, 96000, 192000
     };
-std::array<uint16_t, 3> WavHeader::stdIntBitDepths = {8, 16, 24};
-std::array<uint16_t, 2> WavHeader::stdFloatBitDepths = {32, 64};
+std::array<uint16_t, 5> WavHeader::stdBitDepths = {8, 16, 24, 32, 64};
 
 template <typename T>
 T reverse_endianness(T& source)
@@ -33,21 +32,17 @@ int write_to_stream(std::ostream& stream, T obj, bool reversed)
     return length;
 }
 
-WavHeader::WavHeader(
-        uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels
-    )
-{
-    set_format(samplerate, bitsPerSample, isFloat, channels);
-    set_header_size();
-}
-
-WavHeader::WavHeader(WavParameters params)
+WavHeader::WavHeader(WavParameters params) :
+WavHeader::WavHeader()
 {
     set_format(params);
     set_header_size();
 }
 
-WavHeader::WavHeader()
+WavHeader::WavHeader() :
+_chunkID("RIFF"),
+_subchunk1ID("WAVEfmt "),
+_subchunkDataID("data")
 {
     this->_initialized = false;
     set_header_size();
@@ -69,62 +64,36 @@ void WavHeader::set_header_size(uint32_t length)
     this->headerData = new uint8_t[this->headerSize];
 }
 
-void WavHeader::set_format(
-        uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels
-    )
-{
-    set_sample_rate(samplerate);
-    set_bit_depth(bitsPerSample, isFloat);
-    set_channels(channels);
-    set_data_rates();
-    this->_initialized = true;
-}
-
 void WavHeader::set_format(WavParameters params)
 {
     set_sample_rate(params.sampleRate);
     set_bit_depth(params.bitDepth, params.isFloatingPoint);
     set_channels(params.numChannels);
     set_data_rates();
-    this->_initialized = false;
+    this->_initialized = true;
 }
 
 void WavHeader::set_data_rates()
 {
-    this->byteRate = (
-            (this->sampleRate * this->bitDepth * this->numChannels) / 8
-        );
+    this->byteRate = ((this->sampleRate * this->bitDepth * this->numChannels) / 8);
     this->frameSize = (this->bitDepth * this->numChannels) / 8;
     this->samplesPerSecond = this->sampleRate * this->numChannels;
 }
 
 void WavHeader::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
 {
+    // MPEG-1 Audio format not supported; PCM and FP only.
     this->bitDepthIsStandard = false;
     this->bitDepth = bitsPerSample;
     this->sampleWidth = this->bitDepth / 8;
     this->isFloatingPoint = isFloat;
-    this->formatCode = (this->isFloatingPoint ? 0x0003 : 0x0001);
-    if (this->isFloatingPoint)
+    this->formatCode = (this->isFloatingPoint ? FLOATING_POINT : PCM);
+    for (auto standardBps: stdBitDepths)
     {
-        for (auto standardBps: stdFloatBitDepths)
+        if (this->bitDepth == standardBps)
         {
-            if (this->bitDepth == standardBps)
-            {
-                this->bitDepthIsStandard = true;
-                break;
-            }
-        }
-    }
-    else
-    {
-        for (auto standardBps: stdIntBitDepths)
-        {
-            if (this->bitDepth == standardBps)
-            {
             this->bitDepthIsStandard = true;
             break;
-            }
         }
     }
     #ifdef _DEBUG

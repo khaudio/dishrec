@@ -1,15 +1,16 @@
-#ifndef BWFIXML_H
-#define BWFIXML_H
+#ifndef IXML_H
+#define IXML_H
 
 #include <tinyxml2.h>
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "TimecodeBase.h"
 #include "ErrorEnums.h"
 
 using namespace tinyxml2;
 
-namespace BWFiXML
+namespace iXML
 {
 
 class Base
@@ -151,11 +152,14 @@ public:
     User(XMLDocument* xmldoc);
 };
 
-class IXML
+class IXML : public TimecodeBase::Clock
 {
 protected:
     static const char* _ubits_valid_chars;
     void _set_framerate(const char* fps);
+    void _set_ixml_samples_since_midnight();
+    void _set_samples_since_midnight() override;
+    void _set_samples_since_midnight(uint64_t numSamples) override;
     // virtual void _increment_file_uid();
 public:
     XMLDocument ixml;
@@ -173,18 +177,20 @@ public:
     SyncPointList sync_point_list;
     Location location;
     User user;
+    uint16_t numChannels;
     IXML();
     ~IXML();
     virtual void set_default();
     const char* c_str();
     virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
-    virtual void set_sample_rate(uint32_t samplerate);
+    void set_sample_rate(uint32_t samplerate) override;
     // virtual void set_channels(uint16_t channels);
-    virtual void set_framerate(double fps, bool isDropframe);
-    virtual void set_framerate(int fps, bool isDropframe);
+    void set_framerate(double fps, bool isDropframe) override;
+    void set_framerate(int fps, bool isDropframe) override;
+    void set_timecode(int hr, int min, int sec, int frm) override;
+    void set_timecode(std::array<int, 4> tc) override;
+    void set_timecode(int numFrames) override;
     virtual void set_filename(const char* filename);
-    // virtual void set_timecode(int hr, int min, int sec, int frm);
-    // virtual void set_timecode(int numFrames);
     // Track* create_track();
     // SyncPoint* create_sync_point();
     // virtual void set_take_type(TakeType* type);

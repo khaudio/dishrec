@@ -15,7 +15,7 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/WavHeader.o $(BUILD)/TimecodeBase.o $(BUILD)/BWFiXML.o | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/WavHeader.o $(BUILD)/TimecodeBase.o $(BUILD)/iXML.o | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
 $(BUILD)/RingBuffer.o: | $(BUILD)
@@ -27,8 +27,8 @@ $(BUILD)/WavHeader.o: | $(BUILD)
 $(BUILD)/TimecodeBase.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/TimecodeBase.cpp -o $(BUILD)/TimecodeBase.o $(LDFLAGS)
 
-$(BUILD)/BWFiXML.o: $(BUILD)/tinyxml2.o | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(BUILD)/tinyxml2.o $(SRC)/BWFiXML.cpp -o $(BUILD)/BWFiXML.o $(LDFLAGS)
+$(BUILD)/iXML.o: $(BUILD)/tinyxml2.o | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(BUILD)/tinyxml2.o $(SRC)/iXML.cpp -o $(BUILD)/iXML.o $(LDFLAGS)
 
 $(BUILD)/tinyxml2.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(LIB)/tinyxml2/tinyxml2.cpp -o $(BUILD)/tinyxml2.o $(LDFLAGS)

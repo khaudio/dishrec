@@ -14,7 +14,7 @@ enum ubits_err
     INVALID_UBITS_CHARS = 30,
 };
 
-enum pcm422x_err
+enum format_err
 {
     INVALID_SAMPLERATE = 50,
     INVALID_BIT_DEPTH = 51,

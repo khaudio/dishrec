@@ -1,14 +1,25 @@
 TODO:
+    ixml
+        save inactive tracks but omit from print?
+            for easy reactivation when dis/re-armed
+    trying fixed_mclk and std i2s comm format
+
+    WavHeader
+        remove
+            WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
+            virtual void set_format(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
+        and write a new default uninitialized constructor
+        Set format with WavParameters
+
     filename extension stuff for when a filename is not provided
         get list of wav files
             play them alphabetically
             parse filenames and strip both extension and leading "/" and directory
     
-    FINISH EspSDWavFile::_parse_filename() and clean it all up
-
+    finish writing EspSDWavFile::_parse_filename() and clean it all up
     is i2s r/w in a task a bug or needs other core?
     is it only i2s i/o or ring buffer i/o as well?
-    MOVE MODIFIED FILES BACK FROM noise_machine_esp
+
 
 hardware
     Op-Amps

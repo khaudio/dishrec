@@ -19,10 +19,42 @@ RingBuffer<DATATYPE> outBuffer(BUFFER_LENGTH, RING_LENGTH);
 
 // File object to save data
 std::shared_ptr<EspSDWavFile> currentWriteFile;
-std::shared_ptr<EspSDWavFile> currentReadFile;
+std::shared_ptr<EspSDWavFile> currentReadFile = nullptr;
 std::string currentWriteFilename("arbitrary_filename");
 std::string filenameDelimiter("_");
 int currentWriteFileNumber = 0;
+
+
+void create_buffers(int bufferLength, uint8_t ringSize, uint16_t bitDepth)
+{
+    switch (bitDepth)
+    {
+        if (bitDepth == 16)
+        {
+            std::shared_ptr<RingBuffer<uint16_t>> inBuffer = std::make_shared<RingBuffer<uint16_t>>(bufferLength, ringSize);
+            std::shared_ptr<RingBuffer<uint16_t>> outBuffer = std::make_shared<RingBuffer<uint16_t>>(bufferLength, ringSize);
+        }
+        // else if (bitDepth == 24)
+        // {
+        //     std::shared_ptr<RingBuffer<int24_t>> inBuffer = std::make_shared<RingBuffer<int24_t>>(bufferLength, ringSize);
+        //     std::shared_ptr<RingBuffer<int24_t>> outBuffer = std::make_shared<RingBuffer<int24_t>>(bufferLength, ringSize);
+        // }
+        else if (bitDepth == 32)
+        {
+            std::shared_ptr<RingBuffer<float>> inBuffer = std::make_shared<RingBuffer<float>>(bufferLength, ringSize);
+            std::shared_ptr<RingBuffer<float>> outBuffer = std::make_shared<RingBuffer<float>>(bufferLength, ringSize);
+        }
+        else if (bitDepth == 64)
+        {
+            std::shared_ptr<RingBuffer<double>> inBuffer = std::make_shared<RingBuffer<double>>(bufferLength, ringSize);
+            std::shared_ptr<RingBuffer<double>> outBuffer = std::make_shared<RingBuffer<double>>(bufferLength, ringSize);
+        }
+        else
+        {
+            throw INVALID_BIT_DEPTH;
+        }
+    }
+}
 
 void init_wav_file_objects()
 {
@@ -69,20 +101,44 @@ bool write_if_buffered()
     return written;
 }
 
-void read_file_to_buffer(size_t length)
+template<typename T>
+void read_file_to_buffer(RingBuffer<T>* buff)
 {
-    while (currentReadFile->is_open() && length)
+    if (currentReadFile->is_open())
     {
-        if (outBuffer.writable())
+        size_t bytesAvailableFromFile = currentReadFile->available();
+        size_t chunkSize = (
+                (bytesAvailableFromFile < buff->bytesPerBuffer)
+                ? bytesAvailableFromFile : buff->bytesPerBuffer
+            );
+        if (buff->writable() && chunkSize)
         {
-            size_t iterationSize = (
-                    (length >= outBuffer.bytesPerBuffer)
-                    ? outBuffer.bytesPerBuffer : length
-                );
-            std::vector<DATATYPE> data = currentReadFile->read<DATATYPE>(iterationSize);
-            outBuffer.write(data);
-            length -= iterationSize;
+            std::vector<T> data = currentReadFile->read<T>(chunkSize);
+            buff->write(data);
         }
+    }
+}
+
+template <typename T>
+void buffer_from_sd_card(RingBuffer<T>* buff)
+{
+    if (!currentReadFile->is_open()) return;
+    else if ((buff->sub_buffers_full() < buff->ringLength) && currentReadFile->available())
+    {
+        size_t bytesAvailableFromFile = currentReadFile->available();
+        size_t chunkSize = (
+                (bytesAvailableFromFile < buff->bytesPerBuffer)
+                ? bytesAvailableFromFile : buff->bytesPerBuffer
+            ) / currentReadFile->sampleWidth;
+        std::vector<T> data = currentReadFile->read<T>(chunkSize);
+        buff->write(data);
+    }
+    else if (!currentReadFile->available())
+    {
+        #ifdef _DEBUG
+        std::cout << "Closing read file..." << std::endl;
+        #endif
+        currentReadFile->close();
     }
 }
 
@@ -96,3 +152,27 @@ void print_buffer()
     }
     std::cout << std::endl;
 }
+
+template void read_file_to_buffer<float>(RingBuffer<float>*);
+template void read_file_to_buffer<double>(RingBuffer<double>*);
+template void read_file_to_buffer<long double>(RingBuffer<long double>*);
+template void read_file_to_buffer<int8_t>(RingBuffer<int8_t>*);
+template void read_file_to_buffer<uint8_t>(RingBuffer<uint8_t>*);
+template void read_file_to_buffer<int16_t>(RingBuffer<int16_t>*);
+template void read_file_to_buffer<uint16_t>(RingBuffer<uint16_t>*);
+template void read_file_to_buffer<int32_t>(RingBuffer<int32_t>*);
+template void read_file_to_buffer<uint32_t>(RingBuffer<uint32_t>*);
+template void read_file_to_buffer<int64_t>(RingBuffer<int64_t>*);
+template void read_file_to_buffer<uint64_t>(RingBuffer<uint64_t>*);
+
+template void buffer_from_sd_card<float>(RingBuffer<float>*);
+template void buffer_from_sd_card<double>(RingBuffer<double>*);
+template void buffer_from_sd_card<long double>(RingBuffer<long double>*);
+template void buffer_from_sd_card<int8_t>(RingBuffer<int8_t>*);
+template void buffer_from_sd_card<uint8_t>(RingBuffer<uint8_t>*);
+template void buffer_from_sd_card<int16_t>(RingBuffer<int16_t>*);
+template void buffer_from_sd_card<uint16_t>(RingBuffer<uint16_t>*);
+template void buffer_from_sd_card<int32_t>(RingBuffer<int32_t>*);
+template void buffer_from_sd_card<uint32_t>(RingBuffer<uint32_t>*);
+template void buffer_from_sd_card<int64_t>(RingBuffer<int64_t>*);
+template void buffer_from_sd_card<uint64_t>(RingBuffer<uint64_t>*);

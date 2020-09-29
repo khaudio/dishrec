@@ -31,8 +31,6 @@ ESP32 I2S
     I2S_IN_WS                       I               32                  I2S input WS
     I2S_IN_BCK                      I               33                  I2S input SCK
     I2S_IN_DI                       I               39                  I2S input data
-    I2S_OUT_WS                      O               4                   I2S output WS
-    I2S_OUT_BCK                     O               16                  I2S output SCK
     I2S_OUT_DO                      O               25                  I2S output data
     I2S_MCK                         O               0                   I2S MCK output
     I2S_SHUTDOWN                    O               21                  I2S shutdown signal
@@ -58,22 +56,24 @@ PCM4220/PCM4222
     PCM422X_OWL1                    O               12                  Output word length config 1
     PCM422X_FMT0                    O               8                   Audio data format config 0
     PCM422X_FMT1                    O               7                   Audio data format config 1
+
+PCM4222 Only
     PCM422X_DSDEN/PCM422X_MOD6      O               3                   DSD output enable/modulator data 6 output
     PCM422X_MODEN                   O               6                   Multi-bit modulator output enable
     PCM422X_DSDMODE                 O               11                  DSD mode output/rate
 
 Button
-    REC_STOP_BUTTON                 I               22                 Button to start/stop record to SD */
+    REC_STOP_BUTTON                 I               27                  Button to start/stop record to SD */
 
+#include <driver/gpio.h>
 #include "I2SIO.h"
-#include "driver/gpio.h"
-#include "BWFiXML.h"
+#include "iXML.h"
 #include "TimecodeBase.h"
 
 /*                              Macros                              */
 
 // Record/Stop button; active low
-#define REC_STOP_BUTTON             (GPIO_NUM_22)
+#define REC_STOP_BUTTON             (GPIO_NUM_27)
 
 
 /*                          Global variables                        */
@@ -104,7 +104,7 @@ extern std::string filenameDelimiter;
 extern int currentWriteFileNumber;
 
 // iXML data written to or read from broadcast wav
-BWFiXML::IXML ixml;
+iXML::IXML ixml;
 
 // Timecode value of file
 TimecodeBase::Clock tc;
@@ -122,21 +122,26 @@ void setup();
 void loop();
 
 void set_button_gpio();
-void check_button_state(std::shared_ptr<bool> state);
 void open_file();
 void close_file();
 void write_if_buffered_button(std::shared_ptr<bool> state);
 
 
+/*                          Definitions                             */
+
 void app_main(void)
 {
     setup();
-    loop();
+    while (true)
+    {
+        loop();
+    }
 }
 
 void setup()
 {
     std::cout << "Initializing" << std::endl;
+
     std::cout << "Setting timecode parameters" << std::endl;
 
     tc.set_sample_rate(currentWavFormat.sampleRate);
@@ -151,8 +156,14 @@ void setup()
     std::cout << "Creating file objects..." << std::endl;
 
     init_wav_file_objects();
+    currentReadFile->open_read("readtest");
 
     std::cout << "File objects created" << std::endl;
+    std::cout << "Filling output buffer from file..." << std::endl;
+
+    for (int i(0); i < outBuffer.ringLength; ++i) read_file_to_buffer<DATATYPE>(&outBuffer);
+
+    std::cout << "Output buffer filled" << std::endl;
     std::cout << "Delaying 500ms..." << std::endl;
     ets_delay_us(500000);
     std::cout << "Starting I2S" << std::endl;

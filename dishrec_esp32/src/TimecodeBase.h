@@ -64,10 +64,11 @@ protected:
     uint32_t _samplesPerFrame;
     void _check_initialization() override;
     void _set_samples_per_frame();
-    void _set_samples_since_midnight();
-    void _set_samples_since_midnight(uint64_t numSamples);
+    virtual void _set_samples_since_midnight();
+    virtual void _set_samples_since_midnight(uint64_t numSamples);
 public:
     uint64_t samplesSinceMidnight;
+    uint32_t *timestampSSMLo, *timestampSSMHi;
     uint32_t sampleRate;
     Clock();
     ~Clock();
@@ -76,6 +77,7 @@ public:
     void set_timecode(int hr, int min, int sec, int frm) override;
     void set_timecode(std::array<int, 4> tc) override;
     void set_timecode(int numFrames) override;
+    void tick();
     virtual void set_sample_rate(uint32_t samplerate);
 };
 

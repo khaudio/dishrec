@@ -38,6 +38,7 @@ public:
     void zero(uint8_t bufferIndex);
     void rotate_read_buffer();
     void rotate_write_buffer();
+    void force_rotate_write_buffer();
     bool writable();
     std::vector<T> _read();
     std::vector<T> read();
@@ -45,7 +46,6 @@ public:
     uint8_t* get_write_ptr();
     void* get_read_void_ptr();
     void* get_write_void_ptr();
-    void rotate_write_buffer_manual();
     int _write(std::vector<T> data, bool force = false);
     int _write(T data, bool force = false);
     int _write_trim(std::vector<T>& data, bool force = false);
