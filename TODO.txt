@@ -1,15 +1,28 @@
 TODO:
+
+    BEXTChunk
+        pad description field to min 64 chars with NULLs
+        pad all text fields to even num of chars INCLUDING NULL TERM
+
     ixml
+        does ixml really need to be prepended with <?xml version="1.0" encoding="UTF-8"?>
+        check output of bext stuff using SetText like reserved being full of NULLs
+            maybe use a different method
         save inactive tracks but omit from print?
             for easy reactivation when dis/re-armed
-    trying fixed_mclk and std i2s comm format
+
+    Anything WAV
+        must end on even byte count
+            add byte to end if data_size() is odd
 
     WavHeader
-        remove
-            WavHeader(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
-            virtual void set_format(uint32_t samplerate, uint16_t bitsPerSample, bool isFloat, uint16_t channels);
-        and write a new default uninitialized constructor
-        Set format with WavParameters
+        total chunk sizes saved in iterable instead of hard coding + 36 as in WavHeader::set_size()
+            std::vector<uint32_t> subChunkSizes ??
+            more portable with bext and ixml
+        rewrite to be lighter and more C-like
+
+    EspSDWavFile
+        fix EspSDWavFile::write_header() with new getter instead of old get_header()
 
     filename extension stuff for when a filename is not provided
         get list of wav files

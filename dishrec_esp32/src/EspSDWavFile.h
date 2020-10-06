@@ -74,7 +74,6 @@ protected:
     bool _open_write();
 
     void _parse_filename(std::string name);
-
 public:
     File file;
     std::string filename;

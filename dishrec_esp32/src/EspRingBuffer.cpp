@@ -58,14 +58,17 @@ void create_buffers(int bufferLength, uint8_t ringSize, uint16_t bitDepth)
 
 void init_wav_file_objects()
 {
-    currentWriteFile = std::make_shared<EspSDWavFile>(currentWavFormat);
-    currentReadFile = std::make_shared<EspSDWavFile>(currentWavFormat);
+    currentWriteFile = std::make_shared<EspSDWavFile>();
+    currentWriteFile->set_format(currentWavFormat);
+    currentReadFile = std::make_shared<EspSDWavFile>();
+    currentReadFile->set_format(currentWavFormat);
 }
 
 void open_new_file()
 {
     std::stringstream ss;
-    currentWriteFile = std::make_shared<EspSDWavFile>(currentWavFormat);
+    currentWriteFile = std::make_shared<EspSDWavFile>();
+    currentWriteFile->set_format(currentWavFormat);
     ss << currentWriteFilename << filenameDelimiter << std::setw(3);
     ss << std::setfill('0') << ++currentWriteFileNumber;
     currentWriteFile->set_filename(ss.str());

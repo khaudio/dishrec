@@ -9,3 +9,4 @@ sftp.json
 Private.h
 bin/
 build/
+tinyxml2/

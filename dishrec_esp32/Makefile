@@ -15,14 +15,20 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/WavHeader.o $(BUILD)/TimecodeBase.o $(BUILD)/iXML.o | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/WavHeader.o $(BUILD)/TimecodeBase.o $(BUILD)/iXML.o $(BUILD)/BEXTChunk.o | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
-$(BUILD)/RingBuffer.o: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
+$(BUILD)/iXML.o: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/iXML.cpp -o $(BUILD)/iXML.o $(LDFLAGS)
+
+$(BUILD)/BEXTChunk.o: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/BEXTChunk.cpp -o $(BUILD)/BEXTChunk.o $(LDFLAGS)
 
 $(BUILD)/WavHeader.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/WavHeader.cpp -o $(BUILD)/WavHeader.o $(LDFLAGS)
+
+$(BUILD)/RingBuffer.o: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
 
 $(BUILD)/TimecodeBase.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/TimecodeBase.cpp -o $(BUILD)/TimecodeBase.o $(LDFLAGS)

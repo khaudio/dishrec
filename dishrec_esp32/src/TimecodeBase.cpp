@@ -333,13 +333,13 @@ Clock::~Clock()
 {
 }
 
-void Clock::_set_samples_since_midnight()
+void Clock::_set_timestamp()
 {
     // Calculate samples since midnight from current timecode
     this->samplesSinceMidnight = get_frames() * this->_samplesPerFrame;
 }
 
-void Clock::_set_samples_since_midnight(uint64_t numSamples)
+void Clock::_set_timestamp(uint64_t numSamples)
 {
     // Modify current timecode to reflect numSamples
     this->samplesSinceMidnight = numSamples;
@@ -381,7 +381,7 @@ void Clock::_check_initialization()
 void Clock::set_timecode(int hr, int min, int sec, int frm)
 {
     Base::set_timecode(hr, min, sec, frm);
-    _set_samples_since_midnight();
+    _set_timestamp();
 }
 
 void Clock::set_timecode(std::array<int, 4> tc)
@@ -392,7 +392,7 @@ void Clock::set_timecode(std::array<int, 4> tc)
 void Clock::set_timecode(int numFrames)
 {
     Base::set_timecode(numFrames);
-    _set_samples_since_midnight();
+    _set_timestamp();
 }
 
 void Clock::tick()

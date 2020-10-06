@@ -5,63 +5,20 @@ std::array<uint32_t, 3> WavHeader::stdSampleRates = {
     };
 std::array<uint16_t, 5> WavHeader::stdBitDepths = {8, 16, 24, 32, 64};
 
-template <typename T>
-T reverse_endianness(T& source)
-{
-    uint32_t last(sizeof(T) - 1);
-    T swapped;
-    uint8_t* original = reinterpret_cast<uint8_t*>(&source);
-    uint8_t* reversed = reinterpret_cast<uint8_t*>(&swapped);
-    for (uint32_t i(0), j(last); i <= last; ++i, --j)
-    {
-        reversed[i] = original[j];
-    }
-    return swapped;
-}
-
-template <typename T>
-int write_to_stream(std::ostream& stream, T obj, bool reversed)
-{
-    uint32_t length(sizeof(T));
-    obj = reversed ? reverse_endianness<T>(obj) : obj;
-    uint8_t* converted = reinterpret_cast<uint8_t*>(&obj);
-    for (uint32_t i(0); i < length; ++i)
-    {
-        stream << converted[i];
-    }
-    return length;
-}
-
-WavHeader::WavHeader(WavParameters params) :
-WavHeader::WavHeader()
-{
-    set_format(params);
-    set_header_size();
-}
-
 WavHeader::WavHeader() :
-_chunkID("RIFF"),
-_subchunk1ID("WAVEfmt "),
-_subchunkDataID("data")
+_formatSet(false),
+_fileSizeSet(false),
+_formatSize(16),
+_headerSize(44)
 {
-    this->_initialized = false;
-    set_header_size();
+    memcpy(this->_chunkID, "RIFF", 4);
+    memcpy(this->_fileFormat, "WAVE", 4);
+    memcpy(this->_subchunkFormatID, "fmt ", 4);
+    memcpy(this->_subchunkDataID, "data", 4);
 }
 
 WavHeader::~WavHeader()
 {
-    delete this->headerData;
-    this->headerData = nullptr;
-}
-
-void WavHeader::set_header_size(uint32_t length)
-{
-    if (this->headerData != nullptr)
-    {
-        delete this->headerData;
-    }
-    this->headerSize = length;
-    this->headerData = new uint8_t[this->headerSize];
 }
 
 void WavHeader::set_format(WavParameters params)
@@ -69,58 +26,50 @@ void WavHeader::set_format(WavParameters params)
     set_sample_rate(params.sampleRate);
     set_bit_depth(params.bitDepth, params.isFloatingPoint);
     set_channels(params.numChannels);
-    set_data_rates();
-    this->_initialized = true;
-}
-
-void WavHeader::set_data_rates()
-{
-    this->byteRate = ((this->sampleRate * this->bitDepth * this->numChannels) / 8);
-    this->frameSize = (this->bitDepth * this->numChannels) / 8;
-    this->samplesPerSecond = this->sampleRate * this->numChannels;
+    this->_byteRate = ((this->sampleRate * this->bitDepth * this->numChannels) / 8);
+    this->_frameSize = (this->bitDepth * this->numChannels) / 8;
+    this->_samplesPerSecond = this->sampleRate * this->numChannels;
+    this->_formatSet = true;
 }
 
 void WavHeader::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
 {
     // MPEG-1 Audio format not supported; PCM and FP only.
-    this->bitDepthIsStandard = false;
+    this->_bitDepthIsStandard = false;
     this->bitDepth = bitsPerSample;
     this->sampleWidth = this->bitDepth / 8;
     this->isFloatingPoint = isFloat;
-    this->formatCode = (this->isFloatingPoint ? FLOATING_POINT : PCM);
-    for (auto standardBps: stdBitDepths)
-    {
-        if (this->bitDepth == standardBps)
-        {
-            this->bitDepthIsStandard = true;
-            break;
-        }
-    }
+    this->_formatCode = (this->isFloatingPoint ? FLOATING_POINT : PCM);
+    std::array<uint16_t, 5>::iterator iter = std::find(
+            stdBitDepths.begin(), stdBitDepths.end(), this->bitDepth
+        );
+    if (iter != stdBitDepths.end()) this->_bitDepthIsStandard = true;
+    this->_bitDepthIsStandard = (
+            this->isFloatingPoint
+            ? ((this->bitDepth == 32) || (this->bitDepth == 64))
+            : this->_bitDepthIsStandard
+        );
     #ifdef _DEBUG
-    if (!this->bitDepthIsStandard)
+    if (!this->_bitDepthIsStandard)
     {
         std::cout << "Non-standard bit depth selected" << std::endl;
     }
     std::cout << "Setting format to " << this->bitDepth;
-    std::cout << ((this->formatCode == 1) ? "-bit PCM" : "-bit float");
+    std::cout << ((this->_formatCode == 1) ? "-bit PCM" : "-bit float");
     std::cout << std::endl;
     #endif
 }
 
 void WavHeader::set_sample_rate(uint32_t samplerate)
 {
-    this->sampleRateIsStandard = false;
+    this->_sampleRateIsStandard = false;
     this->sampleRate = samplerate;
-    for (auto stdSampleRate: stdSampleRates)
-    {
-        if (this->sampleRate == stdSampleRate)
-        {
-            this->sampleRateIsStandard = true;
-            break;
-        }
-    }
+    std::array<uint32_t, 3>::iterator iter = std::find(
+            stdSampleRates.begin(), stdSampleRates.end(), this->sampleRate
+        );
+    if (iter != stdSampleRates.end()) this->_sampleRateIsStandard = true;
     #ifdef _DEBUG
-    if (!this->sampleRateIsStandard)
+    if (!this->_sampleRateIsStandard)
     {
         std::cout << "Non-standard sample rate selected" << std::endl;
     }
@@ -128,68 +77,91 @@ void WavHeader::set_sample_rate(uint32_t samplerate)
     #endif
 }
 
-void WavHeader::set_channels(uint16_t channels=1)
+bool WavHeader::is_nonstandard()
+{
+    return !(this->_sampleRateIsStandard && this->_bitDepthIsStandard);
+}
+
+void WavHeader::set_channels(uint16_t channels)
 {
     this->numChannels = channels;
 }
 
-void WavHeader::set_size(uint32_t dataSize)
+void WavHeader::set_data_size(uint32_t numBytes)
 {
-    this->dataSize = dataSize;
-    this->fileSize = dataSize + 36;
+    this->_dataSize = numBytes;
+    this->_fileSizeSet = true;
+    size();
 }
 
 template <typename T>
-void WavHeader::set_size(std::vector<T>& data)
+void WavHeader::set_data_size(std::vector<T>& data)
 {
-    set_size(data.size() * sizeof(T));
+    set_data_size(data.size() * sizeof(T));
 }
 
 uint32_t WavHeader::size()
 {
-    return this->dataSize;
+    // File size (excludes RIFF chunk ID, which is 4 bytes)
+    if (!this->_fileSizeSet) throw FILESIZE_NOT_SET;
+    this->_fileSize = 4;
+    this->_fileSize += this->_formatSize + 8;
+    this->_fileSize += this->_dataSize + 8;
+    return this->_fileSize;
 }
 
-bool WavHeader::is_nonstandard()
+size_t WavHeader::total_size()
 {
-    return !(this->sampleRateIsStandard && this->bitDepthIsStandard);
+    // Total file size including RIFF chunk ID
+    return size() + 4;
 }
 
-std::string WavHeader::str()
+void WavHeader::copy_to_buffer(uint8_t* buff)
 {
-    std::stringstream stream;
-    stream << this->_chunkID;
-    write_to_stream(stream, this->fileSize);
-    stream << this->_subchunk1ID;
-    write_to_stream(stream, this->formatLength);
-    write_to_stream(stream, this->formatCode);
-    write_to_stream(stream, this->numChannels);
-    write_to_stream(stream, this->sampleRate);
-    write_to_stream(stream, this->byteRate);
-    write_to_stream(stream, this->frameSize);
-    write_to_stream(stream, this->bitDepth);
-    stream << this->_subchunkDataID;
-    write_to_stream(stream, this->dataSize);
-    return stream.str();
-}
-
-const uint8_t* WavHeader::get_header()
-{
-    return reinterpret_cast<const uint8_t*>(str().c_str());
+    if (!this->_formatSet) throw FORMAT_NOT_SET;
+    size_t index = 0;
+    size();
+    memcpy(buff + index, this->_chunkID, 4);
+    index += 4;
+    memcpy(buff + index, &this->_fileSize, 4);
+    index += 4;
+    memcpy(buff + index, this->_fileFormat, 4);
+    index += 4;
+    memcpy(buff + index, this->_subchunkFormatID, 4);
+    index += 4;
+    memcpy(buff + index, &this->_formatSize, 4);
+    index += 4;
+    memcpy(buff + index, &this->_formatCode, 2);
+    index += 2;
+    memcpy(buff + index, &this->numChannels, 2);
+    index += 2;
+    memcpy(buff + index, &this->sampleRate, 4);
+    index += 4;
+    memcpy(buff + index, &this->_byteRate, 4);
+    index += 4;
+    memcpy(buff + index, &this->sampleWidth, 2);
+    index += 2;
+    memcpy(buff + index, &this->bitDepth, 2);
+    index += 2;
+    memcpy(buff + index, this->_subchunkDataID, 4);
+    index += 4;
+    memcpy(buff + index, &this->_dataSize, 4);
+    index += 4;
 }
 
 void WavHeader::import_header(uint8_t* data)
 {
     WavParameters readFormat;
-    this->_chunkID.assign(data[CHUNK_ID], 4);
-    this->_subchunk1ID.assign(data[SUBCHUNK_1_ID], 4);
-    this->formatLength = *reinterpret_cast<uint32_t*>(data[SUBCHUNK_1_SIZE]);
-    this->formatCode = *reinterpret_cast<uint16_t*>(data[AUDIO_FORMAT]);
-    readFormat.numChannels = *reinterpret_cast<uint16_t*>(data[NUM_CHANNELS]);
-    readFormat.sampleRate = *reinterpret_cast<uint32_t*>(data[SAMPLE_RATE]);
-    readFormat.bitDepth = *reinterpret_cast<uint16_t*>(data[BITS_PER_SAMPLE]);
-    this->_subchunkDataID.assign(data[SUBCHUNK_2_ID], 4);
-    set_size(*reinterpret_cast<uint32_t*>(data[SUBCHUNK_2_SIZE]));
-    readFormat.isFloatingPoint = this->formatCode == 0x0003;
+    memcpy(this->_chunkID, data + WAV_CHUNK_ID, 4);
+    memcpy(this->_fileFormat, data + WAV_FORMAT, 4);
+    memcpy(this->_subchunkFormatID, data + WAV_SUBCHUNK_1_ID, 4);
+    this->_formatSize = *reinterpret_cast<uint32_t*>(data[WAV_SUBCHUNK_1_SIZE]);
+    this->_formatCode = *reinterpret_cast<uint16_t*>(data[WAV_AUDIO_FORMAT]);
+    readFormat.numChannels = *reinterpret_cast<uint16_t*>(data[WAV_NUM_CHANNELS]);
+    readFormat.sampleRate = *reinterpret_cast<uint32_t*>(data[WAV_SAMPLE_RATE]);
+    readFormat.bitDepth = *reinterpret_cast<uint16_t*>(data[WAV_BITS_PER_SAMPLE]);
+    memcpy(this->_subchunkDataID, data + WAV_SUBCHUNK_2_ID, 4);
+    set_data_size(*reinterpret_cast<uint32_t*>(data[WAV_SUBCHUNK_2_SIZE]));
+    readFormat.isFloatingPoint = this->_formatCode == 0x0003;
     set_format(readFormat);
 }

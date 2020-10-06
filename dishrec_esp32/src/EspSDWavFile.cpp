@@ -16,7 +16,7 @@ std::tuple<std::string, std::string> split_filename(std::string name, const char
 
 bool valid_wav_extension(std::string name)
 {
-    std::tuple<std::string, std::string> split = split_filename(name);
+    std::tuple<std::string, std::string> split = split_filename(name, '.');
     std::string extension = std::get<1>(split);
     return ((extension == "wav") || (extension == "bwf"));
 }
@@ -29,15 +29,13 @@ std::tuple<std::string, std::string> get_path_and_extension(std::string name)
     return std::make_tuple(std::get<0>(split), std::get<0>(extensionSplit));
 }
 
-EspSDWavFile::EspSDWavFile(WavParameters parameters) :
-WavHeader(parameters),
-_directory("/"),
-_fileExtension(".wav")
-{
-}
-
 EspSDWavFile::EspSDWavFile() :
 WavHeader(),
+_sdInitialized(false),
+_fileIsOpen(false),
+_filenameSet(false),
+_dataIndex(0),
+_fileMode(FILE_INACCESSIBLE),
 _directory("/"),
 _fileExtension(".wav")
 {
@@ -171,8 +169,8 @@ bool EspSDWavFile::_open_write()
     _check_file_open();
     this->_fileIsOpen = true;
     seek(0);
-    for (int i(0); i < this->headerSize; ++i) file.write(' ');
-    seek(this->headerSize);
+    for (int i(0); i < this->_headerSize; ++i) file.write(' ');
+    seek(this->_headerSize);
     this->_fileMode = FILE_WRITABLE;
     #ifdef _DEBUG
     std::cout << "Opened file " << this->filename << std::endl;
@@ -250,14 +248,14 @@ size_t EspSDWavFile::_available()
 {
     // Return number of bytes remaining to be read
     _check_readable();
-    return this->dataSize - this->_dataIndex;
+    return this->_dataSize - this->_dataIndex;
 }
 
 size_t EspSDWavFile::samples_available()
 {
     // Return number of samples remaining to be read
     _check_readable();
-    return (this->dataSize - this->_dataIndex) / this->sampleWidth;
+    return (this->_dataSize - this->_dataIndex) / this->sampleWidth;
 }
 
 int EspSDWavFile::available()
@@ -278,8 +276,8 @@ void EspSDWavFile::seek(uint32_t position)
         throw SEEK_ERROR;
     }
     this->_dataIndex = (
-            (position >= this->headerSize)
-            ? (position - this->headerSize) : 0
+            (position >= this->_headerSize)
+            ? (position - this->_headerSize) : 0
         );
 }
 
@@ -295,15 +293,17 @@ void EspSDWavFile::close()
 
 void EspSDWavFile::write_header()
 {
-    const uint8_t* header = get_header();
+    uint8_t header[total_size()];
+    copy_to_buffer(header);
+    // const uint8_t* header = get_header();
     seek(0);
-    this->file.write(header, this->headerSize);
+    this->file.write(header, this->_headerSize);
 }
 
 void EspSDWavFile::read_header()
 {
-    uint8_t headerFromFile[this->headerSize];
-    this->file.read(headerFromFile, this->headerSize);
+    uint8_t headerFromFile[this->_headerSize];
+    this->file.read(headerFromFile, this->_headerSize);
     import_header(headerFromFile);
     seek(0);
 }
@@ -337,13 +337,13 @@ void EspSDWavFile::read(uint8_t* buff, size_t numSamples)
 void EspSDWavFile::reinitialize()
 {
     close();
-    set_size(0);
+    set_data_size(0);
 }
 
 void EspSDWavFile::write(uint8_t* data, uint32_t length)
 {
-    set_size(this->dataSize + length);
-    seek(this->headerSize + this->_dataIndex);
+    set_data_size(this->_dataSize + length);
+    seek(this->_headerSize + this->_dataIndex);
     this->file.write(data, length);
     this->_dataIndex += length;
 }
