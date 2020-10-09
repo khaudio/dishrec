@@ -245,6 +245,11 @@ void Base::set_timecode(int numFrames)
     set_timecode(tc[0], tc[1], tc[2], tc[3]);
 }
 
+void Base::clear_timecode()
+{
+    set_timecode(0, 0, 0, 0);
+}
+
 std::array<int, 4> Base::get_timecode()
 {
     #ifdef _DEBUG
@@ -346,9 +351,15 @@ void Clock::_set_timestamp(uint64_t numSamples)
     Base::set_timecode(numSamples / this->_samplesPerFrame);
 }
 
+void Clock::_set_timestamp(uint32_t ssmLo, uint32_t ssmHi)
+{
+    *this->timestampSSMLo = ssmLo;
+    *this->timestampSSMHi = ssmHi;
+}
+
 void Clock::_set_samples_per_frame()
 {
-    this->_samplesPerFrame = this->sampleRate / this->_maximum[3];
+    this->_samplesPerFrame = this->sampleRate / this->_divisors[3];
 }
 
 void Clock::set_framerate(double fps, bool isDropframe)

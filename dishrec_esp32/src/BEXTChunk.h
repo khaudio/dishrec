@@ -75,48 +75,54 @@ public:
 
 class BEXTChunk
 {
-protected:
+public:
     bool
-        _dateSet, _timeSet, _timestampSet, _umidSet, _loudnessSet,
+        _umidSet, _loudnessSet,
         _loudnessValueSet, _loudnessRangeSet, _maxTruePeakLevelSet,
         _maxMomentaryLoudnessSet, _maxShortTermLoudnessSet;
-    uint16_t _descriptionLength;
-    uint8_t _originatorLength, _originatorReferenceLength;
     uint32_t _size;
     void _autocorrect_bwf_version();
-public:
     char
         _bextChunkID[4], description[256],
         originator[32], originatorReference[32],
         originationDate[10], originationTime[8];
-    uint32_t timeReferenceLow, timeReferenceHigh;
-    uint8_t umid[64];
+    uint8_t umid[64], reserved[180];
     uint16_t
         bwfVersion, loudnessValue, loudnessRange,
         maxTruePeakLevel, maxMomentaryLoudness, maxShortTermLoudness;
-    uint8_t reserved[180];
+    uint32_t timeReferenceLow, timeReferenceHigh;
     std::string codingHistory;
     BEXTChunk();
     ~BEXTChunk();
+    virtual void clear();
     virtual void set_originator(const char* newOriginator);
+    virtual void clear_originator();
     virtual void set_originator_reference(const char* newReference);
+    virtual void clear_originator_reference();
     virtual void set_description(const char* newDescription);
+    virtual void clear_description();
     virtual void set_date(int16_t year, uint8_t month, uint8_t day);
-    virtual void set_date_str(char date[10]);
+    virtual void set_date_str(const char* date);
+    virtual void clear_date();
     virtual void set_time(uint8_t hour, uint8_t minute, uint8_t second);
-    virtual void set_time_str(char time[8]);
+    virtual void set_time_str(const char* time);
+    virtual void clear_time();
     virtual void set_timestamp(uint64_t samplesSinceMidnight);
     virtual void set_timestamp(uint32_t low, uint32_t high);
+    virtual void clear_timestamp();
     virtual void set_bwf_version(uint16_t versionNumber);
     virtual void set_umid(const uint8_t* newUmid, uint8_t length);
+    virtual void clear_umid();
     virtual void set_loudness_value(uint16_t value);
     virtual void set_loudness_range(uint16_t range);
     virtual void set_loudness_max_true_peak(uint16_t level);
     virtual void set_loudness_max_momentary(uint16_t level);
     virtual void set_loudness_max_short_term(uint16_t value);
+    virtual void clear_loudness();
     virtual void set_reserved();
     virtual void set_coding_history(CodingHistoryRow row);
     virtual void append_to_coding_history(CodingHistoryRow row);
+    virtual void clear_coding_history();
     virtual uint32_t size();
     virtual size_t total_size();
     virtual void copy_to_buffer(uint8_t* buff);

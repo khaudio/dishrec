@@ -175,6 +175,7 @@ protected:
     void _set_timestamp_ixml();
     void _set_timestamp() override;
     void _set_timestamp(uint64_t numSamples) override;
+    void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi) override;
     // virtual void _increment_file_uid();
     const char* _xml_c_str();
 public:
@@ -196,7 +197,7 @@ public:
     uint16_t numChannels;
     IXML();
     ~IXML();
-    virtual void set_default();
+    void clear() override;
     virtual void set_ixml_version(uint16_t major, uint16_t minor);
     virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
     void set_sample_rate(uint32_t samplerate) override;
@@ -206,6 +207,7 @@ public:
     void set_timecode(int hr, int min, int sec, int frm) override;
     void set_timecode(std::array<int, 4> tc) override;
     void set_timecode(int numFrames) override;
+    void clear_timecode() override;
     virtual void set_filename(const char* filename);
     // Track* create_track();
     // SyncPoint* create_sync_point();
@@ -219,20 +221,30 @@ public:
     virtual void set_ubits(const char* userbits);
     virtual void set_note(const char* message);
     void set_originator(const char* newOriginator) override;
+    void clear_originator() override;
     void set_originator_reference(const char* newReference) override;
+    void clear_originator_reference() override;
     void set_description(const char* newDescription) override;
+    void clear_description() override;
     void set_date(int16_t year, uint8_t month, uint8_t day) override;
+    void set_date_str(const char* date) override;
+    void clear_date() override;
     void set_time(uint8_t hour, uint8_t minute, uint8_t second) override;
+    void set_time_str(const char* time) override;
+    void clear_time() override;
     void set_bwf_version(uint16_t versionNumber) override;
     void set_umid(const uint8_t* newUmid, uint8_t length) override;
+    void clear_umid() override;
     void set_loudness_value(uint16_t value) override;
     void set_loudness_range(uint16_t range) override;
     void set_loudness_max_true_peak(uint16_t level) override;
     void set_loudness_max_momentary(uint16_t level) override;
     void set_loudness_max_short_term(uint16_t value) override;
+    void clear_loudness() override;
     void set_reserved() override;
     void set_coding_history(BEXT::CodingHistoryRow row) override;
     void append_to_coding_history(BEXT::CodingHistoryRow row) override;
+    void clear_coding_history() override;
     virtual void import_bext_chunk(BEXT::BEXTChunk& chunk);
     uint32_t size() override;
     size_t total_size() override;

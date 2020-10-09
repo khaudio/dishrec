@@ -160,6 +160,7 @@ Base(xmldoc, "SPEED")
     this->timestamp_samples_since_midnight_hi = _set_child_element("TIMESTAMP_SAMPLE_SINCE_MIDNIGHT_HI");
     this->timestamp_samples_since_midnight_lo = _set_child_element("TIMESTAMP_SAMPLE_SINCE_MIDNIGHT_LO");
     this->timestamp_sample_rate = _set_child_element("TIMESTAMP_SAMPLE_RATE");
+    this->note->SetText("");
 }
 
 
@@ -269,8 +270,6 @@ Base(xmldoc, "USER")
 IXML::IXML() :
 TimecodeBase::Clock(),
 BEXT::BEXTChunk(),
-_ixmlVersionMajor(2),
-_ixmlVersionMinor(10),
 take_type(&ixml),
 speed(&ixml),
 history(&ixml),
@@ -312,11 +311,18 @@ user(&ixml)
     this->root->InsertEndChild(this->location._element);
     this->root->InsertEndChild(this->user._element);
     set_ixml_version(2, 10);
-    set_default();
+    clear();
 }
 
 IXML::~IXML()
 {
+}
+
+void IXML::clear()
+{
+    set_circled(false);
+    set_ubits(0x00, 0x00, 0x00, 0x00);
+    BEXT::BEXTChunk::clear();
 }
 
 void IXML::set_ixml_version(uint16_t major, uint16_t minor)
@@ -326,12 +332,6 @@ void IXML::set_ixml_version(uint16_t major, uint16_t minor)
     char ixmlVersion[8];
     sprintf(ixmlVersion, "%u.%u", major, minor);
     this->ixml_version->SetText(ixmlVersion);
-}
-
-void IXML::set_default()
-{
-    set_circled(false);
-    set_ubits(0x00, 0x00, 0x00, 0x00);
 }
 
 void IXML::set_project(const char* projectName)
@@ -480,6 +480,12 @@ void IXML::_set_timestamp(uint64_t numSamples)
     _set_timestamp_ixml();
 }
 
+void IXML::_set_timestamp(uint32_t ssmLo, uint32_t ssmHi)
+{
+    TimecodeBase::Clock::_set_timestamp(ssmLo, ssmHi);
+    _set_timestamp_ixml();
+}
+
 void IXML::set_timecode(int hr, int min, int sec, int frm)
 {
     TimecodeBase::Clock::set_timecode(hr, min, sec, frm);
@@ -495,6 +501,13 @@ void IXML::set_timecode(int numFrames)
     TimecodeBase::Clock::set_timecode(numFrames);
 }
 
+void IXML::clear_timecode()
+{
+    set_timecode(0, 0, 0, 0);
+    this->bext.bwf_time_reference_low->SetText("");
+    this->bext.bwf_time_reference_high->SetText("");
+}
+
 void IXML::set_filename(const char* filename)
 {
     this->history.original_filename->SetText(filename);
@@ -507,10 +520,22 @@ void IXML::set_originator(const char* newOriginator)
     this->bext.bwf_originator->SetText(this->originator);
 }
 
+void IXML::clear_originator()
+{
+    BEXT::BEXTChunk::clear_originator();
+    this->bext.bwf_originator->SetText("");
+}
+
 void IXML::set_originator_reference(const char* newReference)
 {
     BEXT::BEXTChunk::set_originator_reference(newReference);
     this->bext.bwf_originator_reference->SetText(this->originatorReference);
+}
+
+void IXML::clear_originator_reference()
+{
+    BEXT::BEXTChunk::clear_originator_reference();
+    this->bext.bwf_originator_reference->SetText("");
 }
 
 void IXML::set_description(const char* newDescription)
@@ -519,9 +544,27 @@ void IXML::set_description(const char* newDescription)
     this->bext.bwf_description->SetText(this->description);
 }
 
+void IXML::clear_description()
+{
+    BEXT::BEXTChunk::clear_description();
+    this->bext.bwf_description->SetText("");
+}
+
 void IXML::set_date(int16_t year, uint8_t month, uint8_t day)
 {
     BEXT::BEXTChunk::set_date(year, month, day);
+    this->bext.bwf_origination_date->SetText(this->originationDate);
+}
+
+void IXML::set_date_str(const char* date)
+{
+    BEXT::BEXTChunk::set_date_str(date);
+    this->bext.bwf_origination_date->SetText(this->originationDate);
+}
+
+void IXML::clear_date()
+{
+    BEXT::BEXTChunk::clear_date();
     this->bext.bwf_origination_date->SetText(this->originationDate);
 }
 
@@ -531,11 +574,24 @@ void IXML::set_time(uint8_t hour, uint8_t minute, uint8_t second)
     this->bext.bwf_origination_time->SetText(this->originationTime);
 }
 
+void IXML::set_time_str(const char* time)
+{
+    BEXT::BEXTChunk::set_time_str(time);
+    this->bext.bwf_origination_time->SetText(this->originationTime);
+}
+
+void IXML::clear_time()
+{
+    BEXT::BEXTChunk::clear_time();
+    this->bext.bwf_origination_time->SetText(this->originationTime);
+}
+
 void IXML::set_bwf_version(uint16_t versionNumber)
 {
     BEXT::BEXTChunk::set_bwf_version(versionNumber);
     char buff[7];
-    sprintf(buff, "0x%04x", versionNumber);
+    sprintf(buff, "0x%04x", this->bwfVersion);
+    std::cout << "BWF VERSION IS " << versionNumber << "\t" << this->bwfVersion << "\t" << buff << std::endl;
     this->bext.bwf_version->SetText(buff);
 }
 
@@ -543,6 +599,12 @@ void IXML::set_umid(const uint8_t* newUmid, uint8_t length)
 {
     BEXT::BEXTChunk::set_umid(newUmid, length);
     this->bext.bwf_umid->SetText(this->umid);
+}
+
+void IXML::clear_umid()
+{
+    BEXT::BEXTChunk::clear_umid();
+    this->bext.bwf_umid->SetText(std::string(64, '0').c_str());
 }
 
 void IXML::set_loudness_value(uint16_t value)
@@ -575,10 +637,22 @@ void IXML::set_loudness_max_short_term(uint16_t value)
     this->bext.bwf_max_short_term_loudness->SetText(this->maxShortTermLoudness);
 }
 
+void IXML::clear_loudness()
+{
+    BEXT::BEXTChunk::clear_loudness();
+    this->bext.bwf_loudness_value->SetText(this->loudnessValue);
+    this->bext.bwf_loudness_range->SetText(this->loudnessRange);
+    this->bext.bwf_max_true_peak_level->SetText(this->maxTruePeakLevel);
+    this->bext.bwf_max_momentary_loudness->SetText(this->maxMomentaryLoudness);
+    this->bext.bwf_max_short_term_loudness->SetText(this->maxShortTermLoudness);
+}
+
 void IXML::set_reserved()
 {
     BEXT::BEXTChunk::set_reserved();
-    this->bext.bwf_reserved->SetText(this->reserved);
+    std::ostringstream stream;
+    for (int i(0); i < 180; ++i) stream << +(this->reserved[i]);
+    this->bext.bwf_reserved->SetText(stream.str().c_str());
 }
 
 void IXML::set_coding_history(BEXT::CodingHistoryRow row)
@@ -593,6 +667,12 @@ void IXML::append_to_coding_history(BEXT::CodingHistoryRow row)
     this->bext.bwf_coding_history->SetText(this->codingHistory.c_str());
 }
 
+void IXML::clear_coding_history()
+{
+    BEXT::BEXTChunk::clear_coding_history();
+    this->bext.bwf_coding_history->SetText("");
+}
+
 void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
 {
     memcpy(this->_bextChunkID, chunk._bextChunkID, 4);
@@ -601,17 +681,27 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     set_originator_reference(chunk.originatorReference);
     set_date_str(chunk.originationDate);
     set_time_str(chunk.originationTime);
-    set_timestamp(chunk.timeReferenceLow, chunk.timeReferenceHigh);
-    set_umid(chunk.umid, 64);
-    this->bwfVersion = chunk.bwfVersion;
-    this->loudnessValue = chunk.loudnessValue;
-    this->loudnessRange = chunk.loudnessRange;
-    this->maxTruePeakLevel = chunk.maxTruePeakLevel;
-    this->maxMomentaryLoudness = chunk.maxMomentaryLoudness;
-    this->maxShortTermLoudness = chunk.maxShortTermLoudness;
+    _set_timestamp(chunk.timeReferenceLow, chunk.timeReferenceHigh);
+    this->bext.bwf_umid->SetText(chunk.umid);
+    set_bwf_version(chunk.bwfVersion);
+    set_loudness_value(chunk.loudnessValue);
+    set_loudness_range(chunk.loudnessRange);
+    set_loudness_max_true_peak(chunk.maxTruePeakLevel);
+    set_loudness_max_momentary(chunk.maxMomentaryLoudness);
+    set_loudness_max_short_term(chunk.maxShortTermLoudness);
     memcpy(this->reserved, chunk.reserved, 180);
+    std::ostringstream stream;
+    for (int i(0); i < 180; ++i) stream << +(this->reserved[i]);
+    this->bext.bwf_reserved->SetText(stream.str().c_str());
     this->codingHistory = chunk.codingHistory;
-
+    this->bext.bwf_coding_history->SetText(this->codingHistory.c_str());
+    this->_umidSet = chunk._umidSet;
+    this->_loudnessSet = chunk._loudnessSet;
+    this->_loudnessValueSet = chunk._loudnessValueSet;
+    this->_loudnessRangeSet = chunk._loudnessRangeSet;
+    this->_maxTruePeakLevelSet = chunk._maxTruePeakLevelSet;
+    this->_maxMomentaryLoudnessSet = chunk._maxMomentaryLoudnessSet;
+    this->_maxShortTermLoudnessSet = chunk._maxShortTermLoudnessSet;
 }
 
 uint32_t IXML::size()

@@ -7,6 +7,11 @@ TODO:
     ixml
         does ixml really need to be prepended with <?xml version="1.0" encoding="UTF-8"?>
         check output of bext stuff using SetText like reserved being full of NULLs
+            date/time showing they are set but are empty
+                print chars to chars in string?
+                    '\0' = "0"
+                    try using std::string(the null terminated char array) ??
+                        but what about arrays with multiple '\0's?
             maybe use a different method
         save inactive tracks but omit from print?
             for easy reactivation when dis/re-armed
@@ -20,6 +25,12 @@ TODO:
             std::vector<uint32_t> subChunkSizes ??
             more portable with bext and ixml
         rewrite to be lighter and more C-like
+
+    RingBuffer template stuff
+        wrapper class for dealing with I/O that does not require datatype usage outside of class
+        so changing SR/BD is painless and doesn't require spaghetti code outside of the I/O class
+        switch it all internally and just use read() and write() and get_ptr() methods or whatever
+        close now but needs refactoring for actually containing I/O
 
     EspSDWavFile
         fix EspSDWavFile::write_header() with new getter instead of old get_header()

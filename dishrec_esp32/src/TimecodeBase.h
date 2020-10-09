@@ -48,6 +48,7 @@ public:
     virtual void set_timecode(int hr, int min, int sec, int frm);
     virtual void set_timecode(std::array<int, 4> tc);
     virtual void set_timecode(int numFrames);
+    virtual void clear_timecode();
     virtual std::array<int, 4> get_timecode();
     virtual int get_frames();
     virtual std::string str();
@@ -64,10 +65,9 @@ protected:
     uint32_t _samplesPerFrame;
     void _check_initialization() override;
     void _set_samples_per_frame();
-    // virtual void _set_samples_since_midnight();
-    // virtual void _set_samples_since_midnight(uint64_t numSamples);
     virtual void _set_timestamp();
     virtual void _set_timestamp(uint64_t numSamples);
+    virtual void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi);
 public:
     uint64_t samplesSinceMidnight;
     uint32_t *timestampSSMLo, *timestampSSMHi;
