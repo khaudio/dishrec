@@ -241,7 +241,7 @@ maxShortTermLoudness(0),
 timeReferenceLow(0),
 timeReferenceHigh(0)
 {
-    memcpy(this->_bextChunkID, "bext", 4);
+    memcpy(this->bextChunkID, "bext", 4);
     clear();
 }
 
@@ -410,7 +410,7 @@ void BEXTChunk::_autocorrect_bwf_version()
         );
     if (this->_loudnessSet && this->_umidSet) set_bwf_version(2);
     else if (!this->_loudnessSet && this->_umidSet) set_bwf_version(1);
-    else set_bwf_version(0);
+    else if (this->bwfVersion) set_bwf_version(0);
 }
 
 void BEXTChunk::set_umid(const uint8_t* newUmid, uint8_t length)
@@ -541,7 +541,7 @@ size_t BEXTChunk::total_size()
 void BEXTChunk::copy_to_buffer(uint8_t* buff)
 {
     uint32_t index = 0;
-    memcpy(buff + index, &(this->_bextChunkID), 4);
+    memcpy(buff + index, &(this->bextChunkID), 4);
     index += 4;
     size();
     memcpy(buff + index, &(this->_size), 4);

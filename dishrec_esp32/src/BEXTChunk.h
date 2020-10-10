@@ -83,7 +83,7 @@ public:
     uint32_t _size;
     void _autocorrect_bwf_version();
     char
-        _bextChunkID[4], description[256],
+        bextChunkID[4], description[256],
         originator[32], originatorReference[32],
         originationDate[10], originationTime[8];
     uint8_t umid[64], reserved[180];

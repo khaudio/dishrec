@@ -1,4 +1,4 @@
-/*
+
 
 #include <iostream>
 #include <sstream>
@@ -72,21 +72,12 @@ int main()
     }
     std::cout << std::endl << std::endl;
 
-    std::cout << "bext umid: ";
-    for (size_t i(0); i < 64; ++i)
-    {
-        std::cout << bext.umid[i];
-    }
-    std::cout << std::endl;
-    std::cout << "ixml umid: ";
-    for (size_t i(0); i < 64; ++i)
-    {
-        std::cout << ixml.umid[i];
-    }
+    printf("IXML Size: %u\n", ixml.size());
+
     std::cout << std::endl << std::endl;
 
     return 0;
-} */
+}
 
 
 /*

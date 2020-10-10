@@ -591,7 +591,6 @@ void IXML::set_bwf_version(uint16_t versionNumber)
     BEXT::BEXTChunk::set_bwf_version(versionNumber);
     char buff[7];
     sprintf(buff, "0x%04x", this->bwfVersion);
-    std::cout << "BWF VERSION IS " << versionNumber << "\t" << this->bwfVersion << "\t" << buff << std::endl;
     this->bext.bwf_version->SetText(buff);
 }
 
@@ -675,14 +674,12 @@ void IXML::clear_coding_history()
 
 void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
 {
-    memcpy(this->_bextChunkID, chunk._bextChunkID, 4);
     set_description(chunk.description);
     set_originator(chunk.originator);
     set_originator_reference(chunk.originatorReference);
     set_date_str(chunk.originationDate);
     set_time_str(chunk.originationTime);
     _set_timestamp(chunk.timeReferenceLow, chunk.timeReferenceHigh);
-    this->bext.bwf_umid->SetText(chunk.umid);
     set_bwf_version(chunk.bwfVersion);
     set_loudness_value(chunk.loudnessValue);
     set_loudness_range(chunk.loudnessRange);
@@ -690,9 +687,13 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     set_loudness_max_momentary(chunk.maxMomentaryLoudness);
     set_loudness_max_short_term(chunk.maxShortTermLoudness);
     memcpy(this->reserved, chunk.reserved, 180);
-    std::ostringstream stream;
-    for (int i(0); i < 180; ++i) stream << +(this->reserved[i]);
-    this->bext.bwf_reserved->SetText(stream.str().c_str());
+    std::ostringstream reservedStream;
+    for (int i(0); i < 180; ++i) reservedStream << +(this->reserved[i]);
+    this->bext.bwf_reserved->SetText(reservedStream.str().c_str());
+    memcpy(this->umid, chunk.umid, 64);
+    std::ostringstream umidStream;
+    for (int i(0); i < 64; ++i) umidStream << this->umid[i];
+    this->bext.bwf_umid->SetText(umidStream.str().c_str());
     this->codingHistory = chunk.codingHistory;
     this->bext.bwf_coding_history->SetText(this->codingHistory.c_str());
     this->_umidSet = chunk._umidSet;
@@ -731,15 +732,19 @@ void IXML::copy_to_buffer(uint8_t* buff)
 {
     const char* cstr = _xml_c_str();
     this->_ixmlChunkSize = BEXT::get_str_length<uint32_t>(cstr, true);
-    bool oddByteCount = (this->_ixmlChunkSize % 2);
-    this->_ixmlExportedSize = this->_ixmlChunkSize + oddByteCount + 8;
+    bool addByte = false;
+    if (this->_ixmlChunkSize % 2)
+    {
+        this->_ixmlChunkSize += (this->_ixmlChunkSize % 2);
+        addByte = true;
+    }
+    this->_ixmlExportedSize = this->_ixmlChunkSize + 48;
     memcpy(buff, this->_ixmlChunkID, 4);
     memcpy(buff + 4, &this->_ixmlChunkSize, 4);
     memcpy(buff + 8, this->_xmlEncoding, 40);
     memcpy(buff + 48, cstr, this->_ixmlChunkSize);
-    if (oddByteCount)
+    if (addByte)
     {
-        buff[this->_ixmlChunkSize + 8] = '\n';
-        buff[this->_ixmlExportedSize] = '\0';
+        buff[this->_ixmlExportedSize - 1] = '\0';
     }
 }
