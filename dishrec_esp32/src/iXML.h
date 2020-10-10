@@ -39,13 +39,13 @@ protected:
 public:
     TakeType(XMLDocument* xmldoc);
     void set_default(bool);
-    void no_good(bool);
-    void false_start(bool);
-    void wild_track(bool);
-    void pickup(bool);
-    void rehearsal(bool);
-    void announcement(bool);
-    void sound_guide(bool);
+    void set_no_good(bool);
+    void set_false_start(bool);
+    void set_wild_track(bool);
+    void set_pickup(bool);
+    void set_rehearsal(bool);
+    void set_announcement(bool);
+    void set_sound_guide(bool);
     friend class IXML;
 };
 
@@ -178,6 +178,7 @@ protected:
     void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi) override;
     // virtual void _increment_file_uid();
     const char* _xml_c_str();
+
 public:
     XMLDocument ixml;
     XMLNode* root;
@@ -195,13 +196,15 @@ public:
     Location location;
     User user;
     uint16_t numChannels;
+
     IXML();
     ~IXML();
     void clear() override;
     virtual void set_ixml_version(uint16_t major, uint16_t minor);
+
+    // Speed
     virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
     void set_sample_rate(uint32_t samplerate) override;
-    // virtual void set_channels(uint16_t channels);
     void set_framerate(double fps, bool isDropframe) override;
     void set_framerate(int fps, bool isDropframe) override;
     void set_timecode(int hr, int min, int sec, int frm) override;
@@ -209,9 +212,15 @@ public:
     void set_timecode(int numFrames) override;
     void clear_timecode() override;
     virtual void set_filename(const char* filename);
+
+    // Tracks
     // Track* create_track();
+    // virtual void set_channels(uint16_t channels);
+
+    // Sync Points
     // SyncPoint* create_sync_point();
-    // virtual void set_take_type(TakeType* type);
+
+    // Top level metadata
     virtual void set_project(const char* projectName);
     virtual void set_tape(const char* tapeName);
     virtual void set_scene(const char* sceneName);
@@ -220,6 +229,18 @@ public:
     virtual void set_ubits(uint8_t first, uint8_t second, uint8_t third, uint8_t fourth);
     virtual void set_ubits(const char* userbits);
     virtual void set_note(const char* message);
+
+    // Take type
+    virtual void set_default(bool);
+    virtual void set_no_good(bool);
+    virtual void set_false_start(bool);
+    virtual void set_wild_track(bool);
+    virtual void set_pickup(bool);
+    virtual void set_rehearsal(bool);
+    virtual void set_announcement(bool);
+    virtual void set_sound_guide(bool);
+
+    // BEXT
     void set_originator(const char* newOriginator) override;
     void clear_originator() override;
     void set_originator_reference(const char* newReference) override;
@@ -246,8 +267,14 @@ public:
     void append_to_coding_history(BEXT::CodingHistoryRow row) override;
     void clear_coding_history() override;
     virtual void import_bext_chunk(BEXT::BEXTChunk& chunk);
+
+    // Chunk size minus ID and size fields
     uint32_t size() override;
+
+    // Total size needed for buffer
     size_t total_size() override;
+
+    // Export chunk including ID and size fields
     void copy_to_buffer(uint8_t* buff) override;
 };
 

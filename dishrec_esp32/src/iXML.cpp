@@ -44,49 +44,49 @@ void TakeType::set_default(bool flagged)
     _apply();
 }
 
-void TakeType::no_good(bool flagged)
+void TakeType::set_no_good(bool flagged)
 {
     this->_no_good = flagged;
     if (flagged) this->_default = false;
     _apply();
 }
 
-void TakeType::false_start(bool flagged)
+void TakeType::set_false_start(bool flagged)
 {
     this->_false_start = flagged;
     if (flagged) this->_default = false;
     _apply();
 }
 
-void TakeType::wild_track(bool flagged)
+void TakeType::set_wild_track(bool flagged)
 {
     this->_wild_track = flagged;
     if (flagged) this->_default = false;
     _apply();
 }
 
-void TakeType::pickup(bool flagged)
+void TakeType::set_pickup(bool flagged)
 {
     this->_pickup = flagged;
     if (flagged) this->_default = false;
     _apply();
 }
 
-void TakeType::rehearsal(bool flagged)
+void TakeType::set_rehearsal(bool flagged)
 {
     this->_rehearsal = flagged;
     if (flagged) this->_default = false;
     _apply();
 }
 
-void TakeType::announcement(bool flagged)
+void TakeType::set_announcement(bool flagged)
 {
     this->_announcement = flagged;
     if (flagged) this->_default = false;
     _apply();
 }
 
-void TakeType::sound_guide(bool flagged)
+void TakeType::set_sound_guide(bool flagged)
 {
     this->_sound_guide = flagged;
     if (flagged) this->_default = false;
@@ -351,7 +351,10 @@ void IXML::set_scene(const char* sceneName)
 
 void IXML::set_take(uint32_t takeNumber)
 {
-    this->take->SetText(takeNumber);
+    char takeNumberStr[4];
+    sprintf(takeNumberStr, "%03u", takeNumber);
+    std::cout << "TAKE NUMBER IS: " << takeNumberStr << std::endl;
+    this->take->SetText(takeNumberStr);
 }
 
 void IXML::set_circled(bool isCircled)
@@ -396,6 +399,47 @@ void IXML::set_note(const char* message)
     this->note->SetText(message);
 }
 
+void IXML::set_default(bool flagged)
+{
+    this->take_type.set_default(flagged);
+}
+
+void IXML::set_no_good(bool flagged)
+{
+    this->take_type.set_no_good(flagged);
+}
+
+void IXML::set_false_start(bool flagged)
+{
+    this->take_type.set_false_start(flagged);
+}
+
+void IXML::set_wild_track(bool flagged)
+{
+    this->take_type.set_wild_track(flagged);
+}
+
+void IXML::set_pickup(bool flagged)
+{
+    this->take_type.set_pickup(flagged);
+}
+
+void IXML::set_rehearsal(bool flagged)
+{
+    this->take_type.set_rehearsal(flagged);
+}
+
+void IXML::set_announcement(bool flagged)
+{
+    this->take_type.set_announcement(flagged);
+}
+
+void IXML::set_sound_guide(bool flagged)
+{
+    this->take_type.set_sound_guide(flagged);
+}
+
+
 void IXML::set_sample_rate(uint32_t samplerate)
 {
     TimecodeBase::Clock::set_sample_rate(samplerate);
@@ -408,11 +452,6 @@ void IXML::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
 {
     this->speed.audio_bit_depth->SetText(bitsPerSample);
 }
-
-// void IXML::set_channels(uint16_t channels)
-// {
-
-// }
 
 void IXML::_set_framerate(const char* fps)
 {

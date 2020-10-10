@@ -131,10 +131,11 @@ void CodingHistoryRow::set_multi()
 
 void CodingHistoryRow::set_text(const char* text)
 {
-    uint16_t length = get_str_length<uint16_t>(text, false);
+    uint16_t length = get_str_length<uint16_t>(text, false) + 2;
+    sprintf(this->_text, "T=");
     if (length <= this->_textLengthLimit)
     {
-        strncpy(this->_text, text, length);
+        strncpy(this->_text + 2, text, length);
         this->_textLength = length;
         this->_textSet = true;
     }
@@ -191,7 +192,7 @@ void CodingHistoryRow::copy_to_buffer(char* buff)
         index += this->_textLength;
         memcpy(buff + index++, ",", 1);
     }
-    buff[index++] = '\n';
+    buff[index] = '\n';
 }
 
 uint32_t CodingHistoryRow::size()
@@ -205,7 +206,7 @@ uint32_t CodingHistoryRow::size()
             + _modeLength
             + _textLength
         );
-    // Add one per comma for each included field
+    // Add 1 per comma for each included field
     for (bool* setter: this->_setters) this->_size += *setter;
     this->_size += 1; // LF/CR at end
     return this->_size;
@@ -241,7 +242,7 @@ maxShortTermLoudness(0),
 timeReferenceLow(0),
 timeReferenceHigh(0)
 {
-    memcpy(this->bextChunkID, "bext", 4);
+    memcpy(this->_bextChunkID, "bext", 4);
     clear();
 }
 
@@ -497,15 +498,19 @@ void BEXTChunk::set_coding_history(CodingHistoryRow row)
     terminated by CR/LF. Each string shall contain a description of a coding
     process applied to the audio data. Each new coding application shall add
     a new string with the appropriate information. */
-    char buff[row.size()];
+    uint32_t rowSize = row.size();
+    char buff[rowSize + 1];
     row.copy_to_buffer(buff);
+    buff[rowSize] = '\0';
     this->codingHistory = std::string(buff);
 }
 
 void BEXTChunk::append_to_coding_history(CodingHistoryRow row)
 {
-    char buff[row.size()];
+    uint32_t rowSize = row.size();
+    char buff[rowSize + 1];
     row.copy_to_buffer(buff);
+    buff[rowSize] = '\0';
     this->codingHistory.append(std::string(buff));
 }
 
@@ -529,7 +534,10 @@ uint32_t BEXTChunk::size()
         + Reserved (180)
         = 602 + Coding History Size */
     this->_size = 602 + this->codingHistory.size();
-    if (this->_size % 2) this->_size += 1;
+    if (this->_size % 2)
+    {
+        this->_size += 1;
+    }
     return this->_size;
 }
 
@@ -541,7 +549,7 @@ size_t BEXTChunk::total_size()
 void BEXTChunk::copy_to_buffer(uint8_t* buff)
 {
     uint32_t index = 0;
-    memcpy(buff + index, &(this->bextChunkID), 4);
+    memcpy(buff + index, &(this->_bextChunkID), 4);
     index += 4;
     size();
     memcpy(buff + index, &(this->_size), 4);
@@ -578,8 +586,7 @@ void BEXTChunk::copy_to_buffer(uint8_t* buff)
     memcpy(buff + index, this->codingHistory.c_str(), this->codingHistory.size());
     index += this->codingHistory.size();
     // Make sure chunk ends on even-numbered byte
-    if (index % 2) buff[index++] = '\0';
-    buff[index] = '\0';
+    if (this->_size % 2) buff[index] = '\0'; // Pad with NULL
 }
 
 template int8_t BEXT::get_str_length(const char* str, bool includeNull);

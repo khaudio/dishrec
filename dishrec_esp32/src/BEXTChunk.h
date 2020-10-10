@@ -83,7 +83,7 @@ public:
     uint32_t _size;
     void _autocorrect_bwf_version();
     char
-        bextChunkID[4], description[256],
+        _bextChunkID[4], description[256],
         originator[32], originatorReference[32],
         originationDate[10], originationTime[8];
     uint8_t umid[64], reserved[180];
@@ -123,10 +123,15 @@ public:
     virtual void set_coding_history(CodingHistoryRow row);
     virtual void append_to_coding_history(CodingHistoryRow row);
     virtual void clear_coding_history();
+
+    // Chunk size minus ID and size fields
     virtual uint32_t size();
+
+    // Total size needed for buffer
     virtual size_t total_size();
+
+    // Export chunk including ID and size fields
     virtual void copy_to_buffer(uint8_t* buff);
-    const uint8_t* c_str();
 };
 
 };
