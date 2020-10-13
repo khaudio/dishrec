@@ -6,6 +6,8 @@
 #include <memory>
 #include "ErrorEnums.h"
 
+#include <iostream>
+
 #ifndef BEXTCHUNK_H
 #define BEXTCHUNK_H
 

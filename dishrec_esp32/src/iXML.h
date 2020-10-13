@@ -16,6 +16,9 @@ using namespace tinyxml2;
 namespace iXML
 {
 
+void get_random_str(char* buff, uint32_t length);
+void get_random_str(char* buff, uint32_t length, unsigned int seed);
+
 class Base
 {
 protected:
@@ -38,14 +41,14 @@ protected:
     void _apply();
 public:
     TakeType(XMLDocument* xmldoc);
-    void set_default(bool);
-    void set_no_good(bool);
-    void set_false_start(bool);
-    void set_wild_track(bool);
-    void set_pickup(bool);
-    void set_rehearsal(bool);
-    void set_announcement(bool);
-    void set_sound_guide(bool);
+    void set_default();
+    void set_no_good(bool flagged);
+    void set_false_start(bool flagged);
+    void set_wild_track(bool flagged);
+    void set_pickup(bool flagged);
+    void set_rehearsal(bool flagged);
+    void set_announcement(bool flagged);
+    void set_sound_guide(bool flagged);
     friend class IXML;
 };
 
@@ -68,8 +71,7 @@ class History : public Base
 {
 public:
     XMLElement
-        *original_filename, *current_filename,
-        *parent_filename, *parent_uid;
+        *original_filename, *parent_filename, *parent_uid;
     History(XMLDocument* xmldoc);
     friend class IXML;
 };
@@ -170,14 +172,8 @@ protected:
     char _ixmlChunkID[4];
     uint32_t _ixmlChunkSize, _ixmlExportedSize;
     uint16_t _ixmlVersionMajor, _ixmlVersionMinor;
-    static const char *_ubits_valid_chars, *_xmlEncoding;
-    void _set_framerate(const char* fps);
-    void _set_timestamp_ixml();
-    void _set_timestamp() override;
-    void _set_timestamp(uint64_t numSamples) override;
-    void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi) override;
-    // virtual void _increment_file_uid();
-    const char* _xml_c_str();
+    static const char *_ubitsValidChars, *_xmlEncoding;
+    char _fileUID[32], _familyUID[32];
 
 public:
     XMLDocument ixml;
@@ -195,52 +191,74 @@ public:
     SyncPointList sync_point_list;
     Location location;
     User user;
+
     uint16_t numChannels;
+    int takeNumber;
+    static const char *_uidValidChars;
 
     IXML();
     ~IXML();
     void clear() override;
-    virtual void set_ixml_version(uint16_t major, uint16_t minor);
 
-    // Speed
-    virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
+/*                        Top Level Metadata                        */
+    virtual void set_ixml_version(uint16_t major, uint16_t minor);
+    virtual void set_project(const char* projectName);
+    virtual void set_tape(const char* tapeName);
+    virtual void set_scene(const char* sceneName);
+    virtual void set_take(int takeNum);
+    virtual void set_circled(bool isCircled);
+    virtual void set_file_uid();
+    virtual void set_ubits(uint8_t first, uint8_t second, uint8_t third, uint8_t fourth);
+    virtual void set_ubits(const char* userbits);
+    virtual void set_note(const char* message);
+
+/*                             Take type                            */
+    virtual void set_default_take_type();
+    virtual void set_no_good(bool flagged);
+    virtual void set_false_start(bool flagged);
+    virtual void set_wild_track(bool flagged);
+    virtual void set_pickup(bool flagged);
+    virtual void set_rehearsal(bool flagged);
+    virtual void set_announcement(bool flagged);
+    virtual void set_sound_guide(bool flagged);
+
+/*                              Speed                               */
+protected:
+    void _set_framerate(const char* fps);
+    void _set_timestamp_ixml();
+    void _set_timestamp() override;
+    void _set_timestamp(uint64_t numSamples) override;
+    void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi) override;
+
+public:
     void set_sample_rate(uint32_t samplerate) override;
+    virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
     void set_framerate(double fps, bool isDropframe) override;
     void set_framerate(int fps, bool isDropframe) override;
     void set_timecode(int hr, int min, int sec, int frm) override;
     void set_timecode(std::array<int, 4> tc) override;
     void set_timecode(int numFrames) override;
     void clear_timecode() override;
-    virtual void set_filename(const char* filename);
+\
+/*                            Sync Points                           */
+    // SyncPoint* create_sync_point();
 
-    // Tracks
+/*                              History                             */
+    virtual void set_filename(const char* filename);
+    // virtual void set_parent_uid();
+
+/*                             File set                             */
+    virtual void set_total_files(unsigned int numFiles);
+    virtual void set_family_uid();
+    virtual void set_family_name(const char* familyName);
+    virtual void set_family_name();
+    virtual void set_file_set_index(const char* index);
+
+/*                            Track list                            */
     // Track* create_track();
     // virtual void set_channels(uint16_t channels);
 
-    // Sync Points
-    // SyncPoint* create_sync_point();
-
-    // Top level metadata
-    virtual void set_project(const char* projectName);
-    virtual void set_tape(const char* tapeName);
-    virtual void set_scene(const char* sceneName);
-    virtual void set_take(uint32_t takeNumber);
-    virtual void set_circled(bool isCircled);
-    virtual void set_ubits(uint8_t first, uint8_t second, uint8_t third, uint8_t fourth);
-    virtual void set_ubits(const char* userbits);
-    virtual void set_note(const char* message);
-
-    // Take type
-    virtual void set_default(bool);
-    virtual void set_no_good(bool);
-    virtual void set_false_start(bool);
-    virtual void set_wild_track(bool);
-    virtual void set_pickup(bool);
-    virtual void set_rehearsal(bool);
-    virtual void set_announcement(bool);
-    virtual void set_sound_guide(bool);
-
-    // BEXT
+/*                               BEXT                               */
     void set_originator(const char* newOriginator) override;
     void clear_originator() override;
     void set_originator_reference(const char* newReference) override;
@@ -268,13 +286,9 @@ public:
     void clear_coding_history() override;
     virtual void import_bext_chunk(BEXT::BEXTChunk& chunk);
 
-    // Chunk size minus ID and size fields
     uint32_t size() override;
-
-    // Total size needed for buffer
     size_t total_size() override;
-
-    // Export chunk including ID and size fields
+    const char* _xml_c_str();
     void copy_to_buffer(uint8_t* buff) override;
 };
 

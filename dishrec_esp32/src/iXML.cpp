@@ -2,8 +2,21 @@
 
 using namespace iXML;
 
-const char* IXML::_ubits_valid_chars = "0123456789abcdef";
+const char* IXML::_ubitsValidChars = "0123456789abcdef";
+const char* IXML::_uidValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const char* IXML::_xmlEncoding = "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+
+void iXML::get_random_str(char* buff, uint32_t length)
+{
+    srand(time(NULL));
+    for (uint32_t i(0); i < length; ++i) buff[i] = IXML::_uidValidChars[(rand() % 36)];
+}
+
+void iXML::get_random_str(char* buff, uint32_t length, unsigned int seed)
+{
+    srand(time(0) + seed);
+    for (uint32_t i(0); i < length; ++i) buff[i] = IXML::_uidValidChars[(rand() % 36)];
+}
 
 Base::Base(XMLDocument* xmldoc, const char* elementName)
 {
@@ -25,22 +38,19 @@ XMLElement* Base::_set_child_element(const char* elementName)
 TakeType::TakeType(XMLDocument* xmldoc) :
 Base(xmldoc, "TAKE_TYPE")
 {
-    set_default(true);
+    set_default();
 }
 
-void TakeType::set_default(bool flagged)
+void TakeType::set_default()
 {
-    this->_default = flagged;
-    if (this->_default)
-    {
-        this->_no_good = false;
-        this->_false_start = false;
-        this->_wild_track = false;
-        this->_pickup = false;
-        this->_rehearsal = false;
-        this->_announcement = false;
-        this->_sound_guide = false;
-    }
+    this->_default = true;
+    this->_no_good = false;
+    this->_false_start = false;
+    this->_wild_track = false;
+    this->_pickup = false;
+    this->_rehearsal = false;
+    this->_announcement = false;
+    this->_sound_guide = false;
     _apply();
 }
 
@@ -105,38 +115,38 @@ void TakeType::_apply()
     if (this->_no_good)
     {
         if (initialized) stream << ",";
+        else initialized = true;
         stream << "NO_GOOD";
-        initialized = true;
     }
     if (this->_false_start)
     {
         if (initialized) stream << ",";
+        else initialized = true;
         stream << "FALSE_START";
-        initialized = true;
     }
     if (this->_wild_track)
     {
         if (initialized) stream << ",";
+        else initialized = true;
         stream << "WILD_TRACK";
-        initialized = true;
     }
     if (this->_pickup)
     {
         if (initialized) stream << ",";
+        else initialized = true;
         stream << "PICKUP";
-        initialized = true;
     }
     if (this->_rehearsal)
     {
         if (initialized) stream << ",";
+        else initialized = true;
         stream << "REHEARSAL";
-        initialized = true;
     }
     if (this->_announcement)
     {
         if (initialized) stream << ",";
+        else initialized = true;
         stream << "ANNOUNCEMENT";
-        initialized = true;
     }
     if (this->_sound_guide)
     {
@@ -168,7 +178,6 @@ History::History(XMLDocument* xmldoc) :
 Base(xmldoc, "HISTORY")
 {
     this->original_filename = _set_child_element("ORIGINAL_FILENAME");
-    this->current_filename = _set_child_element("CURRENT_FILENAME");
     this->parent_filename = _set_child_element("PARENT_FILENAME");
     this->parent_uid = _set_child_element("PARENT_UID");
 }
@@ -312,6 +321,7 @@ user(&ixml)
     this->root->InsertEndChild(this->user._element);
     set_ixml_version(2, 10);
     clear();
+    set_family_uid(); // Set random Family UID until overwritten
 }
 
 IXML::~IXML()
@@ -322,6 +332,10 @@ void IXML::clear()
 {
     set_circled(false);
     set_ubits(0x00, 0x00, 0x00, 0x00);
+    set_scene("");
+    set_take(1);
+    set_file_uid();
+    set_family_uid();
     BEXT::BEXTChunk::clear();
 }
 
@@ -349,12 +363,12 @@ void IXML::set_scene(const char* sceneName)
     this->scene->SetText(sceneName);
 }
 
-void IXML::set_take(uint32_t takeNumber)
+void IXML::set_take(int takeNum)
 {
-    char takeNumberStr[4];
-    sprintf(takeNumberStr, "%03u", takeNumber);
-    std::cout << "TAKE NUMBER IS: " << takeNumberStr << std::endl;
-    this->take->SetText(takeNumberStr);
+    this->takeNumber = takeNum;
+    char takeNumStr[4];
+    sprintf(takeNumStr, "%03u", takeNum);
+    this->take->SetText(takeNumStr);
 }
 
 void IXML::set_circled(bool isCircled)
@@ -362,15 +376,25 @@ void IXML::set_circled(bool isCircled)
     this->circled->SetText(isCircled);
 }
 
+void IXML::set_file_uid()
+{
+    int sceneSum(0), i(0);
+    const char* sceneName = this->scene->GetText();
+    while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
+    unsigned int seed = (get_frames() * 2) + 3483423 + sceneSum + this->takeNumber;
+    get_random_str(this->_fileUID, 32, seed);
+    char buff[33];
+    strncpy(buff, this->_fileUID, 32);
+    buff[32] = '\0';
+    this->file_uid->SetText(buff);
+}
+
 void IXML::set_ubits(uint8_t first, uint8_t second, uint8_t third, uint8_t fourth)
 {
-    std::ostringstream stream;
-    stream << std::hex << std::setfill('0');
-    stream << std::setw(2) << +first;
-    stream << std::setw(2) << +second;
-    stream << std::setw(2) << +third;
-    stream << std::setw(2) << +fourth;
-    this->ubits->SetText(stream.str().c_str());
+    char buff[9];
+    sprintf(buff, "%02x%02x%02x%02x", first, second, third, fourth);
+    buff[8] = '\0';
+    this->ubits->SetText(buff);
 }
 
 void IXML::set_ubits(const char* userbits)
@@ -380,7 +404,7 @@ void IXML::set_ubits(const char* userbits)
         bool valid(false);
         for (uint8_t j(0); j < 16; ++j)
         {
-            if (userbits[i] == _ubits_valid_chars[j])
+            if (userbits[i] == _ubitsValidChars[j])
             {
                 valid = true;
                 break;
@@ -399,9 +423,9 @@ void IXML::set_note(const char* message)
     this->note->SetText(message);
 }
 
-void IXML::set_default(bool flagged)
+void IXML::set_default_take_type()
 {
-    this->take_type.set_default(flagged);
+    this->take_type.set_default();
 }
 
 void IXML::set_no_good(bool flagged)
@@ -438,7 +462,6 @@ void IXML::set_sound_guide(bool flagged)
 {
     this->take_type.set_sound_guide(flagged);
 }
-
 
 void IXML::set_sample_rate(uint32_t samplerate)
 {
@@ -550,7 +573,43 @@ void IXML::clear_timecode()
 void IXML::set_filename(const char* filename)
 {
     this->history.original_filename->SetText(filename);
-    this->history.current_filename->SetText(filename);
+}
+
+void IXML::set_total_files(unsigned int numFiles)
+{
+    this->file_set.total_files->SetText(numFiles);
+}
+
+void IXML::set_family_uid()
+{
+    int sceneSum(0), i(0);
+    const char* sceneName = this->scene->GetText();
+    while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
+    unsigned int seed = (get_frames() / 2) - 1085976 + sceneSum + this->takeNumber;
+    get_random_str(this->_familyUID, 32, seed);
+    char buff[33];
+    strncpy(buff, this->_familyUID, 32);
+    buff[32] = '\0';
+    this->file_set.family_uid->SetText(buff);
+}
+
+void IXML::set_family_name()
+{
+    char buff[100];
+    strcpy(buff, this->scene->GetText());
+    strcat(buff, "/");
+    strcat(buff, this->take->GetText());
+    this->file_set.family_name->SetText(buff);
+}
+
+void IXML::set_family_name(const char* familyName)
+{
+    this->file_set.family_name->SetText(familyName);
+}
+
+void IXML::set_file_set_index(const char* index)
+{
+    this->file_set.file_set_index->SetText(index);
 }
 
 void IXML::set_originator(const char* newOriginator)
@@ -591,14 +650,17 @@ void IXML::clear_description()
 
 void IXML::set_date(int16_t year, uint8_t month, uint8_t day)
 {
-    BEXT::BEXTChunk::set_date(year, month, day);
-    this->bext.bwf_origination_date->SetText(this->originationDate);
+    char buff[11];
+    sprintf(buff, "%04u-%02u-%02u", year, month, day);
+    buff[10] = '\0';
+    BEXT::BEXTChunk::set_date_str(buff);
+    this->bext.bwf_origination_date->SetText(buff);
 }
 
 void IXML::set_date_str(const char* date)
 {
     BEXT::BEXTChunk::set_date_str(date);
-    this->bext.bwf_origination_date->SetText(this->originationDate);
+    this->bext.bwf_origination_date->SetText(date);
 }
 
 void IXML::clear_date()
@@ -609,14 +671,17 @@ void IXML::clear_date()
 
 void IXML::set_time(uint8_t hour, uint8_t minute, uint8_t second)
 {
-    BEXT::BEXTChunk::set_time(hour, minute, second);
-    this->bext.bwf_origination_time->SetText(this->originationTime);
+    char buff[9];
+    sprintf(buff, "%2u:%02u:%02u", hour, minute, second);
+    buff[8] = '\0';
+    BEXT::BEXTChunk::set_time_str(buff);
+    this->bext.bwf_origination_time->SetText(buff);
 }
 
 void IXML::set_time_str(const char* time)
 {
     BEXT::BEXTChunk::set_time_str(time);
-    this->bext.bwf_origination_time->SetText(this->originationTime);
+    this->bext.bwf_origination_time->SetText(time);
 }
 
 void IXML::clear_time()
@@ -628,8 +693,14 @@ void IXML::clear_time()
 void IXML::set_bwf_version(uint16_t versionNumber)
 {
     BEXT::BEXTChunk::set_bwf_version(versionNumber);
-    char buff[7];
-    sprintf(buff, "0x%04x", this->bwfVersion);
+    // char buff[7];
+    // sprintf(buff, "0x%04x", this->bwfVersion);
+    // this->bext.bwf_version->SetText(buff);
+    
+    // Format to one decimal point FP
+    char buff[4];
+    sprintf(buff, "%u.0", versionNumber);
+    buff[3] = '\0';
     this->bext.bwf_version->SetText(buff);
 }
 
@@ -678,11 +749,11 @@ void IXML::set_loudness_max_short_term(uint16_t value)
 void IXML::clear_loudness()
 {
     BEXT::BEXTChunk::clear_loudness();
-    this->bext.bwf_loudness_value->SetText(this->loudnessValue);
-    this->bext.bwf_loudness_range->SetText(this->loudnessRange);
-    this->bext.bwf_max_true_peak_level->SetText(this->maxTruePeakLevel);
-    this->bext.bwf_max_momentary_loudness->SetText(this->maxMomentaryLoudness);
-    this->bext.bwf_max_short_term_loudness->SetText(this->maxShortTermLoudness);
+    this->bext.bwf_loudness_value->SetText("");
+    this->bext.bwf_loudness_range->SetText("");
+    this->bext.bwf_max_true_peak_level->SetText("");
+    this->bext.bwf_max_momentary_loudness->SetText("");
+    this->bext.bwf_max_short_term_loudness->SetText("");
 }
 
 void IXML::set_reserved()
@@ -713,18 +784,18 @@ void IXML::clear_coding_history()
 
 void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
 {
+    char date[11], time[9];
     set_description(chunk.description);
     set_originator(chunk.originator);
     set_originator_reference(chunk.originatorReference);
-    set_date_str(chunk.originationDate);
-    set_time_str(chunk.originationTime);
+    strncpy(date, chunk.originationDate, 10);
+    date[10] = '\0';
+    set_date_str(date);
+    strncpy(time, chunk.originationTime, 8);
+    time[8] = '\0';
+    set_time_str(time);
     _set_timestamp(chunk.timeReferenceLow, chunk.timeReferenceHigh);
     set_bwf_version(chunk.bwfVersion);
-    set_loudness_value(chunk.loudnessValue);
-    set_loudness_range(chunk.loudnessRange);
-    set_loudness_max_true_peak(chunk.maxTruePeakLevel);
-    set_loudness_max_momentary(chunk.maxMomentaryLoudness);
-    set_loudness_max_short_term(chunk.maxShortTermLoudness);
     memcpy(this->reserved, chunk.reserved, 180);
     std::ostringstream reservedStream;
     for (int i(0); i < 180; ++i) reservedStream << +(this->reserved[i]);
@@ -735,6 +806,11 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     this->bext.bwf_umid->SetText(umidStream.str().c_str());
     this->codingHistory = chunk.codingHistory;
     this->bext.bwf_coding_history->SetText(this->codingHistory.c_str());
+    set_loudness_value(chunk.loudnessValue);
+    set_loudness_range(chunk.loudnessRange);
+    set_loudness_max_true_peak(chunk.maxTruePeakLevel);
+    set_loudness_max_momentary(chunk.maxMomentaryLoudness);
+    set_loudness_max_short_term(chunk.maxShortTermLoudness);
     this->_umidSet = chunk._umidSet;
     this->_loudnessSet = chunk._loudnessSet;
     this->_loudnessValueSet = chunk._loudnessValueSet;
@@ -742,6 +818,7 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     this->_maxTruePeakLevelSet = chunk._maxTruePeakLevelSet;
     this->_maxMomentaryLoudnessSet = chunk._maxMomentaryLoudnessSet;
     this->_maxShortTermLoudnessSet = chunk._maxShortTermLoudnessSet;
+    if (!this->_loudnessSet) clear_loudness();
 }
 
 uint32_t IXML::size()

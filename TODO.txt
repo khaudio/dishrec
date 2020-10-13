@@ -1,18 +1,24 @@
 TODO:
 
-    BEXTChunk
-        pad description field to min 64 chars with NULLs
-        pad all text fields to even num of chars INCLUDING NULL TERM
+    rec/stop
+        start recording on TC frame boundary or better, second boundary
+            pre-roll in ring buffer?
+            try sizing dynamically created ring buffer as size of one frame
+                time buffer cycle to frame tick
+                samples per buffer is not the same as frames per buffer
+                    need to time to frames per buffer for channels > 1
+
+    parsing all metadata
+        regex to locate RIFF chunks
+        read chunk size and parse
 
     ixml
-        does ixml really need to be prepended with <?xml version="1.0" encoding="UTF-8"?>
-        check output of bext stuff using SetText like reserved being full of NULLs
-            date/time showing they are set but are empty
-                print chars to chars in string?
-                    '\0' = "0"
-                    try using std::string(the null terminated char array) ??
-                        but what about arrays with multiple '\0's?
-            maybe use a different method
+    make bwf_version a float value; e.g. 1.0?
+    setter methods for +-1% sample rates
+        digitizer_sample_rate, etc
+    history
+        is current_filename a valid parameter per spec?
+    track list and tracks
         save inactive tracks but omit from print?
             for easy reactivation when dis/re-armed
 
@@ -22,9 +28,9 @@ TODO:
 
     WavHeader
         total chunk sizes saved in iterable instead of hard coding + 36 as in WavHeader::set_size()
+            maybe
             std::vector<uint32_t> subChunkSizes ??
             more portable with bext and ixml
-        rewrite to be lighter and more C-like
 
     RingBuffer template stuff
         wrapper class for dealing with I/O that does not require datatype usage outside of class

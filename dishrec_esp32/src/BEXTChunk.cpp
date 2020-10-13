@@ -322,12 +322,7 @@ void BEXTChunk::set_date(int16_t year, uint8_t month, uint8_t day)
     10 ASCII characters containing the date of creation of the audio
     sequence. The format shall be « ‘,year’,-,’month,’-‘,day,’»
     with 4 characters for the year and 2 characters per other item. */
-    std::ostringstream stream;
-    stream << std::setfill('0');
-    stream << std::setw(4) << +year << "-";
-    stream << std::setw(2) << +month << "-";
-    stream << std::setw(2) << +day;
-    strncpy(this->originationDate, stream.str().c_str(), 10);
+    sprintf(this->originationDate, "%04u-%02u-%02u", year, month, day);
 }
 
 void BEXTChunk::set_date_str(const char* date)
@@ -347,12 +342,7 @@ void BEXTChunk::set_time(uint8_t hour, uint8_t minute, uint8_t second)
     8 ASCII characters containing the time of creation of the audio sequence.
     The format shall be « ‘hour’-‘minute’-‘second’» with 2 characters per
     item. */
-    std::ostringstream stream;
-    stream << std::setfill('0');
-    stream << std::setw(2) << +hour << ":";
-    stream << std::setw(2) << +minute << ":";
-    stream << std::setw(2) << +second;
-    strncpy(this->originationTime, stream.str().c_str(), 8);
+    sprintf(this->originationTime, "%02u:%02u:%02u", hour, minute, second);
 }
 
 void BEXTChunk::set_time_str(const char* time)
