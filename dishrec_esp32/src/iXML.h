@@ -1,12 +1,17 @@
 #ifndef IXML_H
 #define IXML_H
 
+#ifdef ESP32
+#include <tinyxml2.h>
+#else
 #include "../lib/tinyxml2/tinyxml2.h"
+#endif
 
-// #include <tinyxml2.h>
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <map>
+#include <vector>
 #include "TimecodeBase.h"
 #include "BEXTChunk.h"
 #include "ErrorEnums.h"
@@ -15,6 +20,17 @@ using namespace tinyxml2;
 
 namespace iXML
 {
+
+#ifndef MAX_TRACK_STR_LENGTH
+#define MAX_TRACK_STR_LENGTH        100
+#endif
+
+enum ixml_err
+{
+    TRACK_COUNT_MISMATCH = 120,
+    TRACK_NOT_FOUND = 121,
+    INVALID_UID_LENGTH = 122,
+};
 
 void get_random_str(char* buff, uint32_t length);
 void get_random_str(char* buff, uint32_t length, unsigned int seed);
@@ -88,11 +104,19 @@ public:
 
 class Track : public Base
 {
+protected:
+    bool _active;
+    uint16_t _index, _interleaveIndex;
+    char _name[MAX_TRACK_STR_LENGTH], _function[MAX_TRACK_STR_LENGTH];
 public:
-    XMLElement
-        *channel_index, *interleave_index,
-        *name, *function;
     Track(XMLDocument* xmldoc);
+    void set_channel_index(uint16_t channelIndex);
+    void set_interleave_index(uint16_t interleaveIndex);
+    void set_name(const char* trackName);
+    void set_function(const char* trackFunction);
+    uint16_t get_channel_index();
+    const char* get_name() const;
+    const char* get_function() const;
     friend class TrackList;
     friend class IXML;
 };
@@ -100,7 +124,6 @@ public:
 class TrackList : public Base
 {
 public:
-    XMLElement *track_count;
     TrackList(XMLDocument* xmldoc);
     friend class IXML;
 };
@@ -173,7 +196,9 @@ protected:
     uint32_t _ixmlChunkSize, _ixmlExportedSize;
     uint16_t _ixmlVersionMajor, _ixmlVersionMinor;
     static const char *_ubitsValidChars, *_xmlEncoding;
-    char _fileUID[32], _familyUID[32];
+    char _fileUID[32], _familyUID[32], _parentUID[32];
+    std::map<const uint16_t, std::shared_ptr<Track>> tracks;
+    std::vector<XMLElement*> _trackElements;
 
 public:
     XMLDocument ixml;
@@ -191,8 +216,7 @@ public:
     SyncPointList sync_point_list;
     Location location;
     User user;
-
-    uint16_t numChannels;
+    uint16_t numTracks;
     int takeNumber;
     static const char *_uidValidChars;
 
@@ -239,13 +263,13 @@ public:
     void set_timecode(std::array<int, 4> tc) override;
     void set_timecode(int numFrames) override;
     void clear_timecode() override;
-\
+
 /*                            Sync Points                           */
     // SyncPoint* create_sync_point();
 
 /*                              History                             */
     virtual void set_filename(const char* filename);
-    // virtual void set_parent_uid();
+    virtual void set_parent_uid(const char* data);
 
 /*                             File set                             */
     virtual void set_total_files(unsigned int numFiles);
@@ -255,8 +279,21 @@ public:
     virtual void set_file_set_index(const char* index);
 
 /*                            Track list                            */
-    // Track* create_track();
-    // virtual void set_channels(uint16_t channels);
+protected:
+    void _disable_track(std::shared_ptr<Track> track);
+    void _write_track_list();
+
+public:
+    virtual void set_channels(uint16_t channels);
+    virtual uint16_t get_channels();
+    std::shared_ptr<Track> create_track();
+    std::shared_ptr<Track> get_track(const uint16_t index);
+    void delete_track(std::shared_ptr<Track> track);
+    void delete_track(const uint16_t index);
+    void disable_track(std::shared_ptr<Track> track);
+    void disable_track(const uint16_t index);
+    void enable_track(std::shared_ptr<Track> track);
+    void enable_track(const uint16_t index);
 
 /*                               BEXT                               */
     void set_originator(const char* newOriginator) override;

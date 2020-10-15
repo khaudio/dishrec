@@ -5,7 +5,7 @@
 #include "EspSDWavFile.h"
 #include "WDT.h"
 
-// Macros
+// Temp macros until refactored for dynamic vars
 #define CURRENT_SAMPLE_RATE         48000
 #define CURRENT_BIT_DEPTH           16
 #define CURRENT_NUM_CHANNELS        2

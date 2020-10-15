@@ -13,14 +13,12 @@ TODO:
         read chunk size and parse
 
     ixml
-    make bwf_version a float value; e.g. 1.0?
-    setter methods for +-1% sample rates
-        digitizer_sample_rate, etc
-    history
-        is current_filename a valid parameter per spec?
-    track list and tracks
-        save inactive tracks but omit from print?
-            for easy reactivation when dis/re-armed
+        check file_set_index setter
+        setter methods for +-1% sample rates
+            set note field under speed to note speedup or slowdown
+            digitizer_sample_rate, etc
+        all sync point list stuff
+            maybe dynamically create and destroy XMLElements like TrackList
 
     Anything WAV
         must end on even byte count

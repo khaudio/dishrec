@@ -226,7 +226,6 @@ const char* CodingHistoryRow::c_str()
 
 BEXTChunk::BEXTChunk() :
 _umidSet(false),
-_loudnessSet(false),
 _loudnessValueSet(false),
 _loudnessRangeSet(false),
 _maxTruePeakLevelSet(false),
@@ -252,7 +251,7 @@ BEXTChunk::~BEXTChunk()
 
 void BEXTChunk::clear()
 {
-    set_bwf_version(0); // Default to BWF Version 0
+    set_bwf_version(2);
     clear_description();
     clear_originator();
     clear_originator_reference();
@@ -390,17 +389,22 @@ void BEXTChunk::set_bwf_version(uint16_t versionNumber)
     this->bwfVersion = versionNumber;
 }
 
-void BEXTChunk::_autocorrect_bwf_version()
+bool BEXTChunk::loudness_is_set()
 {
-    this->_loudnessSet = (
+    return (
             this->_loudnessValueSet
             && this->_loudnessRangeSet
             && this->_maxTruePeakLevelSet
             && this->_maxMomentaryLoudnessSet
             && this->_maxShortTermLoudnessSet
         );
-    if (this->_loudnessSet && this->_umidSet) set_bwf_version(2);
-    else if (!this->_loudnessSet && this->_umidSet) set_bwf_version(1);
+}
+
+void BEXTChunk::_autoset_bwf_version()
+{
+    bool loudnessSet = loudness_is_set();
+    if (loudnessSet && this->_umidSet) set_bwf_version(2);
+    else if (!loudnessSet && this->_umidSet) set_bwf_version(1);
     else if (this->bwfVersion) set_bwf_version(0);
 }
 
@@ -413,49 +417,42 @@ void BEXTChunk::set_umid(const uint8_t* newUmid, uint8_t length)
     memcpy(this->umid, newUmid, length);
     if (length <= 32) memset(this->umid + 32, 0, 32);
     this->_umidSet = true;
-    _autocorrect_bwf_version();
 }
 
 void BEXTChunk::clear_umid()
 {
     memset(this->umid, 0, 64);
     this->_umidSet = false;
-    _autocorrect_bwf_version();
 }
 
 void BEXTChunk::set_loudness_value(uint16_t value)
 {
     this->loudnessValue = value;
     this->_loudnessValueSet = true;
-    _autocorrect_bwf_version();
 }
 
 void BEXTChunk::set_loudness_range(uint16_t range)
 {
     this->loudnessRange = range;
     this->_loudnessRangeSet = true;
-    _autocorrect_bwf_version();
 }
 
 void BEXTChunk::set_loudness_max_true_peak(uint16_t level)
 {
     this->maxTruePeakLevel = level;
     this->_maxTruePeakLevelSet = true;
-    _autocorrect_bwf_version();
 }
 
 void BEXTChunk::set_loudness_max_momentary(uint16_t level)
 {
     this->maxMomentaryLoudness = level;
     this->_maxMomentaryLoudnessSet = true;
-    _autocorrect_bwf_version();
 }
 
 void BEXTChunk::set_loudness_max_short_term(uint16_t value)
 {
     this->maxShortTermLoudness = value;
     this->_maxShortTermLoudnessSet = true;
-    _autocorrect_bwf_version();
 }
 
 void BEXTChunk::clear_loudness()
@@ -470,7 +467,6 @@ void BEXTChunk::clear_loudness()
     this->_maxTruePeakLevelSet = false;
     this->_maxMomentaryLoudnessSet = false;
     this->_maxShortTermLoudnessSet = false;
-    this->_loudnessSet = false;
 }
 
 void BEXTChunk::set_reserved()

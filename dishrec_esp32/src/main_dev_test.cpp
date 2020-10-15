@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <map>
 
 #include "WavHeader.h"
 #include "BEXTChunk.h"
@@ -34,7 +35,7 @@ int main()
     bext.set_date(2020, 9, 30);
     bext.set_time(20, 49, 9);
     bext.set_umid((uint8_t*)"01234567890123456789012345678901", 32);
-
+    
     WavParameters params;
     params.sampleRate = 48000;
     params.bitDepth = 16;
@@ -59,8 +60,19 @@ int main()
     ixml.set_project("dishrec test project");
     ixml.set_scene("101A");
     ixml.set_take(1);
-    ixml.set_family_name();
-    ixml.set_total_files(1); // File is not one mono stem of multple concurrent recorded files
+    
+    std::shared_ptr<iXML::Track> newTrack = ixml.create_track();
+    newTrack->set_name("track numba juan");
+    newTrack->set_function("MID/SIDE");
+    
+    const uint16_t idx = newTrack->get_channel_index();
+    ixml.disable_track(newTrack);
+    newTrack = ixml.get_track(idx);
+    ixml.enable_track(newTrack);
+    ixml.disable_track(idx);
+    ixml.enable_track(idx);
+    ixml.enable_track(newTrack);
+
     ixml.set_tape("tape name... set tape name to date?");
     ixml.set_note("this is a note for this take");
     ixml.set_circled(true); // Circle this take
@@ -68,17 +80,21 @@ int main()
     ixml.set_no_good(true);
     ixml.set_ubits(0xde, 0xad, 0xbe, 0xef);
 
+    ixml.set_filename("101AT001");
+    ixml.set_family_name();
+    ixml.set_total_files(1); // File is not one mono stem of multple concurrent recorded files
+    ixml.set_file_uid();
+    ixml.set_parent_uid("thisisaparentUIDshorterthan32chars");
+
     size_t metaBuffSize = ixml.total_size();
     uint8_t metaBuff[metaBuffSize];
     ixml.copy_to_buffer(metaBuff);
 
-    ixml.set_file_uid();
-    
-    for (size_t i(0); i < metaBuffSize; ++i)
-    {
-        std::cout << std::setw(2) << std::setfill('0') << std::hex << +metaBuff[i] << " ";
-    }
-    std::cout << std::endl << std::endl;
+    // for (size_t i(0); i < metaBuffSize; ++i)
+    // {
+    //     std::cout << std::setw(2) << std::setfill('0') << std::hex << +metaBuff[i] << " ";
+    // }
+    // std::cout << std::endl << std::endl;
 
     for (size_t i(0); i < metaBuffSize; ++i)
     {
@@ -90,7 +106,6 @@ int main()
 
     std::cout << std::endl << std::endl;
 
-    return 0;
 }
 
 
@@ -190,5 +205,99 @@ iXML�
 
 IXML Total Size: 3322
 
+
+SOUND DEVICES 633
+<?xml version="1.0" encoding="UTF-8"?>
+<BWFXML>
+        <IXML_VERSION>1.5</IXML_VERSION>
+        <PROJECT>NoGreaterLove</PROJECT>
+        <SCENE>32D</SCENE>
+        <MEDIA_ID>1331</MEDIA_ID>
+        <TAKE>03</TAKE>
+        <TAPE>14Y06M30</TAPE>
+        <CIRCLED>FALSE</CIRCLED>
+        <UBITS>00000000</UBITS>
+        <FILE_UID>USSDVLL0314007001140630HtNLT  11</FILE_UID>
+        <NOTE>Drive</NOTE>
+        <SPEED>
+                <NOTE></NOTE>
+                <MASTER_SPEED>24000/1001</MASTER_SPEED>
+                <CURRENT_SPEED>24000/1001</CURRENT_SPEED>
+                <TIMECODE_FLAG>NDF</TIMECODE_FLAG>
+                <TIMECODE_RATE>24000/1001</TIMECODE_RATE>
+                <FILE_SAMPLE_RATE>96000</FILE_SAMPLE_RATE>
+                <AUDIO_BIT_DEPTH>24</AUDIO_BIT_DEPTH>
+                <DIGITIZER_SAMPLE_RATE>96000</DIGITIZER_SAMPLE_RATE>
+                <TIMESTAMP_SAMPLE_RATE>96000</TIMESTAMP_SAMPLE_RATE>
+                <TIMESTAMP_SAMPLES_SINCE_MIDNIGHT_HI>0000000001</TIMESTAMP_SAMPLES_SINCE_MIDNIGHT_HI>
+                <TIMESTAMP_SAMPLES_SINCE_MIDNIGHT_LO>1906684161</TIMESTAMP_SAMPLES_SINCE_MIDNIGHT_LO>
+        </SPEED>
+        <HISTORY>
+                <ORIGINAL_FILENAME>32DT03.WAV</ORIGINAL_FILENAME>
+                <CURRENT_FILENAME>32DT03.WAV</CURRENT_FILENAME>
+        </HISTORY>
+        <FILE_SET>
+                <TOTAL_FILES>1</TOTAL_FILES>
+                <FAMILY_UID>USSDVLL0314007001140630HtNLT  0</FAMILY_UID>
+                <FILE_SET_INDEX>A</FILE_SET_INDEX>
+        </FILE_SET>
+        <TRACK_LIST>
+                <TRACK_COUNT>3</TRACK_COUNT>
+                <TRACK>
+                        <CHANNEL_INDEX>3</CHANNEL_INDEX>
+                        <INTERLEAVE_INDEX>1</INTERLEAVE_INDEX>
+                        <NAME>416-HH</NAME>
+                </TRACK>
+                <TRACK>
+                        <CHANNEL_INDEX>6</CHANNEL_INDEX>
+                        <INTERLEAVE_INDEX>2</INTERLEAVE_INDEX>
+                        <NAME>Lav 1-Host</NAME>
+                </TRACK>
+                <TRACK>
+                        <CHANNEL_INDEX>7</CHANNEL_INDEX>
+                        <INTERLEAVE_INDEX>3</INTERLEAVE_INDEX>
+                        <NAME>Lav 2-Guest</NAME>
+                </TRACK>
+        </TRACK_LIST>
+</BWFXML>
+
+
+
+ZAXCOM TRXCL3.5
+<?xml version="1.0" encoding="UTF-8"?>
+<BWFXML>
+    <IXML_VERSION>1.27</IXML_VERSION>
+    <TAPE>SN8083</TAPE>
+    <SPEED>
+        <TIMECODE_RATE>24000/1001</TIMECODE_RATE>
+        <TIMECODE_FLAG>NDF</TIMECODE_FLAG>
+    </SPEED>
+    <TRACK_LIST>
+        <TRACK_COUNT>1</TRACK_COUNT>
+        <TRACK>
+            <CHANNEL_INDEX>1</CHANNEL_INDEX>
+            <INTERLEAVE_INDEX>1</INTERLEAVE_INDEX>
+            <NAME>SN8083</NAME>
+        </TRACK>
+    </TRACK_LIST>
+    <FILE_SET>
+        <TOTAL_FILES>1</TOTAL_FILES>
+        <FAMILY_NAME>SN8083061__</FAMILY_NAME>
+        <FAMILY_UID>SN8083061_0xA74BA30F_0xA77676EF_0x12E73F74</FAMILY_UID>
+    </FILE_SET>
+    <BEXT>
+        <BWF_ORIGINATOR>Zaxcom ZAXFILE</BWF_ORIGINATOR>
+        <BWF_ORIGINATION_DATE>0000-00-00</BWF_ORIGINATION_DATE>
+        <BWF_ORIGINATION_TIME>00-00-00</BWF_ORIGINATION_TIME>
+        <BWF_TIME_REFERENCE_LOW>2809558767</BWF_TIME_REFERENCE_LOW>
+        <BWF_TIME_REFERENCE_HIGH>0</BWF_TIME_REFERENCE_HIGH>
+        <BWF_VERSION>1.0</BWF_VERSION>
+        <BWF_CODING_HISTORY>A=PCM,F=48000,W=24,M=1,T=ZAXFILE</BWF_CODING_HISTORY>
+    </BEXT>
+</BWFXML>
+
+2806752015
+2809558767
+317144948
 
 */

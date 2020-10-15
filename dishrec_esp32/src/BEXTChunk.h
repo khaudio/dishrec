@@ -79,11 +79,11 @@ class BEXTChunk
 {
 public:
     bool
-        _umidSet, _loudnessSet,
+        _umidSet,
         _loudnessValueSet, _loudnessRangeSet, _maxTruePeakLevelSet,
         _maxMomentaryLoudnessSet, _maxShortTermLoudnessSet;
     uint32_t _size;
-    void _autocorrect_bwf_version();
+    void _autoset_bwf_version();
     char
         _bextChunkID[4], description[256],
         originator[32], originatorReference[32],
@@ -121,6 +121,7 @@ public:
     virtual void set_loudness_max_momentary(uint16_t level);
     virtual void set_loudness_max_short_term(uint16_t value);
     virtual void clear_loudness();
+    virtual bool loudness_is_set();
     virtual void set_reserved();
     virtual void set_coding_history(CodingHistoryRow row);
     virtual void append_to_coding_history(CodingHistoryRow row);

@@ -15,7 +15,9 @@
     CLK                             18
 */
 
+#ifndef SD_CS_PIN
 #define SD_CS_PIN                   (GPIO_NUM_5)
+#endif
 
 /* SDMMC:
 

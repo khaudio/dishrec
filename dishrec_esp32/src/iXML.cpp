@@ -173,7 +173,6 @@ Base(xmldoc, "SPEED")
     this->note->SetText("");
 }
 
-
 History::History(XMLDocument* xmldoc) :
 Base(xmldoc, "HISTORY")
 {
@@ -192,18 +191,43 @@ Base(xmldoc, "FILE_SET")
 }
 
 Track::Track(XMLDocument* xmldoc) :
-Base(xmldoc, "TRACK")
+Base(xmldoc, "TRACK"),
+_active(true),
+_index(0),
+_interleaveIndex(0),
+_name(""),
+_function("")
 {
-    this->channel_index = _set_child_element("CHANNEL_INDEX");
-    this->interleave_index = _set_child_element("INTERLEAVE_INDEX");
-    this->name = _set_child_element("NAME");
-    this->function = _set_child_element("FUNCTION");
+}
+
+void Track::set_channel_index(uint16_t channelIndex)
+{
+    this->_index = channelIndex;
+}
+
+void Track::set_interleave_index(uint16_t interleaveIndex)
+{
+    this->_interleaveIndex = interleaveIndex;
+}
+
+void Track::set_name(const char* trackName)
+{
+    strcpy(this->_name, trackName);
+}
+
+void Track::set_function(const char* trackFunction)
+{
+    strcpy(this->_function, trackFunction);
+}
+
+uint16_t Track::get_channel_index()
+{
+    return this->_index;
 }
 
 TrackList::TrackList(XMLDocument* xmldoc) :
 Base(xmldoc, "TRACK_LIST")
 {
-    this->track_count = _set_child_element("TRACK_COUNT");
 }
 
 BEXTElement::BEXTElement(XMLDocument* xmldoc) :
@@ -225,7 +249,6 @@ Base(xmldoc, "BEXT")
     this->bwf_max_true_peak_level = _set_child_element("BWF_MAX_TRUE_PEAK_LEVEL");
     this->bwf_max_momentary_loudness = _set_child_element("BWF_MAX_MOMENTARY_LOUDNESS");
     this->bwf_max_short_term_loudness = _set_child_element("BWF_MAX_SHORT_TERM_LOUDNESS");
-    
 }
 
 SyncPoint::SyncPoint(XMLDocument* xmldoc) :
@@ -287,7 +310,8 @@ track_list(&ixml),
 bext(&ixml),
 sync_point_list(&ixml),
 location(&ixml),
-user(&ixml)
+user(&ixml),
+numTracks(0)
 {
     memcpy(this->_ixmlChunkID, "iXML", 4);
     this->root = this->ixml.NewElement("BWFXML");
@@ -575,6 +599,14 @@ void IXML::set_filename(const char* filename)
     this->history.original_filename->SetText(filename);
 }
 
+void IXML::set_parent_uid(const char* data)
+{
+    uint8_t length = BEXT::get_str_length<uint8_t>(data, false);
+    length = ((length < 32) ? length : 32); // Truncate if too long
+    strncpy(this->_parentUID, data, length);
+    for (size_t i(length); i <= 32; ++i) this->_parentUID[i] = '\0';
+}
+
 void IXML::set_total_files(unsigned int numFiles)
 {
     this->file_set.total_files->SetText(numFiles);
@@ -610,6 +642,152 @@ void IXML::set_family_name(const char* familyName)
 void IXML::set_file_set_index(const char* index)
 {
     this->file_set.file_set_index->SetText(index);
+}
+
+void IXML::set_channels(uint16_t channels)
+{
+    int tracksToCreate = channels - this->tracks.size();
+    if (channels > 0) for (int i(0); i < tracksToCreate; ++i) create_track();
+    
+    // Set active/inactive tracks here?
+}
+
+uint16_t IXML::get_channels()
+{
+    uint16_t numActive(0);
+    for (std::pair<const uint16_t, std::shared_ptr<Track>> p: this->tracks)
+    {
+        numActive += p.second->_active;
+    }
+    return numActive;
+}
+
+void IXML::_write_track_list()
+{
+    // Delete track data (name, function, etc) elements
+    for (size_t i(0); i < this->_trackElements.size(); ++i)
+    {
+        this->_trackElements[i]->DeleteChildren();
+    }
+
+    // Delete track elements and count from track list
+    this->track_list._element->DeleteChildren();
+
+    // Clear deleted track pointers
+    this->_trackElements.clear();
+
+    // Delete track list element
+    this->root->DeleteChild(this->track_list._element);
+
+    // Recreate track list element
+    this->track_list._element = this->ixml.NewElement("TRACK_LIST");
+    
+    // Recreate track count element
+    XMLElement* track_count = this->track_list._set_child_element("TRACK_COUNT");
+
+    // Re-insert track list
+    this->root->InsertAfterChild(this->file_set._element, this->track_list._element);
+
+    // Reset track count index
+    this->numTracks = 0;
+
+    if (!this->tracks.size())
+    {
+        track_count->SetText(this->numTracks);
+        return;
+    }
+
+    // Iterate over Track objects
+    for (std::pair<const uint16_t, std::shared_ptr<Track>>& p: this->tracks)
+    {
+        std::shared_ptr<Track> track = p.second;
+        if (track->_active)
+        {
+            track->set_interleave_index(++this->numTracks);
+            XMLElement* trackElement = this->_trackElements.emplace_back(
+                    this->track_list._element->InsertNewChildElement("TRACK")
+                );
+            XMLElement* channelIndex = trackElement->InsertNewChildElement("CHANNEL_INDEX");
+            XMLElement* interleaveIndex = trackElement->InsertNewChildElement("INTERLEAVE_INDEX");
+            XMLElement* name = trackElement->InsertNewChildElement("NAME");
+            XMLElement* function = trackElement->InsertNewChildElement("FUNCTION");
+            channelIndex->SetText(track->_index);
+            interleaveIndex->SetText(track->_interleaveIndex);
+            name->SetText(track->_name);
+            function->SetText(track->_function);
+        }
+    }
+
+    // Set track count element
+    track_count->SetText(this->numTracks);
+}
+
+std::shared_ptr<Track> IXML::get_track(const uint16_t index)
+{
+    std::map<const uint16_t, std::shared_ptr<Track>>::iterator iter;
+    iter = this->tracks.find(index);
+    if (iter == this->tracks.end()) throw TRACK_NOT_FOUND;
+    return iter->second;
+}
+
+std::shared_ptr<Track> IXML::create_track()
+{
+    std::shared_ptr<Track> newTrack = std::make_shared<Track>(&this->ixml);
+    newTrack->set_channel_index(++this->numTracks);
+    newTrack->set_name("");
+    newTrack->set_function("");
+    this->tracks.insert_or_assign(newTrack->_index, newTrack);
+    _write_track_list();
+    return newTrack;
+}
+
+void IXML::delete_track(std::shared_ptr<Track> track)
+{
+    this->tracks.erase(track->_index);
+    _write_track_list();
+}
+
+void IXML::delete_track(const uint16_t index)
+{
+    this->tracks.erase(index);
+    _write_track_list();
+}
+
+void IXML::enable_track(std::shared_ptr<Track> track)
+{
+    for (std::pair<const uint16_t, std::shared_ptr<Track>>& p: this->tracks)
+    {
+        if (p.second == track)
+        {
+            if (track->_active) return;
+            track->_active = true;
+            _write_track_list();
+        }
+        else throw TRACK_NOT_FOUND;
+    }
+}
+
+void IXML::enable_track(const uint16_t index)
+{
+    std::shared_ptr<Track> track = get_track(index);
+    if (track->_active) return;
+    track->_active = true;
+    _write_track_list();
+}
+
+void IXML::disable_track(std::shared_ptr<Track> track)
+{
+    if (!track->_active) return;
+    track->_active = false;
+    _write_track_list();
+}
+
+void IXML::disable_track(const uint16_t index)
+{
+    std::shared_ptr<Track> track = get_track(index);
+    if (!track->_active) return;
+    track->_active = false;
+    _write_track_list();
 }
 
 void IXML::set_originator(const char* newOriginator)
@@ -693,9 +871,6 @@ void IXML::clear_time()
 void IXML::set_bwf_version(uint16_t versionNumber)
 {
     BEXT::BEXTChunk::set_bwf_version(versionNumber);
-    // char buff[7];
-    // sprintf(buff, "0x%04x", this->bwfVersion);
-    // this->bext.bwf_version->SetText(buff);
     
     // Format to one decimal point FP
     char buff[4];
@@ -812,13 +987,12 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     set_loudness_max_momentary(chunk.maxMomentaryLoudness);
     set_loudness_max_short_term(chunk.maxShortTermLoudness);
     this->_umidSet = chunk._umidSet;
-    this->_loudnessSet = chunk._loudnessSet;
     this->_loudnessValueSet = chunk._loudnessValueSet;
     this->_loudnessRangeSet = chunk._loudnessRangeSet;
     this->_maxTruePeakLevelSet = chunk._maxTruePeakLevelSet;
     this->_maxMomentaryLoudnessSet = chunk._maxMomentaryLoudnessSet;
     this->_maxShortTermLoudnessSet = chunk._maxShortTermLoudnessSet;
-    if (!this->_loudnessSet) clear_loudness();
+    if (!loudness_is_set()) clear_loudness();
 }
 
 uint32_t IXML::size()
@@ -846,6 +1020,7 @@ const char* IXML::_xml_c_str()
 
 void IXML::copy_to_buffer(uint8_t* buff)
 {
+    if (this->numTracks != get_channels()) throw TRACK_COUNT_MISMATCH;
     const char* cstr = _xml_c_str();
     this->_ixmlChunkSize = BEXT::get_str_length<uint32_t>(cstr, true);
     bool addByte = false;
