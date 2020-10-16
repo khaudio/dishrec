@@ -484,7 +484,7 @@ void BEXTChunk::set_coding_history(CodingHistoryRow row)
     terminated by CR/LF. Each string shall contain a description of a coding
     process applied to the audio data. Each new coding application shall add
     a new string with the appropriate information. */
-    uint32_t rowSize = row.size();
+    const uint32_t rowSize = row.size();
     char buff[rowSize + 1];
     row.copy_to_buffer(buff);
     buff[rowSize] = '\0';
@@ -493,7 +493,7 @@ void BEXTChunk::set_coding_history(CodingHistoryRow row)
 
 void BEXTChunk::append_to_coding_history(CodingHistoryRow row)
 {
-    uint32_t rowSize = row.size();
+    const uint32_t rowSize = row.size();
     char buff[rowSize + 1];
     row.copy_to_buffer(buff);
     buff[rowSize] = '\0';

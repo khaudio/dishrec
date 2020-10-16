@@ -601,10 +601,7 @@ void IXML::set_filename(const char* filename)
 
 void IXML::set_parent_uid(const char* data)
 {
-    uint8_t length = BEXT::get_str_length<uint8_t>(data, false);
-    length = ((length < 32) ? length : 32); // Truncate if too long
-    strncpy(this->_parentUID, data, length);
-    for (size_t i(length); i <= 32; ++i) this->_parentUID[i] = '\0';
+    this->history.parent_uid->SetText(data);
 }
 
 void IXML::set_total_files(unsigned int numFiles)
@@ -755,16 +752,9 @@ void IXML::delete_track(const uint16_t index)
 
 void IXML::enable_track(std::shared_ptr<Track> track)
 {
-    for (std::pair<const uint16_t, std::shared_ptr<Track>>& p: this->tracks)
-    {
-        if (p.second == track)
-        {
-            if (track->_active) return;
-            track->_active = true;
-            _write_track_list();
-        }
-        else throw TRACK_NOT_FOUND;
-    }
+    if (track->_active) return;
+    track->_active = true;
+    _write_track_list();
 }
 
 void IXML::enable_track(const uint16_t index)
@@ -1006,8 +996,7 @@ uint32_t IXML::size()
 
 size_t IXML::total_size()
 {
-    size_t chunkSize = size();
-    return chunkSize + 8;
+    return size() + 8; // Chunk + ID and Size indicators
 }
 
 const char* IXML::_xml_c_str()

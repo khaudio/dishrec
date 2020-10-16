@@ -61,17 +61,23 @@ int main()
     ixml.set_scene("101A");
     ixml.set_take(1);
     
-    std::shared_ptr<iXML::Track> newTrack = ixml.create_track();
-    newTrack->set_name("track numba juan");
-    newTrack->set_function("MID/SIDE");
+    std::shared_ptr<iXML::Track> trackOne = ixml.create_track();
+    trackOne->set_name("BOOM1");
+    trackOne->set_function("M/S MID");
+    std::shared_ptr<iXML::Track> trackTwo = ixml.create_track();
+    trackTwo->set_name("BOOM2");
+    trackTwo->set_function("M/S SIDE");
+    trackTwo->set_channel_index(2);
+    trackTwo->set_interleave_index(2);
+
+    const uint16_t t1idx = trackOne->get_channel_index();
+    ixml.disable_track(trackOne);
     
-    const uint16_t idx = newTrack->get_channel_index();
-    ixml.disable_track(newTrack);
-    newTrack = ixml.get_track(idx);
-    ixml.enable_track(newTrack);
-    ixml.disable_track(idx);
-    ixml.enable_track(idx);
-    ixml.enable_track(newTrack);
+    trackOne = ixml.get_track(t1idx);
+    ixml.enable_track(trackOne);
+    ixml.disable_track(t1idx);
+    ixml.enable_track(t1idx);
+    ixml.enable_track(trackOne);
 
     ixml.set_tape("tape name... set tape name to date?");
     ixml.set_note("this is a note for this take");
@@ -84,9 +90,9 @@ int main()
     ixml.set_family_name();
     ixml.set_total_files(1); // File is not one mono stem of multple concurrent recorded files
     ixml.set_file_uid();
-    ixml.set_parent_uid("thisisaparentUIDshorterthan32chars");
+    ixml.set_parent_uid("thiscanbethefileuidforthefilethisfilewasderivedfromoranythingelse_YYYYMMDD_00123423");
 
-    size_t metaBuffSize = ixml.total_size();
+    const size_t metaBuffSize = ixml.total_size();
     uint8_t metaBuff[metaBuffSize];
     ixml.copy_to_buffer(metaBuff);
 
