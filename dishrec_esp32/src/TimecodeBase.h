@@ -79,7 +79,7 @@ public:
     void set_timecode(int hr, int min, int sec, int frm) override;
     void set_timecode(std::array<int, 4> tc) override;
     void set_timecode(int numFrames) override;
-    void tick();
+    virtual void tick();
     virtual void set_sample_rate(uint32_t samplerate);
 };
 

@@ -30,6 +30,9 @@ enum ixml_err
     TRACK_COUNT_MISMATCH = 120,
     TRACK_NOT_FOUND = 121,
     INVALID_UID_LENGTH = 122,
+    SYNC_POINT_TIMESTAMP_NOT_SET = 123,
+    SYNC_POINT_NOT_FOUND = 124,
+    ITEM_NOT_FOUND = 125,
 };
 
 void get_random_str(char* buff, uint32_t length);
@@ -146,11 +149,22 @@ public:
 
 class SyncPoint : public Base
 {
+protected:
+    bool _timestampSet;
+    uint64_t _timestamp;
+    void _set_timestamp();
 public:
     XMLElement
         *sync_point_type, *sync_point_function, *sync_point_comment,
         *sync_point_low, *sync_point_high, *sync_point_event_duration;
     SyncPoint(XMLDocument* xmldoc);
+    void set_type(const char* syncPointType);
+    void set_function(const char* syncPointFunction);
+    void set_comment(const char* comment);
+    void set_timestamp(uint64_t numSamples);
+    void set_timestamp(const TimecodeBase::Clock& clock);
+    uint64_t get_timestamp() const;
+    void set_duration(uint64_t duration);
     friend class SyncPointList;
     friend class IXML;
 };
@@ -198,6 +212,7 @@ protected:
     static const char *_ubitsValidChars, *_xmlEncoding;
     char _fileUID[32], _familyUID[32], _parentUID[32];
     std::map<const uint16_t, std::shared_ptr<Track>> tracks;
+    std::vector<std::shared_ptr<SyncPoint>> syncPoints;
     std::vector<XMLElement*> _trackElements;
 
 public:
@@ -216,7 +231,7 @@ public:
     SyncPointList sync_point_list;
     Location location;
     User user;
-    uint16_t numTracks;
+    uint16_t numTracks, numSyncPoints;
     int takeNumber;
     static const char *_uidValidChars;
 
@@ -265,8 +280,21 @@ public:
     void clear_timecode() override;
 
 /*                            Sync Points                           */
-    // virtual SyncPoint* create_sync_point();
-    // virtual void destroy_sync_point();
+protected:
+    static inline bool _sync_point_sorter(
+            std::shared_ptr<SyncPoint> first,
+            std::shared_ptr<SyncPoint> second
+        );
+    inline size_t _get_sync_point_index(std::shared_ptr<SyncPoint> point);
+    inline void _update_sync_point_count();
+    virtual std::shared_ptr<SyncPoint> _create_sync_point(uint64_t numSamples);
+
+public:
+    virtual std::shared_ptr<SyncPoint> create_sync_point(uint64_t numSamples);
+    virtual std::shared_ptr<SyncPoint> create_sync_point(TimecodeBase::Clock& clock);
+    virtual std::shared_ptr<SyncPoint> create_sync_point();
+    virtual void destroy_sync_point(std::shared_ptr<SyncPoint> point);
+    virtual void clear_sync_points();
 
 /*                              History                             */
     virtual void set_filename(const char* filename);

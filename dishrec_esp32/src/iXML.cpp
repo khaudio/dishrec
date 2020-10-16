@@ -6,6 +6,7 @@ const char* IXML::_ubitsValidChars = "0123456789abcdef";
 const char* IXML::_uidValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const char* IXML::_xmlEncoding = "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 
+
 void iXML::get_random_str(char* buff, uint32_t length)
 {
     srand(time(NULL));
@@ -252,7 +253,9 @@ Base(xmldoc, "BEXT")
 }
 
 SyncPoint::SyncPoint(XMLDocument* xmldoc) :
-Base(xmldoc, "SYNC_POINT")
+Base(xmldoc, "SYNC_POINT"),
+_timestampSet(false),
+_timestamp(0)
 {
     this->sync_point_type = _set_child_element("SYNC_POINT_TYPE");
     this->sync_point_function = _set_child_element("SYNC_POINT_FUNCTION");
@@ -260,6 +263,57 @@ Base(xmldoc, "SYNC_POINT")
     this->sync_point_low = _set_child_element("SYNC_POINT_LOW");
     this->sync_point_high = _set_child_element("SYNC_POINT_HIGH");
     this->sync_point_event_duration = _set_child_element("SYNC_POINT_EVENT_DURATION");
+    this->sync_point_event_duration->SetText(0);
+    this->sync_point_type->SetText("");
+    this->sync_point_function->SetText("");
+    this->sync_point_comment->SetText("");
+}
+
+void SyncPoint::set_type(const char* syncPointType)
+{
+    this->sync_point_type->SetText(syncPointType);
+}
+
+void SyncPoint::set_function(const char* syncPointFunction)
+{
+    this->sync_point_function->SetText(syncPointFunction);
+}
+
+void SyncPoint::set_comment(const char* comment)
+{
+    this->sync_point_comment->SetText(comment);
+}
+
+void SyncPoint::_set_timestamp()
+{
+    uint32_t* cast = reinterpret_cast<uint32_t*>(&this->_timestamp);
+    this->sync_point_low->SetText(*cast);
+    this->sync_point_high->SetText(*(cast + 1));
+    this->_timestampSet = true;
+}
+
+void SyncPoint::set_timestamp(uint64_t numSamples)
+{
+    this->_timestamp = numSamples;
+    _set_timestamp();
+}
+
+void SyncPoint::set_timestamp(const TimecodeBase::Clock& clock)
+{
+    this->_timestamp = clock.samplesSinceMidnight;
+    this->sync_point_low->SetText(*clock.timestampSSMLo);
+    this->sync_point_high->SetText(*clock.timestampSSMHi);
+    this->_timestampSet = true;
+}
+
+uint64_t SyncPoint::get_timestamp() const
+{
+    return this->_timestamp;
+}
+
+void SyncPoint::set_duration(uint64_t duration)
+{
+    this->sync_point_event_duration->SetText(duration);
 }
 
 SyncPointList::SyncPointList(XMLDocument* xmldoc) :
@@ -311,7 +365,8 @@ bext(&ixml),
 sync_point_list(&ixml),
 location(&ixml),
 user(&ixml),
-numTracks(0)
+numTracks(0),
+numSyncPoints(0)
 {
     memcpy(this->_ixmlChunkID, "iXML", 4);
     this->root = this->ixml.NewElement("BWFXML");
@@ -594,16 +649,97 @@ void IXML::clear_timecode()
     this->bext.bwf_time_reference_high->SetText("");
 }
 
-// SyncPoint* IXML::create_sync_point()
-// {
+inline bool IXML::_sync_point_sorter(
+        std::shared_ptr<SyncPoint> first,
+        std::shared_ptr<SyncPoint> second
+    )
+{
+    return first->get_timestamp() < second->get_timestamp();
+}
 
-// }
+inline void IXML::_update_sync_point_count()
+{
+    this->numSyncPoints = this->syncPoints.size();
+    this->sync_point_list.sync_point_count->SetText(this->numSyncPoints);
+}
 
-// void IXML::destroy_sync_point()
-// {
+size_t IXML::_get_sync_point_index(std::shared_ptr<SyncPoint> point)
+{
+    std::vector<std::shared_ptr<SyncPoint>>::iterator iter;
+    iter = std::find(this->syncPoints.begin(), this->syncPoints.end(), point);
+    if (iter == this->syncPoints.end()) throw SYNC_POINT_NOT_FOUND;
+    return iter - this->syncPoints.begin();
+}
 
-// }
+std::shared_ptr<SyncPoint> IXML::_create_sync_point(uint64_t numSamples)
+{
+    this->syncPoints.emplace_back(std::make_shared<SyncPoint>(&this->ixml));
+    std::shared_ptr<SyncPoint> point = this->syncPoints.back();
+    point->set_timestamp(numSamples);
+    this->numSyncPoints = this->syncPoints.size();
+    if (this->numSyncPoints == 1)
+    {
+        this->sync_point_list._element->InsertEndChild(point->_element);
+    }
+    else
+    {
+        std::sort(
+                this->syncPoints.begin(),
+                this->syncPoints.end(),
+                IXML::_sync_point_sorter
+            );
+        int index = _get_sync_point_index(point);
+        if (index)
+        {
+            this->sync_point_list._element->InsertAfterChild(
+                    this->syncPoints[index - 1]->_element, point->_element
+                );
+        }
+        else
+        {
+            this->sync_point_list._element->InsertAfterChild(
+                    this->sync_point_list.sync_point_count,
+                    point->_element
+                );
+        }
+    }
+    this->sync_point_list.sync_point_count->SetText(this->numSyncPoints);
+    return point;
+}
 
+std::shared_ptr<SyncPoint> IXML::create_sync_point(uint64_t numSamples)
+{
+    return _create_sync_point(numSamples);
+}
+
+std::shared_ptr<SyncPoint> IXML::create_sync_point(TimecodeBase::Clock& clock)
+{
+    return _create_sync_point(clock.samplesSinceMidnight);
+}
+
+std::shared_ptr<SyncPoint> IXML::create_sync_point()
+{
+    // Create sync point at current timestamp
+    return _create_sync_point(this->samplesSinceMidnight);
+}
+
+void IXML::destroy_sync_point(std::shared_ptr<SyncPoint> point)
+{
+    std::vector<std::shared_ptr<SyncPoint>>::iterator iter;
+    iter = std::find(this->syncPoints.begin(), this->syncPoints.end(), point);
+    if (iter == this->syncPoints.end()) return;
+    point->_element->DeleteChildren();
+    this->sync_point_list._element->DeleteChild(point->_element);
+    this->syncPoints.erase(iter);
+    this->numSyncPoints = this->syncPoints.size();
+    this->sync_point_list.sync_point_count->SetText(this->numSyncPoints);
+}
+
+void IXML::clear_sync_points()
+{
+    this->syncPoints.clear();
+    _update_sync_point_count();
+}
 
 void IXML::set_filename(const char* filename)
 {
