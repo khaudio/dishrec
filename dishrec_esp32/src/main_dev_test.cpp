@@ -64,11 +64,10 @@ int main()
     std::shared_ptr<iXML::Track> trackOne = ixml.create_track();
     trackOne->set_name("BOOM1");
     trackOne->set_function("M/S MID");
+
     std::shared_ptr<iXML::Track> trackTwo = ixml.create_track();
     trackTwo->set_name("BOOM2");
     trackTwo->set_function("M/S SIDE");
-    trackTwo->set_channel_index(2);
-    trackTwo->set_interleave_index(2);
 
     const uint16_t t1idx = trackOne->get_channel_index();
     ixml.disable_track(trackOne);

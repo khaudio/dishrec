@@ -594,6 +594,17 @@ void IXML::clear_timecode()
     this->bext.bwf_time_reference_high->SetText("");
 }
 
+// SyncPoint* IXML::create_sync_point()
+// {
+
+// }
+
+// void IXML::destroy_sync_point()
+// {
+
+// }
+
+
 void IXML::set_filename(const char* filename)
 {
     this->history.original_filename->SetText(filename);
@@ -672,12 +683,6 @@ void IXML::_write_track_list()
 
     // Clear deleted track pointers
     this->_trackElements.clear();
-
-    // Delete track list element
-    this->root->DeleteChild(this->track_list._element);
-
-    // Recreate track list element
-    this->track_list._element = this->ixml.NewElement("TRACK_LIST");
     
     // Recreate track count element
     XMLElement* track_count = this->track_list._set_child_element("TRACK_COUNT");
@@ -738,13 +743,13 @@ std::shared_ptr<Track> IXML::create_track()
     return newTrack;
 }
 
-void IXML::delete_track(std::shared_ptr<Track> track)
+void IXML::destroy_track(std::shared_ptr<Track> track)
 {
     this->tracks.erase(track->_index);
     _write_track_list();
 }
 
-void IXML::delete_track(const uint16_t index)
+void IXML::destroy_track(const uint16_t index)
 {
     this->tracks.erase(index);
     _write_track_list();

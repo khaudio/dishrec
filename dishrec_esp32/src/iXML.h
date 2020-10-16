@@ -248,8 +248,8 @@ public:
 
 /*                              Speed                               */
 protected:
-    void _set_framerate(const char* fps);
-    void _set_timestamp_ixml();
+    virtual void _set_framerate(const char* fps);
+    virtual void _set_timestamp_ixml();
     void _set_timestamp() override;
     void _set_timestamp(uint64_t numSamples) override;
     void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi) override;
@@ -265,7 +265,8 @@ public:
     void clear_timecode() override;
 
 /*                            Sync Points                           */
-    // SyncPoint* create_sync_point();
+    // virtual SyncPoint* create_sync_point();
+    // virtual void destroy_sync_point();
 
 /*                              History                             */
     virtual void set_filename(const char* filename);
@@ -280,20 +281,19 @@ public:
 
 /*                            Track list                            */
 protected:
-    void _disable_track(std::shared_ptr<Track> track);
-    void _write_track_list();
+    virtual void _write_track_list();
 
 public:
     virtual void set_channels(uint16_t channels);
     virtual uint16_t get_channels();
-    std::shared_ptr<Track> create_track();
-    std::shared_ptr<Track> get_track(const uint16_t index);
-    void delete_track(std::shared_ptr<Track> track);
-    void delete_track(const uint16_t index);
-    void disable_track(std::shared_ptr<Track> track);
-    void disable_track(const uint16_t index);
-    void enable_track(std::shared_ptr<Track> track);
-    void enable_track(const uint16_t index);
+    virtual std::shared_ptr<Track> create_track();
+    virtual std::shared_ptr<Track> get_track(const uint16_t index);
+    virtual void destroy_track(std::shared_ptr<Track> track);
+    virtual void destroy_track(const uint16_t index);
+    virtual void disable_track(std::shared_ptr<Track> track);
+    virtual void disable_track(const uint16_t index);
+    virtual void enable_track(std::shared_ptr<Track> track);
+    virtual void enable_track(const uint16_t index);
 
 /*                               BEXT                               */
     void set_originator(const char* newOriginator) override;
