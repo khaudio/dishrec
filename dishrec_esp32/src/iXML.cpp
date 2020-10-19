@@ -550,7 +550,7 @@ void IXML::set_sample_rate(uint32_t samplerate)
     this->speed.timestamp_sample_rate->SetText(samplerate);
 }
 
-void IXML::set_bit_depth(uint16_t bitsPerSample, bool isFloat)
+void IXML::set_bit_depth(uint16_t bitsPerSample)
 {
     this->speed.audio_bit_depth->SetText(bitsPerSample);
 }
@@ -1010,9 +1010,9 @@ void IXML::set_bwf_version(uint16_t versionNumber)
     this->bext.bwf_version->SetText(buff);
 }
 
-void IXML::set_umid(const uint8_t* newUmid, uint8_t length)
+void IXML::set_umid(const uint8_t* newUmid)
 {
-    BEXT::BEXTChunk::set_umid(newUmid, length);
+    BEXT::BEXTChunk::set_umid(newUmid);
     this->bext.bwf_umid->SetText(this->umid);
 }
 
@@ -1066,7 +1066,8 @@ void IXML::set_reserved()
 {
     BEXT::BEXTChunk::set_reserved();
     std::ostringstream stream;
-    for (int i(0); i < 180; ++i) stream << +(this->reserved[i]);
+    int length = sizeof(this->reserved);
+    for (int i(0); i < length; ++i) stream << 0;
     this->bext.bwf_reserved->SetText(stream.str().c_str());
 }
 
@@ -1128,11 +1129,12 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
 
 uint32_t IXML::size()
 {
-    uint32_t chunkSize = BEXT::get_str_length<uint32_t>(
-            reinterpret_cast<const char*>(_xml_c_str()), true
-        ) + 40; // Add XML version/encoding + LF
-    chunkSize += (chunkSize % 2);
-    return chunkSize;
+    // Add NULL term + XML version/encoding + LF
+    this->_ixmlChunkSize = strlen(
+            reinterpret_cast<const char*>(_xml_c_str())
+        ) + 41;
+    this->_ixmlChunkSize += (this->_ixmlChunkSize % 2);
+    return this->_ixmlChunkSize;
 }
 
 size_t IXML::total_size()
@@ -1152,7 +1154,7 @@ void IXML::copy_to_buffer(uint8_t* buff)
 {
     if (this->numTracks != get_channels()) throw TRACK_COUNT_MISMATCH;
     const char* cstr = _xml_c_str();
-    this->_ixmlChunkSize = BEXT::get_str_length<uint32_t>(cstr, true);
+    this->_ixmlChunkSize = strlen(cstr) + 1;
     bool addByte = false;
     if (this->_ixmlChunkSize % 2)
     {

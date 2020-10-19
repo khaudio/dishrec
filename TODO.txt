@@ -1,5 +1,11 @@
 TODO:
 
+    change audio datatype to int unless 8-bit unsigned
+        check sizeof(int_fast16_t) and so on on MCU
+        8 bit low priority since PCM4220 is only 16-24b
+        pad data for selected bit depth and add padded flag for packing
+    add optional 32f conversion
+
     rec/stop
         start recording on TC frame boundary or better, second boundary
             pre-roll in ring buffer?
@@ -8,45 +14,25 @@ TODO:
                 samples per buffer is not the same as frames per buffer
                     need to time to frames per buffer for channels > 1
 
-    parsing all metadata
-        regex to locate RIFF chunks
-        read chunk size and parse
-
     ixml
         check file_set_index setter
         setter methods for +-1% sample rates
             set note field under speed to note speedup or slowdown
             digitizer_sample_rate, etc
-        all sync point list stuff
-            maybe dynamically create and destroy XMLElements like TrackList
-
-    Anything WAV
-        must end on even byte count
-            add byte to end if data_size() is odd
-
-    WavHeader
-        total chunk sizes saved in iterable instead of hard coding + 36 as in WavHeader::set_size()
-            maybe
-            std::vector<uint32_t> subChunkSizes ??
-            more portable with bext and ixml
-
-    RingBuffer template stuff
-        wrapper class for dealing with I/O that does not require datatype usage outside of class
-        so changing SR/BD is painless and doesn't require spaghetti code outside of the I/O class
-        switch it all internally and just use read() and write() and get_ptr() methods or whatever
-        close now but needs refactoring for actually containing I/O
 
     EspSDWavFile
         fix EspSDWavFile::write_header() with new getter instead of old get_header()
 
-    filename extension stuff for when a filename is not provided
-        get list of wav files
-            play them alphabetically
-            parse filenames and strip both extension and leading "/" and directory
-    
-    finish writing EspSDWavFile::_parse_filename() and clean it all up
-    is i2s r/w in a task a bug or needs other core?
-    is it only i2s i/o or ring buffer i/o as well?
+    Playback, recall, and parsing
+        regex to locate RIFF chunks
+        read chunk size and parse
+        filename extension stuff for when a filename is not provided
+            get list of wav files
+                play them alphabetically
+                parse filenames and strip both extension and leading "/" and directory
+        finish writing EspSDWavFile::_parse_filename() and clean it all up
+        is i2s r/w in a task a bug or needs other core?
+        is it only i2s i/o or ring buffer i/o as well?
 
 
 hardware

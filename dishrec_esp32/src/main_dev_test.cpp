@@ -11,6 +11,7 @@
 #include "WavHeader.h"
 #include "BEXTChunk.h"
 #include "iXML.h"
+#include "AudioDataPad.h"
 
 
 void print(const uint8_t* buff, size_t buffsize)
@@ -18,6 +19,7 @@ void print(const uint8_t* buff, size_t buffsize)
     for (size_t i(0); i < buffsize; ++i) std::cout << buff[i];
     std::cout << std::endl;
 }
+
 
 void print_hex(const uint8_t* buff, size_t buffsize)
 {
@@ -28,6 +30,7 @@ void print_hex(const uint8_t* buff, size_t buffsize)
     }
     std::cout << std::endl;
 }
+
 
 int main()
 {
@@ -51,7 +54,7 @@ int main()
 
     bext.set_date(2020, 9, 30);
     bext.set_time(20, 49, 9);
-    bext.set_umid((uint8_t*)"01234567890123456789012345678901", 32);
+    bext.set_umid((uint8_t*)"01234567890123456789012345678901");
     
     WavParameters params;
     params.sampleRate = 48000;
@@ -68,7 +71,7 @@ int main()
 
     ixml.set_framerate(23.98, false);
     ixml.set_sample_rate(48000);
-    ixml.set_bit_depth(16, false);
+    ixml.set_bit_depth(16);
     ixml.set_timecode(16, 14, 34, 0);
 
     ixml.import_bext_chunk(bext);
@@ -126,6 +129,4 @@ int main()
     printf("\nIXML Total Size: %lu\n", ixml.total_size());
 
     std::cout << std::endl << std::endl;
-
 }
-

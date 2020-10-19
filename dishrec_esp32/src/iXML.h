@@ -271,7 +271,7 @@ protected:
 
 public:
     void set_sample_rate(uint32_t samplerate) override;
-    virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
+    virtual void set_bit_depth(uint16_t bitsPerSample);
     void set_framerate(double fps, bool isDropframe) override;
     void set_framerate(int fps, bool isDropframe) override;
     void set_timecode(int hr, int min, int sec, int frm) override;
@@ -337,7 +337,7 @@ public:
     void set_time_str(const char* time) override;
     void clear_time() override;
     void set_bwf_version(uint16_t versionNumber) override;
-    void set_umid(const uint8_t* newUmid, uint8_t length) override;
+    void set_umid(const uint8_t* newUmid) override;
     void clear_umid() override;
     void set_loudness_value(uint16_t value) override;
     void set_loudness_range(uint16_t range) override;

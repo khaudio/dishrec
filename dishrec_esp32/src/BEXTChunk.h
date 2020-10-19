@@ -14,9 +14,6 @@
 namespace BEXT
 {
 
-template <typename T>
-T get_str_length(const char* str, bool includeNull = true);
-
 enum bext_coding_history_err
 {
     CODING_ALGORITHM_NOT_SET = 80,
@@ -113,7 +110,7 @@ public:
     virtual void set_timestamp(uint32_t low, uint32_t high);
     virtual void clear_timestamp();
     virtual void set_bwf_version(uint16_t versionNumber);
-    virtual void set_umid(const uint8_t* newUmid, uint8_t length);
+    virtual void set_umid(const uint8_t* newUmid);
     virtual void clear_umid();
     virtual void set_loudness_value(uint16_t value);
     virtual void set_loudness_range(uint16_t range);

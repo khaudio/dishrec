@@ -4,14 +4,6 @@ using namespace BEXT;
 
 const uint16_t CodingHistoryRow::_textLengthLimit = 1024;
 
-template <typename T>
-T BEXT::get_str_length(const char* str, bool includeNull)
-{
-    T i = 0;
-    while (str[i] != '\0') ++i;
-    return i + includeNull;
-}
-
 CodingHistoryRow::CodingHistoryRow() :
 _isMPEG(false),
 _algoSet(false),
@@ -68,7 +60,7 @@ void CodingHistoryRow::set_sample_rate(uint32_t samplerate)
 {
     // Set sample rate in Hz
     sprintf(this->_samplerate, "F=%u", samplerate);
-    this->_samplerateLength = get_str_length<uint16_t>(this->_samplerate, false);
+    this->_samplerateLength = strlen(this->_samplerate);
     this->_samplerateSet = true;
 }
 
@@ -76,7 +68,7 @@ void CodingHistoryRow::set_bit_rate(uint32_t bitrate)
 {
     // Set bit rate in Kb/s per channel for MPEG encoding
     sprintf(this->_bitrate, "B=%u", bitrate);
-    this->_bitrateLength = get_str_length<uint16_t>(this->_bitrate, false);
+    this->_bitrateLength = strlen(this->_bitrate);
     this->_bitrateSet = true;
 }
 
@@ -90,7 +82,7 @@ void CodingHistoryRow::clear_bit_rate()
 void CodingHistoryRow::set_bit_depth(uint16_t bitsPerSample)
 {
     sprintf(this->_bitDepth, "W=%u", bitsPerSample);
-    this->_bitDepthLength = get_str_length<uint16_t>(this->_bitDepth, false);
+    this->_bitDepthLength = strlen(this->_bitDepth);
     this->_bitDepthSet = true;
 }
 
@@ -131,7 +123,7 @@ void CodingHistoryRow::set_multi()
 
 void CodingHistoryRow::set_text(const char* text)
 {
-    uint16_t length = get_str_length<uint16_t>(text, false) + 2;
+    uint16_t length = strlen(text) + 2;
     sprintf(this->_text, "T=");
     if (length <= this->_textLengthLimit)
     {
@@ -144,7 +136,7 @@ void CodingHistoryRow::set_text(const char* text)
 void CodingHistoryRow::append_text(const char* text)
 {
     // Truncate and append text
-    this->_textLength = get_str_length<uint16_t>(text, false);
+    this->_textLength = strlen(text);
     int16_t remaining = (this->_textLengthLimit - 2) - this->_textLength;
     if (remaining <= 0) return;
     strcat(this->_text, "; ");
@@ -269,10 +261,7 @@ void BEXTChunk::set_originator(const char* newOriginator)
     /* Per EBU TECH 3285:
     ASCII string (maximum 32 characters) containing the name of the
     originator/ producer of the audio file. */
-    uint8_t length = get_str_length<uint8_t>(newOriginator, true); // Include null term in length
-    length = ((length < 32) ? length : 32); // Truncate if too long
-    strncpy(this->originator, newOriginator, length);
-    for (uint8_t i(length - 1); i <= 31; ++i) this->originator[i] = '\0'; // Pad and terminate with NULL
+    strncpy(this->originator, newOriginator, 31);
 }
 
 void BEXTChunk::clear_originator()
@@ -285,10 +274,7 @@ void BEXTChunk::set_originator_reference(const char* newReference)
     /* Per EBU TECH 3285:
     ASCII string (maximum 32 characters) containing an unambiguous
     reference allocated by the originating organisation. */
-    uint8_t length = get_str_length<uint8_t>(newReference, true); // Include null term in length
-    length = ((length < 32) ? length : 32); // Truncate if too long
-    strncpy(this->originatorReference, newReference, length);
-    for (uint8_t i(length - 1); i <= 31; ++i) this->originatorReference[i] = '\0'; // Pad and terminate with NULL
+    strncpy(this->originatorReference, newReference, 31);
 }
 
 void BEXTChunk::clear_originator_reference()
@@ -304,10 +290,7 @@ void BEXTChunk::set_description(const char* newDescription)
     description, it is recommended that a resume of the description is
     contained in the first 64 characters and the last 192 characters are used
     for details. */
-    uint16_t length = get_str_length<uint16_t>(newDescription, true); // Include null term in length
-    length = ((length < 256) ? length : 256); // Truncate if too long
-    strncpy(this->description, newDescription, length);
-    for (uint16_t i(length - 1); i <= 255; ++i) this->description[i] = '\0'; // Pad and terminate with NULL
+    strncpy(this->description, newDescription, 255);
 }
 
 void BEXTChunk::clear_description()
@@ -408,14 +391,17 @@ void BEXTChunk::_autoset_bwf_version()
     else if (this->bwfVersion) set_bwf_version(0);
 }
 
-void BEXTChunk::set_umid(const uint8_t* newUmid, uint8_t length)
+void BEXTChunk::set_umid(const uint8_t* newUmid)
 {
     /* Per EBU TECH 3285:
     64 bytes containing a UMID (Unique Material Identifier) to standard
     SMPTE 330M [1]. If only a 32 byte "basic UMID" is used, the last 32 bytes
     should be set to zero. (The length of the UMID is given internally.) */
-    memcpy(this->umid, newUmid, length);
-    if (length <= 32) memset(this->umid + 32, 0, 32);
+    strncpy(
+            reinterpret_cast<char*>(this->umid),
+            reinterpret_cast<const char*>(newUmid),
+            64
+        );
     this->_umidSet = true;
 }
 
@@ -574,12 +560,3 @@ void BEXTChunk::copy_to_buffer(uint8_t* buff)
     // Make sure chunk ends on even-numbered byte
     if (this->_size % 2) buff[index] = '\0'; // Pad with NULL
 }
-
-template int8_t BEXT::get_str_length(const char* str, bool includeNull);
-template uint8_t BEXT::get_str_length(const char* str, bool includeNull);
-template int16_t BEXT::get_str_length(const char* str, bool includeNull);
-template uint16_t BEXT::get_str_length(const char* str, bool includeNull);
-template int32_t BEXT::get_str_length(const char* str, bool includeNull);
-template uint32_t BEXT::get_str_length(const char* str, bool includeNull);
-template int64_t BEXT::get_str_length(const char* str, bool includeNull);
-template uint64_t BEXT::get_str_length(const char* str, bool includeNull);

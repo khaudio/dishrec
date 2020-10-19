@@ -12,10 +12,6 @@
 #include <cstring>
 #include "ErrorEnums.h"
 
-template <typename T>
-T reverse_endianness(T& source);
-template <typename T>
-int write_to_stream(std::ostream& stream, T obj, bool reversed=false);
 
 enum wav_header_offset
 {
@@ -60,19 +56,19 @@ struct WavParameters
 class WavHeader : public WavParameters
 {
 protected:
-    bool _formatSet, _fileSizeSet, _sampleRateIsStandard, _bitDepthIsStandard;
+    bool _formatSet, _fileSizeSet;
     uint16_t _formatCode, _frameSize;
     uint32_t _fileSize, _formatSize, _headerSize, _dataSize, _byteRate, _samplesPerSecond;
-    char _chunkID[4], _fileFormat[4], _subchunkFormatID[4], _subchunkDataID[4];
+    char _riffChunkID[4], _fileFormat[4], _formatChunkID[4], _dataChunkID[4];
 public:
     uint16_t sampleWidth;
-    static std::array<uint32_t, 3> stdSampleRates;
-    static std::array<uint16_t, 5> stdBitDepths;
     WavHeader();
     ~WavHeader();
-    virtual void set_bit_depth(uint16_t bitsPerSample, bool isFloat);
+    virtual void set_bit_depth(uint16_t bitsPerSample);
+    virtual void set_pcm();
+    virtual void set_floating_point();
+    virtual void set_mpeg_1();
     virtual void set_sample_rate(uint32_t samplerate);
-    virtual bool is_nonstandard();
     virtual void set_channels(uint16_t channels);
     virtual void set_format(WavParameters params);
     void set_data_size(uint32_t dataSize);
