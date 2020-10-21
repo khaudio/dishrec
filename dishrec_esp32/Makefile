@@ -15,17 +15,20 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/AudioDataPad.o $(BUILD)/WavHeader.o $(BUILD)/iXML.o | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWF.o | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
+
+$(BUILD)/RingBuffer.o: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
+
+$(BUILD)/BWF.o: $(BUILD)/WavHeader.o $(BUILD)/AudioDataPad.o $(BUILD)/iXML.o | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/BWF.cpp -o $(BUILD)/BWF.o $(LDFLAGS) -L$(BUILD)/WavHeader.o -L$(BUILD)/AudioDataPad.o -L$(BUILD)/iXML.o
 
 $(BUILD)/WavHeader.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/WavHeader.cpp -o $(BUILD)/WavHeader.o $(LDFLAGS)
 
 $(BUILD)/AudioDataPad.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioDataPad.cpp -o $(BUILD)/AudioDataPad.o $(LDFLAGS)
-
-$(BUILD)/RingBuffer.o: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
 
 $(BUILD)/iXML.o: $(BUILD)/tinyxml2.o $(BUILD)/BEXTChunk.o $(BUILD)/TimecodeBase.o | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/iXML.cpp -o $(BUILD)/iXML.o $(LDFLAGS) -L$(BUILD)/tinyxml2.o -L$(BUILD)/BEXTChunk.o -L$(BUILD)/TimecodeBase.o

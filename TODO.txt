@@ -1,5 +1,8 @@
 TODO:
 
+    bwf
+        separate ixml/bext and inherit separately?
+
     change audio datatype to int unless 8-bit unsigned
         check sizeof(int_fast16_t) and so on on MCU
         8 bit low priority since PCM4220 is only 16-24b
@@ -22,6 +25,8 @@ TODO:
 
     EspSDWavFile
         fix EspSDWavFile::write_header() with new getter instead of old get_header()
+
+    add current device coding history
 
     Playback, recall, and parsing
         regex to locate RIFF chunks

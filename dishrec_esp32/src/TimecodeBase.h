@@ -13,6 +13,9 @@
 namespace TimecodeBase
 {
 
+class Base;
+class Clock;
+
 constexpr double _framerate_2398 = 24000/1001;
 constexpr double _framerate_2997 = 30000/1001;
 constexpr long double _framerate_2398_ld = 24000/1001;
@@ -23,6 +26,12 @@ uint32_t tc_to_binary(std::array<int, 4> timecode);
 std::string tc_to_string(std::array<int, 4> values, bool isDropframe);
 std::array<int, 4> string_to_tc(std::string formatted, bool* isDropframe=nullptr);
 
+Base operator-(const Base& b);
+Base operator+(Base& b1, const Base& b2);
+Base operator-(Base& b1, const Base& b2);
+Base operator+(Base& b1, const std::array<int, 4>& tc);
+Base operator-(Base& b1, const std::array<int, 4>& tc);
+
 class Base
 {
 protected:
@@ -31,18 +40,24 @@ protected:
     double _framerate;
     int *_hours, *_minutes, *_seconds, *_frames, _dropped;
     std::array<int, 4> _value, _divisors, _maximum;
+
     virtual void _set_value(std::array<int, 4> vals);
     virtual void _check_initialization();
     virtual bool _drop_frame(std::array<int, 4> tc);
-    virtual std::array<int, 4> _increment(std::array<int, 4> values, std::array<int, 4> offset);
+    virtual std::array<int, 4> _increment(
+            std::array<int, 4> values,
+            std::array<int, 4> offset
+        );
     std::array<int, 4> _reconcile(std::array<int, 4> tc);
     std::array<int, 4> _reconcile(int hr, int min, int sec, int frm);
     int _to_frames(int hr, int min, int sec, int frm);
     int _to_frames(std::array<int, 4> tc);
     std::array<int, 4> _from_frames(int numFrames);
+
 public:
     Base();
     ~Base();
+
     virtual void set_framerate(double fps, bool isDropframe);
     virtual void set_framerate(int fps, bool isDropframe);
     virtual void set_timecode(int hr, int min, int sec, int frm);

@@ -355,7 +355,6 @@ Base(xmldoc, "USER")
 
 IXML::IXML() :
 TimecodeBase::Clock(),
-BEXT::BEXTChunk(),
 take_type(&ixml),
 speed(&ixml),
 history(&ixml),
@@ -366,7 +365,8 @@ sync_point_list(&ixml),
 location(&ixml),
 user(&ixml),
 numTracks(0),
-numSyncPoints(0)
+numSyncPoints(0),
+_additionalLength(1024)
 {
     memcpy(this->_ixmlChunkID, "iXML", 4);
     this->root = this->ixml.NewElement("BWFXML");
@@ -409,13 +409,13 @@ IXML::~IXML()
 
 void IXML::clear()
 {
+    BEXT::BEXTChunk::clear();
     set_circled(false);
     set_ubits(0x00, 0x00, 0x00, 0x00);
     set_scene("");
     set_take(1);
     set_file_uid();
     set_family_uid();
-    BEXT::BEXTChunk::clear();
 }
 
 void IXML::set_ixml_version(uint16_t major, uint16_t minor)
@@ -458,13 +458,11 @@ void IXML::set_circled(bool isCircled)
 void IXML::set_file_uid()
 {
     int sceneSum(0), i(0);
+    char buff[32];
     const char* sceneName = this->scene->GetText();
     while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
     unsigned int seed = (get_frames() * 2) + 3483423 + sceneSum + this->takeNumber;
-    get_random_str(this->_fileUID, 32, seed);
-    char buff[33];
-    strncpy(buff, this->_fileUID, 32);
-    buff[32] = '\0';
+    get_random_str(buff, 32, seed);
     this->file_uid->SetText(buff);
 }
 
@@ -759,19 +757,17 @@ void IXML::set_total_files(unsigned int numFiles)
 void IXML::set_family_uid()
 {
     int sceneSum(0), i(0);
+    char buff[32];
     const char* sceneName = this->scene->GetText();
     while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
     unsigned int seed = (get_frames() / 2) - 1085976 + sceneSum + this->takeNumber;
-    get_random_str(this->_familyUID, 32, seed);
-    char buff[33];
-    strncpy(buff, this->_familyUID, 32);
-    buff[32] = '\0';
+    get_random_str(buff, 32, seed);
     this->file_set.family_uid->SetText(buff);
 }
 
 void IXML::set_family_name()
 {
-    char buff[100];
+    char buff[512];
     strcpy(buff, this->scene->GetText());
     strcat(buff, "/");
     strcat(buff, this->take->GetText());
@@ -792,8 +788,14 @@ void IXML::set_channels(uint16_t channels)
 {
     int tracksToCreate = channels - this->tracks.size();
     if (channels > 0) for (int i(0); i < tracksToCreate; ++i) create_track();
-    
-    // Set active/inactive tracks here?
+    else if (tracksToCreate < 0)
+    {
+        int index(this->tracks.size() - 1);
+        for (int i(0); i > tracksToCreate; --i)
+        {
+            this->tracks.erase(index--);
+        }
+    }
 }
 
 uint16_t IXML::get_channels()
@@ -948,7 +950,7 @@ void IXML::clear_originator_reference()
 void IXML::set_description(const char* newDescription)
 {
     BEXT::BEXTChunk::set_description(newDescription);
-    this->bext.bwf_description->SetText(this->description);
+    this->bext.bwf_description->SetText(newDescription);
 }
 
 void IXML::clear_description()
@@ -959,17 +961,14 @@ void IXML::clear_description()
 
 void IXML::set_date(int16_t year, uint8_t month, uint8_t day)
 {
-    char buff[11];
-    sprintf(buff, "%04u-%02u-%02u", year, month, day);
-    buff[10] = '\0';
-    BEXT::BEXTChunk::set_date_str(buff);
-    this->bext.bwf_origination_date->SetText(buff);
+    BEXT::BEXTChunk::set_date(year, month, day);
+    this->bext.bwf_origination_date->SetText(this->originationDate);
 }
 
 void IXML::set_date_str(const char* date)
 {
     BEXT::BEXTChunk::set_date_str(date);
-    this->bext.bwf_origination_date->SetText(date);
+    this->bext.bwf_origination_date->SetText(this->originationDate);
 }
 
 void IXML::clear_date()
@@ -980,17 +979,14 @@ void IXML::clear_date()
 
 void IXML::set_time(uint8_t hour, uint8_t minute, uint8_t second)
 {
-    char buff[9];
-    sprintf(buff, "%2u:%02u:%02u", hour, minute, second);
-    buff[8] = '\0';
-    BEXT::BEXTChunk::set_time_str(buff);
-    this->bext.bwf_origination_time->SetText(buff);
+    BEXT::BEXTChunk::set_time(hour, minute, second);
+    this->bext.bwf_origination_time->SetText(this->originationTime);
 }
 
 void IXML::set_time_str(const char* time)
 {
     BEXT::BEXTChunk::set_time_str(time);
-    this->bext.bwf_origination_time->SetText(time);
+    this->bext.bwf_origination_time->SetText(this->originationTime);
 }
 
 void IXML::clear_time()
@@ -1071,6 +1067,18 @@ void IXML::set_reserved()
     this->bext.bwf_reserved->SetText(stream.str().c_str());
 }
 
+void IXML::set_coding_history(std::string history)
+{
+    BEXT::BEXTChunk::set_coding_history(history);
+    this->bext.bwf_coding_history->SetText(this->codingHistory.c_str());
+}
+
+void IXML::set_coding_history(const char* history)
+{
+    BEXT::BEXTChunk::set_coding_history(history);
+    this->bext.bwf_coding_history->SetText(this->codingHistory.c_str());
+}
+
 void IXML::set_coding_history(BEXT::CodingHistoryRow row)
 {
     BEXT::BEXTChunk::set_coding_history(row);
@@ -1127,19 +1135,14 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     if (!loudness_is_set()) clear_loudness();
 }
 
-uint32_t IXML::size()
+size_t IXML::size()
 {
     // Add NULL term + XML version/encoding + LF
     this->_ixmlChunkSize = strlen(
             reinterpret_cast<const char*>(_xml_c_str())
-        ) + 41;
+        ) + 41 + this->_additionalLength;
     this->_ixmlChunkSize += (this->_ixmlChunkSize % 2);
     return this->_ixmlChunkSize;
-}
-
-size_t IXML::total_size()
-{
-    return size() + 8; // Chunk + ID and Size indicators
 }
 
 const char* IXML::_xml_c_str()
@@ -1150,24 +1153,24 @@ const char* IXML::_xml_c_str()
     return cstr;
 }
 
-void IXML::copy_to_buffer(uint8_t* buff)
+size_t IXML::get(uint8_t* buff)
 {
     if (this->numTracks != get_channels()) throw TRACK_COUNT_MISMATCH;
     const char* cstr = _xml_c_str();
-    this->_ixmlChunkSize = strlen(cstr) + 1;
-    bool addByte = false;
-    if (this->_ixmlChunkSize % 2)
-    {
-        this->_ixmlChunkSize += (this->_ixmlChunkSize % 2);
-        addByte = true;
-    }
-    this->_ixmlExportedSize = this->_ixmlChunkSize + 48;
+    
+    size_t xmlLength = strlen(cstr) + 1;
+    this->_ixmlChunkSize = xmlLength + 40 + this->_additionalLength;
+
+    // Pad with NULL if size is odd number of bytes
+    if (this->_ixmlChunkSize % 2) buff[this->_ixmlChunkSize++ - 1] = '\0';
+
+    size_t index(8);
     memcpy(buff, this->_ixmlChunkID, 4);
     memcpy(buff + 4, &this->_ixmlChunkSize, 4);
-    memcpy(buff + 8, this->_xmlEncoding, 40);
-    memcpy(buff + 48, cstr, this->_ixmlChunkSize);
-    if (addByte)
-    {
-        buff[this->_ixmlExportedSize - 1] = '\0';
-    }
+    memcpy(buff + index, this->_xmlEncoding, 40);
+    index += 40;
+    memcpy(buff + index, cstr, xmlLength);
+    index += xmlLength;
+    memset(buff + index, ' ', this->_additionalLength);
+    return index + this->_additionalLength;
 }

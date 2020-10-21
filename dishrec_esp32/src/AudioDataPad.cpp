@@ -4,6 +4,7 @@ template <typename T>
 PadMeta<T>::PadMeta()
 {
     this->_usableWidth = sizeof(T);
+    this->_absoluteWidth = sizeof(T);
 }
 
 template <typename T>
@@ -14,34 +15,34 @@ PadMeta<T>::~PadMeta()
 template <typename T>
 bool PadMeta<T>::is_padded()
 {
-    return (this->_usableWidth < sizeof(T));
+    return (this->_usableWidth < this->_absoluteWidth);
 }
 
 template <typename T>
-void PadMeta<T>::set_usable_width(int numBytes)
+void PadMeta<T>::set_usable_width(int_fast32_t numBytes)
 {
-    if (numBytes > sizeof(T))
+    if (numBytes > this->_absoluteWidth)
     {
         throw std::out_of_range("Too many bits for datatype");
     }
     this->_usableWidth = numBytes;
-    this->_paddedWidth = sizeof(T) - this->_usableWidth;
+    this->_paddedWidth = this->_absoluteWidth - this->_usableWidth;
 }
 
 template <typename T>
-int_least8_t PadMeta<T>::get_usable_width()
+int_fast32_t PadMeta<T>::get_usable_width()
 {
     return this->_usableWidth;
 }
 
 template <typename T>
-int_least8_t PadMeta<T>::get_absolute_width()
+int_fast32_t PadMeta<T>::get_absolute_width()
 {
-    return sizeof(T);
+    return this->_absoluteWidth;
 }
 
 template <typename T>
-int_least8_t PadMeta<T>::get_padded_width()
+int_fast32_t PadMeta<T>::get_padded_width()
 {
     return this->_paddedWidth;
 }
@@ -55,7 +56,7 @@ AudioInt::~AudioInt()
 {
 }
 
-void AudioInt::_set_bit_depth(uint16_t bitsPerSample)
+void AudioInt::set_bit_depth(uint16_t bitsPerSample)
 {
     set_usable_width(bitsPerSample / 8);
 }

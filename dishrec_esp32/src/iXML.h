@@ -8,10 +8,10 @@
 #endif
 
 #include <string>
-#include <iostream>
 #include <sstream>
 #include <map>
 #include <vector>
+
 #include "TimecodeBase.h"
 #include "BEXTChunk.h"
 #include "ErrorEnums.h"
@@ -24,6 +24,20 @@ namespace iXML
 #ifndef MAX_TRACK_STR_LENGTH
 #define MAX_TRACK_STR_LENGTH        100
 #endif
+
+class Base;
+class TakeType;
+class Speed;
+class History;
+class FileSet;
+class Track;
+class TrackList;
+class BEXTElement;
+class SyncPoint;
+class SyncPointList;
+class Location;
+class User;
+class IXML;
 
 enum ixml_err
 {
@@ -203,18 +217,8 @@ public:
     friend class IXML;
 };
 
-class IXML : public TimecodeBase::Clock, public BEXT::BEXTChunk
+class IXML : public BEXT::BEXTChunk, public TimecodeBase::Clock
 {
-protected:
-    char _ixmlChunkID[4];
-    uint32_t _ixmlChunkSize, _ixmlExportedSize;
-    uint16_t _ixmlVersionMajor, _ixmlVersionMinor;
-    static const char *_ubitsValidChars, *_xmlEncoding;
-    char _fileUID[32], _familyUID[32], _parentUID[32];
-    std::map<const uint16_t, std::shared_ptr<Track>> tracks;
-    std::vector<std::shared_ptr<SyncPoint>> syncPoints;
-    std::vector<XMLElement*> _trackElements;
-
 public:
     XMLDocument ixml;
     XMLNode* root;
@@ -235,8 +239,22 @@ public:
     int takeNumber;
     static const char *_uidValidChars;
 
+protected:
+    char _ixmlChunkID[4];
+    uint32_t _ixmlChunkSize;
+    uint16_t _ixmlVersionMajor, _ixmlVersionMinor;
+    static const char *_ubitsValidChars, *_xmlEncoding;
+    std::map<const uint16_t, std::shared_ptr<Track>> tracks;
+    std::vector<std::shared_ptr<SyncPoint>> syncPoints;
+    std::vector<XMLElement*> _trackElements;
+
+    // Additional empty space before data chunk
+    uint32_t _additionalLength;
+
+public:
     IXML();
     ~IXML();
+    
     void clear() override;
 
 /*                        Top Level Metadata                        */
@@ -324,37 +342,62 @@ public:
     virtual void enable_track(const uint16_t index);
 
 /*                               BEXT                               */
+
+    // Originator
     void set_originator(const char* newOriginator) override;
     void clear_originator() override;
+
+    // Originator Reference
     void set_originator_reference(const char* newReference) override;
     void clear_originator_reference() override;
+
+    // Description
     void set_description(const char* newDescription) override;
     void clear_description() override;
+
+    // Origination Date
     void set_date(int16_t year, uint8_t month, uint8_t day) override;
     void set_date_str(const char* date) override;
     void clear_date() override;
+
+    // Origination Time
     void set_time(uint8_t hour, uint8_t minute, uint8_t second) override;
     void set_time_str(const char* time) override;
     void clear_time() override;
+
+    // BWF Version
     void set_bwf_version(uint16_t versionNumber) override;
+
+    // UMID
     void set_umid(const uint8_t* newUmid) override;
     void clear_umid() override;
+
+    // Loudness
     void set_loudness_value(uint16_t value) override;
     void set_loudness_range(uint16_t range) override;
     void set_loudness_max_true_peak(uint16_t level) override;
     void set_loudness_max_momentary(uint16_t level) override;
     void set_loudness_max_short_term(uint16_t value) override;
     void clear_loudness() override;
+
+    // Reserved
     void set_reserved() override;
+
+    // Coding History
+    void set_coding_history(std::string history) override;
+    void set_coding_history(const char* history) override;
     void set_coding_history(BEXT::CodingHistoryRow row) override;
     void append_to_coding_history(BEXT::CodingHistoryRow row) override;
     void clear_coding_history() override;
+
+    // Import data from external BEXT Chunk
     virtual void import_bext_chunk(BEXT::BEXTChunk& chunk);
 
-    uint32_t size() override;
-    size_t total_size() override;
     const char* _xml_c_str();
-    void copy_to_buffer(uint8_t* buff) override;
+
+    size_t size() override;
+    
+    size_t get(uint8_t* buff) override;
 };
 
 };

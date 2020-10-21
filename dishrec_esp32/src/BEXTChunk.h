@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <sstream>
 #include <memory>
+
 #include "ErrorEnums.h"
 
 #include <iostream>
@@ -13,6 +14,9 @@
 
 namespace BEXT
 {
+
+class CodingHistoryRow;
+class BEXTChunk;
 
 enum bext_coding_history_err
 {
@@ -47,7 +51,7 @@ private:
     char
         _codingAlgorithm[16], _samplerate[16], _bitDepth[5],
         _mode[16], _bitrate[8], _text[1024], _internalBuffer[1200];
-    uint32_t _size;
+    uint32_t _rowSize;
 public:
     CodingHistoryRow();
     ~CodingHistoryRow();
@@ -75,43 +79,89 @@ public:
 class BEXTChunk
 {
 public:
-    bool
-        _umidSet,
-        _loudnessValueSet, _loudnessRangeSet, _maxTruePeakLevelSet,
-        _maxMomentaryLoudnessSet, _maxShortTermLoudnessSet;
-    uint32_t _size;
-    void _autoset_bwf_version();
-    char
-        _bextChunkID[4], description[256],
-        originator[32], originatorReference[32],
-        originationDate[10], originationTime[8];
-    uint8_t umid[64], reserved[180];
-    uint16_t
-        bwfVersion, loudnessValue, loudnessRange,
-        maxTruePeakLevel, maxMomentaryLoudness, maxShortTermLoudness;
-    uint32_t timeReferenceLow, timeReferenceHigh;
-    std::string codingHistory;
+    char _bextChunkID[4];
+    uint32_t _bextChunkSize;
+
     BEXTChunk();
     ~BEXTChunk();
+
     virtual void clear();
+
+    // Chunk size minus ID and size fields
+    virtual size_t size();
+
+    // Size of entire chunk including ID and Size
+    virtual size_t total_size();
+
+    // Export chunk including ID and size fields
+    virtual size_t get(uint8_t* buff);
+
+    // Import chunk
+    virtual size_t set(const uint8_t* data);
+
+/*                            Originator                            */
+
+    char originator[33];
     virtual void set_originator(const char* newOriginator);
     virtual void clear_originator();
+
+/*                       Originator Reference                       */
+
+    char originatorReference[33];
     virtual void set_originator_reference(const char* newReference);
     virtual void clear_originator_reference();
+
+/*                           Description                            */
+
+    char description[257];
     virtual void set_description(const char* newDescription);
     virtual void clear_description();
+
+/*                              Date                                */
+
+    char originationDate[11];
     virtual void set_date(int16_t year, uint8_t month, uint8_t day);
     virtual void set_date_str(const char* date);
     virtual void clear_date();
+
+/*                              Time                                */
+
+    char originationTime[9];
     virtual void set_time(uint8_t hour, uint8_t minute, uint8_t second);
     virtual void set_time_str(const char* time);
     virtual void clear_time();
+
+/*                            Timestamp                             */
+
+    uint32_t timeReferenceLow, timeReferenceHigh;
     virtual void set_timestamp(uint64_t samplesSinceMidnight);
     virtual void set_timestamp(uint32_t low, uint32_t high);
     virtual void clear_timestamp();
+
+/*                           BWF Version                            */
+
+protected:
+    void _autoset_bwf_version();
+
+public:
+    uint16_t bwfVersion;
     virtual void set_bwf_version(uint16_t versionNumber);
+
+/*                              UMID                                */
+
+    bool _umidSet;
+    uint8_t umid[64];
     virtual void set_umid(const uint8_t* newUmid);
     virtual void clear_umid();
+
+/*                            Loudness                              */
+
+    bool
+        _loudnessValueSet, _loudnessRangeSet, _maxTruePeakLevelSet,
+        _maxMomentaryLoudnessSet, _maxShortTermLoudnessSet;
+    uint16_t
+        loudnessValue, loudnessRange,
+        maxTruePeakLevel, maxMomentaryLoudness, maxShortTermLoudness;
     virtual void set_loudness_value(uint16_t value);
     virtual void set_loudness_range(uint16_t range);
     virtual void set_loudness_max_true_peak(uint16_t level);
@@ -119,19 +169,20 @@ public:
     virtual void set_loudness_max_short_term(uint16_t value);
     virtual void clear_loudness();
     virtual bool loudness_is_set();
+
+/*                            Reserved                              */
+
+    uint8_t reserved[180];
     virtual void set_reserved();
+
+/*                         Coding History                           */
+
+    std::string codingHistory;
+    virtual void set_coding_history(std::string history);
+    virtual void set_coding_history(const char* history);
     virtual void set_coding_history(CodingHistoryRow row);
     virtual void append_to_coding_history(CodingHistoryRow row);
     virtual void clear_coding_history();
-
-    // Chunk size minus ID and size fields
-    virtual uint32_t size();
-
-    // Total size needed for buffer
-    virtual size_t total_size();
-
-    // Export chunk including ID and size fields
-    virtual void copy_to_buffer(uint8_t* buff);
 };
 
 };

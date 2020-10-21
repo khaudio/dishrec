@@ -18,7 +18,7 @@ _bitrateLength(0),
 _bitDepthLength(0),
 _modeLength(0),
 _textLength(0),
-_size(0)
+_rowSize(0)
 {
     this->_setters[0] = &this->_algoSet;
     this->_setters[1] = &this->_samplerateSet;
@@ -189,8 +189,8 @@ void CodingHistoryRow::copy_to_buffer(char* buff)
 
 uint32_t CodingHistoryRow::size()
 {
-    this->_size = 0;
-    this->_size += (
+    this->_rowSize = 0;
+    this->_rowSize += (
             _algorithmLength
             + _samplerateLength
             + _bitrateLength
@@ -199,9 +199,9 @@ uint32_t CodingHistoryRow::size()
             + _textLength
         );
     // Add 1 per comma for each included field
-    for (bool* setter: this->_setters) this->_size += *setter;
-    this->_size += 1; // LF/CR at end
-    return this->_size;
+    for (bool* setter: this->_setters) this->_rowSize += *setter;
+    this->_rowSize += 1; // LF/CR at end
+    return this->_rowSize;
 }
 
 std::string CodingHistoryRow::str()
@@ -217,21 +217,21 @@ const char* CodingHistoryRow::c_str()
 }
 
 BEXTChunk::BEXTChunk() :
+_bextChunkSize(0),
+timeReferenceLow(0),
+timeReferenceHigh(0),
+bwfVersion(0),
 _umidSet(false),
 _loudnessValueSet(false),
 _loudnessRangeSet(false),
 _maxTruePeakLevelSet(false),
 _maxMomentaryLoudnessSet(false),
 _maxShortTermLoudnessSet(false),
-_size(0),
-bwfVersion(0),
 loudnessValue(0),
 loudnessRange(0),
 maxTruePeakLevel(0),
 maxMomentaryLoudness(0),
-maxShortTermLoudness(0),
-timeReferenceLow(0),
-timeReferenceHigh(0)
+maxShortTermLoudness(0)
 {
     memcpy(this->_bextChunkID, "bext", 4);
     clear();
@@ -256,32 +256,6 @@ void BEXTChunk::clear()
     set_reserved();
 }
 
-void BEXTChunk::set_originator(const char* newOriginator)
-{
-    /* Per EBU TECH 3285:
-    ASCII string (maximum 32 characters) containing the name of the
-    originator/ producer of the audio file. */
-    strncpy(this->originator, newOriginator, 31);
-}
-
-void BEXTChunk::clear_originator()
-{
-    memset(this->originator, 0, 32);
-}
-
-void BEXTChunk::set_originator_reference(const char* newReference)
-{
-    /* Per EBU TECH 3285:
-    ASCII string (maximum 32 characters) containing an unambiguous
-    reference allocated by the originating organisation. */
-    strncpy(this->originatorReference, newReference, 31);
-}
-
-void BEXTChunk::clear_originator_reference()
-{
-    memset(this->originatorReference, 0, 32);
-}
-
 void BEXTChunk::set_description(const char* newDescription)
 {
     /* Per EBU TECH 3285:
@@ -295,7 +269,33 @@ void BEXTChunk::set_description(const char* newDescription)
 
 void BEXTChunk::clear_description()
 {
-    memset(this->description, 0, 256);
+    memset(this->description, 0, 257);
+}
+
+void BEXTChunk::set_originator(const char* newOriginator)
+{
+    /* Per EBU TECH 3285:
+    ASCII string (maximum 32 characters) containing the name of the
+    originator/ producer of the audio file. */
+    strncpy(this->originator, newOriginator, 31);
+}
+
+void BEXTChunk::clear_originator()
+{
+    memset(this->originator, 0, 33);
+}
+
+void BEXTChunk::set_originator_reference(const char* newReference)
+{
+    /* Per EBU TECH 3285:
+    ASCII string (maximum 32 characters) containing an unambiguous
+    reference allocated by the originating organisation. */
+    strncpy(this->originatorReference, newReference, 31);
+}
+
+void BEXTChunk::clear_originator_reference()
+{
+    memset(this->originatorReference, 0, 33);
 }
 
 void BEXTChunk::set_date(int16_t year, uint8_t month, uint8_t day)
@@ -310,12 +310,12 @@ void BEXTChunk::set_date(int16_t year, uint8_t month, uint8_t day)
 void BEXTChunk::set_date_str(const char* date)
 {
     // Set date string literal directly
-    memcpy(this->originationDate, date, 10);
+    strncpy(this->originationDate, date, 10);
 }
 
 void BEXTChunk::clear_date()
 {
-    set_date_str("0000-00-00");
+    strncpy(this->originationDate, "0000-00-00", 11);
 }
 
 void BEXTChunk::set_time(uint8_t hour, uint8_t minute, uint8_t second)
@@ -330,12 +330,12 @@ void BEXTChunk::set_time(uint8_t hour, uint8_t minute, uint8_t second)
 void BEXTChunk::set_time_str(const char* time)
 {
     // Set time string literal directly
-    memcpy(this->originationTime, time, 8);
+    strncpy(this->originationTime, time, 8);
 }
 
 void BEXTChunk::clear_time()
 {
-    set_time_str("00-00-00");
+    strncpy(this->originationTime, "00-00-00", 9);
 }
 
 void BEXTChunk::set_timestamp(uint64_t samplesSinceMidnight)
@@ -477,6 +477,17 @@ void BEXTChunk::set_coding_history(CodingHistoryRow row)
     this->codingHistory = std::string(buff);
 }
 
+void BEXTChunk::set_coding_history(std::string history)
+{
+    this->codingHistory = history;
+}
+
+void BEXTChunk::set_coding_history(const char* history)
+{
+    this->codingHistory = std::string(history);
+}
+
+
 void BEXTChunk::append_to_coding_history(CodingHistoryRow row)
 {
     const uint32_t rowSize = row.size();
@@ -491,7 +502,7 @@ void BEXTChunk::clear_coding_history()
     this->codingHistory = std::string("");
 }
 
-uint32_t BEXTChunk::size()
+size_t BEXTChunk::size()
 {
     /* Return size of chunk data only (excludes ChunkID and size blocks)
         Description (256)
@@ -505,27 +516,25 @@ uint32_t BEXTChunk::size()
         + Loudness (10)
         + Reserved (180)
         = 602 + Coding History Size */
-    this->_size = 602 + this->codingHistory.size();
-    if (this->_size % 2)
+    this->_bextChunkSize = 602 + this->codingHistory.size();
+    if (this->_bextChunkSize % 2)
     {
-        this->_size += 1;
+        this->_bextChunkSize += 1;
     }
-    return this->_size;
+    return this->_bextChunkSize;
 }
 
 size_t BEXTChunk::total_size()
 {
-    return size() + 8; // Chunk + ID and Size indicators
+    return size() + 8; // Chunk + ID and Size fields
 }
 
-void BEXTChunk::copy_to_buffer(uint8_t* buff)
+size_t BEXTChunk::get(uint8_t* buff)
 {
-    uint32_t index = 0;
-    memcpy(buff + index, &(this->_bextChunkID), 4);
-    index += 4;
     size();
-    memcpy(buff + index, &(this->_size), 4);
-    index += 4;
+    size_t index(8);
+    memcpy(buff, this->_bextChunkID, 4);
+    memcpy(buff + 4, &this->_bextChunkSize, 4);
     memcpy(buff + index, this->description, 256);
     index += 256;
     memcpy(buff + index, this->originator, 32);
@@ -558,5 +567,51 @@ void BEXTChunk::copy_to_buffer(uint8_t* buff)
     memcpy(buff + index, this->codingHistory.c_str(), this->codingHistory.size());
     index += this->codingHistory.size();
     // Make sure chunk ends on even-numbered byte
-    if (this->_size % 2) buff[index] = '\0'; // Pad with NULL
+    if (this->_bextChunkSize % 2) buff[index++] = '\0'; // Pad with NULL
+    return index;
+}
+
+size_t BEXTChunk::set(const uint8_t* data)
+{
+    size_t index = 0;
+    memcpy(&this->_bextChunkID, data + index, 4);
+    index += 4;
+    size();
+    memcpy(&this->_bextChunkSize, data + index, 4);
+    index += 4;
+    memcpy(this->description, data + index, 256);
+    index += 256;
+    memcpy(this->originator, data + index, 32);
+    index += 32;
+    memcpy(this->originatorReference, data + index, 32);
+    index += 32;
+    memcpy(this->originationDate, data + index, 10);
+    index += 10;
+    memcpy(this->originationTime, data + index, 8);
+    index += 8;
+    memcpy(&this->timeReferenceLow, data + index, 4);
+    memcpy(&this->timeReferenceHigh, data + index + 4, 4);
+    index += 8;
+    memcpy(&this->bwfVersion, data + index, 2);
+    index += 2;
+    memcpy(&this->umid, data + index, 64);
+    index += 64;
+    memcpy(&this->loudnessValue, data + index, 2);
+    index += 2;
+    memcpy(&this->loudnessRange, data + index, 2);
+    index += 2;
+    memcpy(&this->maxTruePeakLevel, data + index, 2);
+    index += 2;
+    memcpy(&this->maxMomentaryLoudness, data + index, 2);
+    index += 2;
+    memcpy(&this->maxShortTermLoudness, data + index, 2);
+    index += 2;
+    memcpy(this->reserved, data + index, 180);
+    index += 180;
+    size_t remaining = this->_bextChunkSize - index;
+    char history[remaining];
+    memcpy(history, data + index, remaining);
+    set_coding_history(history);
+    index += remaining;
+    return index;
 }

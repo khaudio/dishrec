@@ -10,74 +10,158 @@
 #include <vector>
 #include <memory>
 #include <cstring>
+#include <regex>
 #include "ErrorEnums.h"
 
-
-enum wav_header_offset
+namespace WavMeta
 {
-/*                              Endianness              Size in bytes */
-    WAV_CHUNK_ID = 0,           // Big endian           4
-    WAV_CHUNK_SIZE = 4,         // Little endian        4
-    WAV_FORMAT = 8,             // Big endian           4
-    WAV_SUBCHUNK_1_ID = 12,     // Big endian           4
-    WAV_SUBCHUNK_1_SIZE = 16,   // Little endian        4
-    WAV_AUDIO_FORMAT = 20,      // Little endian        2
-    WAV_NUM_CHANNELS = 22,      // Little endian        2
-    WAV_SAMPLE_RATE = 24,       // Little endian        4
-    WAV_BYTE_RATE = 28,         // Little endian        4
-    WAV_BLOCK_ALIGN = 32,       // Little endian        2
-    WAV_BITS_PER_SAMPLE = 34,   // Little endian        2
-    WAV_SUBCHUNK_2_ID = 36,     // Big endian           4
-    WAV_SUBCHUNK_2_SIZE = 40,   // Little endian        4
-    WAV_DATA_START = 44         // Little endian        4
-};
+
+class WavParameters;
+class Chunk;
+class RiffChunk;
+class DataChunk;
+class FormatChunk;
+class WavHeader;
 
 enum wav_format_codes
 {
-    PCM = 0x0001,
-    FLOATING_POINT = 0x0003,
-    MPEG_1 = 0x0005
+    FORMAT_PCM = 0x0001,
+    FORMAT_FLOATING_POINT = 0x0003,
+    FORMAT_MPEG_1 = 0x0005
 };
 
 enum wav_format_err
 {
     FORMAT_NOT_SET = 101,
-    FILESIZE_NOT_SET = 102
+    FORMAT_NOT_FOUND = 102,
+    DATA_SIZE_NOT_SET = 103
 };
 
-struct WavParameters
+class WavParameters
 {
-    uint32_t sampleRate;
-    uint16_t bitDepth;
-    bool isFloatingPoint;
-    uint16_t numChannels;
-};
-
-class WavHeader : public WavParameters
-{
-protected:
-    bool _formatSet, _fileSizeSet;
-    uint16_t _formatCode, _frameSize;
-    uint32_t _fileSize, _formatSize, _headerSize, _dataSize, _byteRate, _samplesPerSecond;
-    char _riffChunkID[4], _fileFormat[4], _formatChunkID[4], _dataChunkID[4];
 public:
-    uint16_t sampleWidth;
+    uint32_t sampleRate;
+    uint16_t bitDepth, numChannels, sampleWidth, formatCode;
+};
+
+class Chunk
+{
+public:
+    char chunkID[4];
+    uint32_t chunkSize;
+    Chunk();
+    Chunk(const char* chunkid);
+    ~Chunk();
+    virtual void set_chunk_size(uint32_t chunksize);
+
+    virtual uint32_t size();
+    virtual size_t total_size();
+
+    // Export chunk to buffer
+    virtual size_t get(uint8_t* buff);
+    virtual size_t get(char* buff);
+
+    // Import chunk from data
+    virtual size_t set(const uint8_t* data);
+    virtual size_t set(const char* data);
+};
+
+class RiffChunk : public Chunk
+{
+public:
+    char riffType[4];
+    RiffChunk();
+    size_t get(uint8_t* buff) override;
+    size_t set(const uint8_t* data) override;
+};
+
+class DataChunk : public Chunk
+{
+public:
+    DataChunk();
+    template <typename T>
+    void set_chunk_size(std::vector<T>& data);
+};
+
+class FormatChunk : public Chunk
+{
+public:
+    uint8_t data[40], *extra;
+    uint16_t *formatCode, *numChannels, *sampleWidth, *bitDepth;
+    uint32_t *sampleRate, *byteRate, *extraSize;
+    FormatChunk();
+    size_t get(uint8_t* buff) override;
+    size_t set(const uint8_t* data) override;
+};
+
+class WavHeader
+{
+public:
     WavHeader();
     ~WavHeader();
+
+    // File size (Header + Data)
+    virtual void set_file_size(size_t numBytes);
+    virtual size_t get_file_size();
+
+    // Wav header size (excluding RIFF ID + Size)
+    virtual size_t size();
+    
+    // Total header size including RIFF header
+    virtual size_t total_size();
+
+    virtual size_t get(uint8_t* buff);
+    virtual size_t set(const uint8_t* data);
+
+/*                               RIFF                               */
+
+protected:
+    RiffChunk riffChunk;
+    size_t _headerSize;
+
+/*                              Format                              */
+
+protected:
+    FormatChunk formatChunk;
+    bool _sampleRateSet, _bitDepthSet, _numChannelsSet;
+
+    virtual void _set_data_rates();
+
+public:
+    uint32_t &sampleRate;
+    uint16_t &bitDepth, &numChannels, &sampleWidth, &formatCode;
+    uint16_t frameSize;
+    uint32_t byteRate, samplesPerSecond;
+
+    virtual void set_sample_rate(uint32_t samplerate);
     virtual void set_bit_depth(uint16_t bitsPerSample);
+    virtual void set_channels(uint16_t channels);
     virtual void set_pcm();
     virtual void set_floating_point();
     virtual void set_mpeg_1();
-    virtual void set_sample_rate(uint32_t samplerate);
-    virtual void set_channels(uint16_t channels);
+    virtual void set_byte_rate(uint32_t manualDataRate);
+    virtual void set_format_code(uint16_t formatcode);
+    virtual void set_extra_format_data(const uint8_t* data);
+    virtual void set_extra_format_size(uint16_t length);
     virtual void set_format(WavParameters params);
-    void set_data_size(uint32_t dataSize);
-    template <typename T>
-    void set_data_size(std::vector<T>& data);
-    virtual uint32_t size();
-    virtual size_t total_size();
-    virtual void copy_to_buffer(uint8_t* buff);
-    virtual void import_header(uint8_t* data);
+
+    virtual uint16_t get_channels();
+
+    virtual size_t import_format_chunk(const uint8_t* data);
+
+    virtual bool is_floating_point();
+    virtual bool is_set();
+
+/*                               Data                               */
+
+protected:
+    DataChunk dataChunk;
+
+public:
+    virtual void set_data_size(size_t numBytes);
+    virtual size_t get_data_size();
+};
+
 };
 
 #endif
