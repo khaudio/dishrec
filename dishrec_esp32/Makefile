@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=gnu++2a -Wall -Wextra -O0 -D _DEBUG -g
+CXXFLAGS = -std=gnu++2a -Wall -Wextra -Werror -O0 -D _DEBUG -g
 LDFLAGS = $(INC) -L$(LIB)
 SRC = $(PWD)/src
 BUILD = $(PWD)/build

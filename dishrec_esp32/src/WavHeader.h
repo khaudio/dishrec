@@ -3,20 +3,19 @@
 
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <cstdint>
 #include <iostream>
-#include <sstream>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <cstring>
-#include <regex>
+
 #include "ErrorEnums.h"
 
 namespace WavMeta
 {
 
-class WavParameters;
+class WavFormat;
 class Chunk;
 class RiffChunk;
 class DataChunk;
@@ -37,11 +36,21 @@ enum wav_format_err
     DATA_SIZE_NOT_SET = 103
 };
 
-class WavParameters
+class WavFormat
 {
 public:
     uint32_t sampleRate;
     uint16_t bitDepth, numChannels, sampleWidth, formatCode;
+    virtual void set_bit_depth(uint16_t bitsPerSample);
+    virtual void set_sample_rate(uint32_t samplerate);
+    virtual void set_channels(uint16_t channels);
+    virtual void set_format_code(uint16_t formatcode);
+    virtual void set_pcm();
+    virtual void set_floating_point();
+    virtual void set_mpeg_1();
+    virtual bool is_pcm();
+    virtual bool is_floating_point();
+    virtual bool is_mpeg_1();
 };
 
 class Chunk
@@ -60,6 +69,7 @@ public:
     // Export chunk to buffer
     virtual size_t get(uint8_t* buff);
     virtual size_t get(char* buff);
+    virtual std::string str();
 
     // Import chunk from data
     virtual size_t set(const uint8_t* data);
@@ -94,7 +104,7 @@ public:
     size_t set(const uint8_t* data) override;
 };
 
-class WavHeader
+class WavHeader : virtual public WavFormat
 {
 public:
     WavHeader();
@@ -111,6 +121,7 @@ public:
     virtual size_t total_size();
 
     virtual size_t get(uint8_t* buff);
+    
     virtual size_t set(const uint8_t* data);
 
 /*                               RIFF                               */
@@ -128,28 +139,24 @@ protected:
     virtual void _set_data_rates();
 
 public:
-    uint32_t &sampleRate;
-    uint16_t &bitDepth, &numChannels, &sampleWidth, &formatCode;
     uint16_t frameSize;
     uint32_t byteRate, samplesPerSecond;
 
-    virtual void set_sample_rate(uint32_t samplerate);
-    virtual void set_bit_depth(uint16_t bitsPerSample);
-    virtual void set_channels(uint16_t channels);
-    virtual void set_pcm();
-    virtual void set_floating_point();
-    virtual void set_mpeg_1();
+    void set_sample_rate(uint32_t samplerate) override;
+    void set_bit_depth(uint16_t bitsPerSample) override;
+    void set_channels(uint16_t channels) override;
+    void set_pcm() override;
+    void set_floating_point() override;
+    void set_mpeg_1() override;
+    void set_format_code(uint16_t formatcode) override;
     virtual void set_byte_rate(uint32_t manualDataRate);
-    virtual void set_format_code(uint16_t formatcode);
     virtual void set_extra_format_data(const uint8_t* data);
     virtual void set_extra_format_size(uint16_t length);
-    virtual void set_format(WavParameters params);
-
-    virtual uint16_t get_channels();
+    virtual void set_format(WavFormat params);
 
     virtual size_t import_format_chunk(const uint8_t* data);
 
-    virtual bool is_floating_point();
+    // virtual bool is_floating_point();
     virtual bool is_set();
 
 /*                               Data                               */

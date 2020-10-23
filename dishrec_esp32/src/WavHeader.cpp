@@ -2,6 +2,71 @@
 
 using namespace WavMeta;
 
+inline void WavFormat::set_bit_depth(uint16_t bitsPerSample)
+{
+    this->bitDepth = bitsPerSample;
+    this->sampleWidth = this->bitDepth / 8;
+}
+
+inline void WavFormat::set_sample_rate(uint32_t samplerate)
+{
+    this->sampleRate = samplerate;
+}
+
+inline void WavFormat::set_channels(uint16_t channels)
+{
+    this->numChannels = channels;
+}
+
+inline void WavFormat::set_format_code(uint16_t formatcode)
+{
+    switch (formatcode)
+    {
+        case (FORMAT_PCM):
+            set_pcm();
+            break;
+        case (FORMAT_FLOATING_POINT):
+            set_floating_point();
+            break;
+        case (FORMAT_MPEG_1):
+            set_mpeg_1();
+            break;
+        default:
+            throw FORMAT_NOT_FOUND;
+    }
+}
+
+inline void WavFormat::set_pcm()
+{
+    this->formatCode = FORMAT_PCM;
+}
+
+inline void WavFormat::set_floating_point()
+{
+    this->formatCode = FORMAT_FLOATING_POINT;
+}
+
+inline void WavFormat::set_mpeg_1()
+{
+    this->formatCode = FORMAT_MPEG_1;
+}
+
+inline bool WavFormat::is_pcm()
+{
+    return (this->formatCode == FORMAT_PCM);
+}
+
+inline bool WavFormat::is_floating_point()
+{
+    return (this->formatCode == FORMAT_FLOATING_POINT);
+}
+
+inline bool WavFormat::is_mpeg_1()
+{
+    return (this->formatCode == FORMAT_MPEG_1);
+}
+
+
 Chunk::Chunk()
 {
 }
@@ -40,6 +105,14 @@ size_t Chunk::get(uint8_t* buff)
 size_t Chunk::get(char* buff)
 {
     return get(reinterpret_cast<uint8_t*>(buff));
+}
+
+std::string Chunk::str()
+{
+    const size_t bufflen(total_size());
+    uint8_t buff[bufflen];
+    get(buff);
+    return std::string(reinterpret_cast<const char*>(buff));
 }
 
 size_t Chunk::set(const uint8_t* data)
@@ -125,12 +198,7 @@ WavHeader::WavHeader() :
 _headerSize(60),
 _sampleRateSet(false),
 _bitDepthSet(false),
-_numChannelsSet(true),
-sampleRate(*this->formatChunk.sampleRate),
-bitDepth(*this->formatChunk.bitDepth),
-numChannels(*this->formatChunk.numChannels),
-sampleWidth(*this->formatChunk.sampleWidth),
-formatCode(*this->formatChunk.formatCode)
+_numChannelsSet(true)
 {
     this->numChannels = 1; // Default to 1 channel
     set_pcm(); // Default to Linear PCM
@@ -142,16 +210,15 @@ WavHeader::~WavHeader()
 
 void WavHeader::set_sample_rate(uint32_t samplerate)
 {
-    this->sampleRate = samplerate;
-    this->_sampleRateSet = true;
+    WavFormat::set_sample_rate(samplerate);
     *this->formatChunk.sampleRate = this->sampleRate;
+    this->_sampleRateSet = true;
     _set_data_rates();
 }
 
 void WavHeader::set_bit_depth(uint16_t bitsPerSample)
 {
-    this->bitDepth = bitsPerSample;
-    this->sampleWidth = this->bitDepth / 8;
+    WavFormat::set_bit_depth(bitsPerSample);
     *this->formatChunk.bitDepth = this->bitDepth;
     *this->formatChunk.sampleWidth = this->sampleWidth;
     this->_bitDepthSet = true;
@@ -160,27 +227,33 @@ void WavHeader::set_bit_depth(uint16_t bitsPerSample)
 
 void WavHeader::set_channels(uint16_t channels)
 {
-    this->numChannels = channels;
-    this->_numChannelsSet = true;
+    WavFormat::set_channels(channels);
     *this->formatChunk.numChannels = this->numChannels;
+    this->_numChannelsSet = true;
     _set_data_rates();
 }
 
 void WavHeader::set_pcm()
 {
-    this->formatCode = FORMAT_PCM;
+    WavFormat::set_pcm();
     *this->formatChunk.formatCode = this->formatCode;
 }
 
 void WavHeader::set_floating_point()
 {
-    this->formatCode = FORMAT_FLOATING_POINT;
+    WavFormat::set_floating_point();
     *this->formatChunk.formatCode = this->formatCode;
 }
 
 void WavHeader::set_mpeg_1()
 {
-    this->formatCode = FORMAT_MPEG_1;
+    WavFormat::set_mpeg_1();
+    *this->formatChunk.formatCode = this->formatCode;
+}
+
+void WavHeader::set_format_code(uint16_t formatcode)
+{
+    WavFormat::set_format_code(formatcode);
     *this->formatChunk.formatCode = this->formatCode;
 }
 
@@ -190,37 +263,12 @@ void WavHeader::set_byte_rate(uint32_t rate)
     *this->formatChunk.byteRate = this->byteRate;
 }
 
-void WavHeader::set_format_code(uint16_t formatcode)
+void WavHeader::set_format(WavFormat params)
 {
-    switch (formatcode)
-    {
-        case (FORMAT_PCM):
-            set_pcm();
-            break;
-        case (FORMAT_FLOATING_POINT):
-            set_floating_point();
-            break;
-        case (FORMAT_MPEG_1):
-            set_mpeg_1();
-            break;
-        default:
-            throw FORMAT_NOT_FOUND;
-    }
-    *this->formatChunk.formatCode = this->formatCode;
-}
-
-void WavHeader::set_format(WavParameters params)
-{
-    this->sampleRate = params.sampleRate;
-    this->bitDepth = params.bitDepth;
-    this->numChannels = params.numChannels;
-    this->sampleWidth = params.sampleWidth;
-    this->formatCode = params.formatCode;
-}
-
-uint16_t WavHeader::get_channels()
-{
-    return this->numChannels;
+    set_sample_rate(params.sampleRate);
+    set_bit_depth(params.bitDepth);
+    set_channels(params.numChannels);
+    set_format_code(params.formatCode);
 }
 
 void WavHeader::_set_data_rates()
@@ -273,11 +321,6 @@ bool WavHeader::is_set()
             && this->_bitDepthSet
             && this->_numChannelsSet
         );
-}
-
-bool WavHeader::is_floating_point()
-{
-    return (this->formatCode == FORMAT_FLOATING_POINT);
 }
 
 void WavHeader::set_data_size(size_t numBytes)

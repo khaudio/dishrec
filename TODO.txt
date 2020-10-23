@@ -1,7 +1,8 @@
 TODO:
 
     bwf
-        separate ixml/bext and inherit separately?
+        reserve enough meta space to write when file is done
+            keep in mind sync point and track # limits
 
     change audio datatype to int unless 8-bit unsigned
         check sizeof(int_fast16_t) and so on on MCU
@@ -22,6 +23,7 @@ TODO:
         setter methods for +-1% sample rates
             set note field under speed to note speedup or slowdown
             digitizer_sample_rate, etc
+        user fields and so on
 
     EspSDWavFile
         fix EspSDWavFile::write_header() with new getter instead of old get_header()

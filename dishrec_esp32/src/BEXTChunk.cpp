@@ -152,7 +152,7 @@ void CodingHistoryRow::clear_text()
     this->_textSet = false;
 }
 
-void CodingHistoryRow::copy_to_buffer(char* buff)
+void CodingHistoryRow::get(char* buff)
 {
     if (!(this->_algoSet)) throw CODING_ALGORITHM_NOT_SET;
     if (!(this->_samplerateSet)) throw SAMPLE_RATE_NOT_SET;
@@ -206,34 +206,30 @@ uint32_t CodingHistoryRow::size()
 
 std::string CodingHistoryRow::str()
 {
-    copy_to_buffer(this->_internalBuffer);
+    get(this->_internalBuffer);
     return std::string(this->_internalBuffer);
 }
 
 const char* CodingHistoryRow::c_str()
 {
-    copy_to_buffer(this->_internalBuffer);
+    get(this->_internalBuffer);
     return this->_internalBuffer;
 }
 
 BEXTChunk::BEXTChunk() :
-_bextChunkSize(0),
-timeReferenceLow(0),
-timeReferenceHigh(0),
+TimecodeBase::Timestamp(),
+Chunk("bext"),
 bwfVersion(0),
 _umidSet(false),
-_loudnessValueSet(false),
-_loudnessRangeSet(false),
-_maxTruePeakLevelSet(false),
-_maxMomentaryLoudnessSet(false),
-_maxShortTermLoudnessSet(false),
 loudnessValue(0),
 loudnessRange(0),
 maxTruePeakLevel(0),
 maxMomentaryLoudness(0),
 maxShortTermLoudness(0)
 {
-    memcpy(this->_bextChunkID, "bext", 4);
+    // this->samplesSinceMidnight = 0;
+    // this->timeReferenceLow = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
+    // this->timeReferenceHigh = this->timeReferenceLow + 1;
     clear();
 }
 
@@ -341,8 +337,8 @@ void BEXTChunk::clear_time()
 void BEXTChunk::set_timestamp(uint64_t samplesSinceMidnight)
 {
     uint32_t* cast = reinterpret_cast<uint32_t*>(&samplesSinceMidnight);
-    this->timeReferenceLow = *cast;
-    this->timeReferenceHigh = *(cast + 1);
+    *this->timeReferenceLow = *cast;
+    *this->timeReferenceHigh = *(cast + 1);
 }
 
 void BEXTChunk::set_timestamp(uint32_t low, uint32_t high)
@@ -352,14 +348,14 @@ void BEXTChunk::set_timestamp(uint32_t low, uint32_t high)
     value which contains the first sample count since midnight. The number
     of samples per second depends on the sample frequency which is defined
     in the field <nSamplesPerSec> from the <format chunk>. */
-    this->timeReferenceLow = low;
-    this->timeReferenceHigh = high;
+    *this->timeReferenceLow = low;
+    *this->timeReferenceHigh = high;
 }
 
 void BEXTChunk::clear_timestamp()
 {
-    this->timeReferenceLow = 0;
-    this->timeReferenceHigh = 0;
+    *this->timeReferenceLow = 0;
+    *this->timeReferenceHigh = 0;
 }
 
 void BEXTChunk::set_bwf_version(uint16_t versionNumber)
@@ -375,11 +371,11 @@ void BEXTChunk::set_bwf_version(uint16_t versionNumber)
 bool BEXTChunk::loudness_is_set()
 {
     return (
-            this->_loudnessValueSet
-            && this->_loudnessRangeSet
-            && this->_maxTruePeakLevelSet
-            && this->_maxMomentaryLoudnessSet
-            && this->_maxShortTermLoudnessSet
+            this->loudnessValue
+            && this->loudnessRange
+            && this->maxTruePeakLevel
+            && this->maxMomentaryLoudness
+            && this->maxShortTermLoudness
         );
 }
 
@@ -414,31 +410,26 @@ void BEXTChunk::clear_umid()
 void BEXTChunk::set_loudness_value(uint16_t value)
 {
     this->loudnessValue = value;
-    this->_loudnessValueSet = true;
 }
 
 void BEXTChunk::set_loudness_range(uint16_t range)
 {
     this->loudnessRange = range;
-    this->_loudnessRangeSet = true;
 }
 
 void BEXTChunk::set_loudness_max_true_peak(uint16_t level)
 {
     this->maxTruePeakLevel = level;
-    this->_maxTruePeakLevelSet = true;
 }
 
 void BEXTChunk::set_loudness_max_momentary(uint16_t level)
 {
     this->maxMomentaryLoudness = level;
-    this->_maxMomentaryLoudnessSet = true;
 }
 
 void BEXTChunk::set_loudness_max_short_term(uint16_t value)
 {
     this->maxShortTermLoudness = value;
-    this->_maxShortTermLoudnessSet = true;
 }
 
 void BEXTChunk::clear_loudness()
@@ -448,11 +439,6 @@ void BEXTChunk::clear_loudness()
     this->maxTruePeakLevel = 0;
     this->maxMomentaryLoudness = 0;
     this->maxShortTermLoudness = 0;
-    this->_loudnessValueSet = false;
-    this->_loudnessRangeSet = false;
-    this->_maxTruePeakLevelSet = false;
-    this->_maxMomentaryLoudnessSet = false;
-    this->_maxShortTermLoudnessSet = false;
 }
 
 void BEXTChunk::set_reserved()
@@ -472,7 +458,7 @@ void BEXTChunk::set_coding_history(CodingHistoryRow row)
     a new string with the appropriate information. */
     const uint32_t rowSize = row.size();
     char buff[rowSize + 1];
-    row.copy_to_buffer(buff);
+    row.get(buff);
     buff[rowSize] = '\0';
     this->codingHistory = std::string(buff);
 }
@@ -492,7 +478,7 @@ void BEXTChunk::append_to_coding_history(CodingHistoryRow row)
 {
     const uint32_t rowSize = row.size();
     char buff[rowSize + 1];
-    row.copy_to_buffer(buff);
+    row.get(buff);
     buff[rowSize] = '\0';
     this->codingHistory.append(std::string(buff));
 }
@@ -502,7 +488,7 @@ void BEXTChunk::clear_coding_history()
     this->codingHistory = std::string("");
 }
 
-size_t BEXTChunk::size()
+uint32_t BEXTChunk::size()
 {
     /* Return size of chunk data only (excludes ChunkID and size blocks)
         Description (256)
@@ -516,12 +502,12 @@ size_t BEXTChunk::size()
         + Loudness (10)
         + Reserved (180)
         = 602 + Coding History Size */
-    this->_bextChunkSize = 602 + this->codingHistory.size();
-    if (this->_bextChunkSize % 2)
+    this->chunkSize = 602 + this->codingHistory.size();
+    if (this->chunkSize % 2)
     {
-        this->_bextChunkSize += 1;
+        this->chunkSize += 1;
     }
-    return this->_bextChunkSize;
+    return this->chunkSize;
 }
 
 size_t BEXTChunk::total_size()
@@ -533,8 +519,8 @@ size_t BEXTChunk::get(uint8_t* buff)
 {
     size();
     size_t index(8);
-    memcpy(buff, this->_bextChunkID, 4);
-    memcpy(buff + 4, &this->_bextChunkSize, 4);
+    memcpy(buff, this->chunkID, 4);
+    memcpy(buff + 4, &this->chunkSize, 4);
     memcpy(buff + index, this->description, 256);
     index += 256;
     memcpy(buff + index, this->originator, 32);
@@ -545,8 +531,7 @@ size_t BEXTChunk::get(uint8_t* buff)
     index += 10;
     memcpy(buff + index, this->originationTime, 8);
     index += 8;
-    memcpy(buff + index, &this->timeReferenceLow, 4);
-    memcpy(buff + index + 4, &this->timeReferenceHigh, 4);
+    memcpy(buff + index, &this->samplesSinceMidnight, 8);
     index += 8;
     memcpy(buff + index, &this->bwfVersion, 2);
     index += 2;
@@ -567,17 +552,17 @@ size_t BEXTChunk::get(uint8_t* buff)
     memcpy(buff + index, this->codingHistory.c_str(), this->codingHistory.size());
     index += this->codingHistory.size();
     // Make sure chunk ends on even-numbered byte
-    if (this->_bextChunkSize % 2) buff[index++] = '\0'; // Pad with NULL
+    if (this->chunkSize % 2) buff[index++] = '\0'; // Pad with NULL
     return index;
 }
 
 size_t BEXTChunk::set(const uint8_t* data)
 {
     size_t index = 0;
-    memcpy(&this->_bextChunkID, data + index, 4);
+    memcpy(&this->chunkID, data + index, 4);
     index += 4;
     size();
-    memcpy(&this->_bextChunkSize, data + index, 4);
+    memcpy(&this->chunkSize, data + index, 4);
     index += 4;
     memcpy(this->description, data + index, 256);
     index += 256;
@@ -589,8 +574,7 @@ size_t BEXTChunk::set(const uint8_t* data)
     index += 10;
     memcpy(this->originationTime, data + index, 8);
     index += 8;
-    memcpy(&this->timeReferenceLow, data + index, 4);
-    memcpy(&this->timeReferenceHigh, data + index + 4, 4);
+    memcpy(&this->samplesSinceMidnight, data + index, 8);
     index += 8;
     memcpy(&this->bwfVersion, data + index, 2);
     index += 2;
@@ -608,7 +592,7 @@ size_t BEXTChunk::set(const uint8_t* data)
     index += 2;
     memcpy(this->reserved, data + index, 180);
     index += 180;
-    size_t remaining = this->_bextChunkSize - index;
+    size_t remaining = this->chunkSize - index;
     char history[remaining];
     memcpy(history, data + index, remaining);
     set_coding_history(history);

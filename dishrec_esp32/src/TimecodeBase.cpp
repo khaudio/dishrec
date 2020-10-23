@@ -2,14 +2,54 @@
 
 using namespace TimecodeBase;
 
+Timestamp::Timestamp() :
+samplesSinceMidnight(0)
+{
+    this->timeReferenceLow = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
+    this->timeReferenceHigh = this->timeReferenceLow + 1;
+}
+
+Timestamp::~Timestamp()
+{
+}
+
+const char* TimecodeBase::framerate_str(int fps)
+{
+    switch (fps)
+    {
+        case (24):
+            return FRAMERATE_24;
+        case (25):
+            return FRAMERATE_25;
+        case (30):
+            return FRAMERATE_30;
+        default:
+            throw INVALID_FRAMERATE;
+    }
+}
+
+const char* TimecodeBase::framerate_str(double fps)
+{
+    if ((fps == 23.98) || (fps == 23.976)) return FRAMERATE_2398;
+    else if (fps == 29.97) return FRAMERATE_2997;
+    else throw INVALID_FRAMERATE;
+}
+
+double TimecodeBase::framerate_num(const char* framerateStr)
+{
+    if (!(strcmp(framerateStr, FRAMERATE_2398))) return FRAMERATE_NUM_2398;
+    else if (!(strcmp(framerateStr, FRAMERATE_24))) return FRAMERATE_NUM_24;
+    else if (!(strcmp(framerateStr, FRAMERATE_25))) return FRAMERATE_NUM_25;
+    else if (!(strcmp(framerateStr, FRAMERATE_2997))) return FRAMERATE_NUM_2997;
+    else if (!(strcmp(framerateStr, FRAMERATE_30))) return FRAMERATE_NUM_30;
+    else throw INVALID_FRAMERATE;
+}
+
 std::array<int, 4> TimecodeBase::binary_to_tc(uint32_t data)
 {
     std::array<int, 4> timecode;
     uint8_t* ptr(reinterpret_cast<uint8_t*>(&data));
-    for (uint8_t i(0); i < 4; ++i)
-    {
-        timecode[i] = *(ptr + i);
-    }
+    for (uint8_t i(0); i < 4; ++i) timecode[i] = *(ptr + i);
     return timecode;
 }
 
@@ -17,45 +57,58 @@ uint32_t TimecodeBase::tc_to_binary(std::array<int, 4> timecode)
 {
     uint32_t data;
     uint8_t* ptr(reinterpret_cast<uint8_t*>(&data));
-    for (uint8_t i(0); i < 4; ++i)
-    {
-        *(ptr + i) = timecode[i];
-    }
+    for (uint8_t i(0); i < 4; ++i) *(ptr + i) = timecode[i];
     return data;
+}
+
+void TimecodeBase::get_tc_string(char* buff, std::array<int, 4> values, bool isDropframe)
+{
+    sprintf(
+            buff,
+            "%02u:%02u:%02u%c%02u",
+            values[0],
+            values[1],
+            values[2],
+            (isDropframe ? ';' : ':'),
+            values[3]
+        );
+    buff[11] = '\0';
 }
 
 std::string TimecodeBase::tc_to_string(std::array<int, 4> values, bool isDropframe)
 {
-    std::ostringstream stream;
-    stream << std::setfill('0') << std::setw(2);
-    stream << +values[0] << ":";
-    stream << std::setfill('0') << std::setw(2);
-    stream << +values[1] << ":";
-    stream << std::setfill('0') << std::setw(2);
-    stream << +values[2] << (isDropframe ? ";" : ":");
-    stream << std::setfill('0') << std::setw(2);
-    stream << +values[3];
-    return stream.str();
+    char buff[16];
+    get_tc_string(buff, values, isDropframe);
+    return std::string(buff);
+}
+
+std::array<int, 4> TimecodeBase::string_to_tc(const char* formatted, bool* isDropframe)
+{
+    if (isDropframe != nullptr) *isDropframe = (formatted[8] == ';');
+    std::array<int, 4> timecode;
+    const char hrStr[3] = {formatted[0], formatted[1], '\0'};
+    const char minStr[3] = {formatted[3], formatted[4], '\0'};
+    const char secStr[3] = {formatted[6], formatted[7], '\0'};
+    const char frmStr[3] = {formatted[9], formatted[10], '\0'};
+    timecode[0] = atoi(hrStr);
+    timecode[1] = atoi(minStr);
+    timecode[2] = atoi(secStr);
+    timecode[3] = atoi(frmStr);
+    return timecode;
 }
 
 std::array<int, 4> TimecodeBase::string_to_tc(std::string formatted, bool* isDropframe)
 {
     #ifdef _DEBUG
-    if (formatted.size() != 11)
-    {
-        throw INVALID_TC_STRING_LENGTH;
-    }
+    if (formatted.size() != 11) throw INVALID_TC_STRING_LENGTH;
     #endif
+    if (isDropframe != nullptr) *isDropframe = formatted.substr(8, 1) == ";";
     std::array<int, 4> timecode = {
             std::stoi(formatted.substr(0, 2)),
             std::stoi(formatted.substr(3, 2)),
             std::stoi(formatted.substr(6, 2)),
             std::stoi(formatted.substr(9, 2)),
         };
-    if (isDropframe != nullptr)
-    {
-        *isDropframe = formatted.substr(8, 1) == ";";
-    }
     return timecode;
 }
 
@@ -77,23 +130,17 @@ Base::~Base()
 {
 }
 
-void Base::_set_value(std::array<int, 4> tc)
+inline void Base::_set_value(std::array<int, 4> tc)
 {
-    for (uint8_t i(0); i < 4; ++i)
-    {
-        this->_value[i] = tc[i];
-    }
+    for (uint8_t i(0); i < 4; ++i) this->_value[i] = tc[i];
 }
 
-void Base::_check_initialization()
+inline void Base::_check_initialization()
 {
-    if (!this->_initialized)
-    {
-        throw TIMEBASE_UNINITIALIZED;
-    }
+    if (!this->_initialized) throw TIMEBASE_UNINITIALIZED;
 }
 
-bool Base::_drop_frame(std::array<int, 4> tc)
+inline bool Base::_drop_frame(std::array<int, 4> tc)
 {
     return (
             this->_dropframe
@@ -103,7 +150,7 @@ bool Base::_drop_frame(std::array<int, 4> tc)
         );
 }
 
-std::array<int, 4> Base::_increment(std::array<int, 4> values, std::array<int, 4> offset)
+inline std::array<int, 4> Base::_increment(std::array<int, 4> values, std::array<int, 4> offset)
 {
     std::array<int, 4> output(values);
     for (int8_t i(3); i >= 0; --i)
@@ -136,19 +183,19 @@ std::array<int, 4> Base::_increment(std::array<int, 4> values, std::array<int, 4
     return output;
 }
 
-std::array<int, 4> Base::_reconcile(std::array<int, 4> tc)
+inline std::array<int, 4> Base::_reconcile(std::array<int, 4> tc)
 {
     static std::array<int, 4> _zeroTC = {0, 0, 0, 0};
     return _increment(_zeroTC, tc);
 }
 
-std::array<int, 4> Base::_reconcile(int hr, int min, int sec, int frm)
+inline std::array<int, 4> Base::_reconcile(int hr, int min, int sec, int frm)
 {
     std::array<int, 4> tc = {hr, min, sec, frm};
     return _reconcile(tc);
 }
 
-int Base::_to_frames(int hr, int min, int sec, int frm)
+inline int Base::_to_frames(int hr, int min, int sec, int frm)
 {
     int accumulated(hr * this->_divisors[1]);
     accumulated += min;
@@ -159,30 +206,32 @@ int Base::_to_frames(int hr, int min, int sec, int frm)
     return accumulated;
 }
 
-int Base::_to_frames(std::array<int, 4> tc)
+inline int Base::_to_frames(std::array<int, 4> tc)
 {
     return _to_frames(tc[0], tc[1], tc[2], tc[3]);
 }
 
-std::array<int, 4> Base::_from_frames(int numFrames)
+inline std::array<int, 4> Base::_from_frames(int numFrames)
 {
     std::array<int, 4> offset = {0, 0, 0, numFrames};
     return _reconcile(offset);
 }
 
-void Base::set_framerate(double fps, bool isDropframe)
+void Base::set_framerate(const char* fps)
 {
-    this->_dropframe = isDropframe;
+    strncpy(this->_framerate, fps, 16);
+}
+
+void Base::set_framerate(double fps)
+{
     if ((fps == 23.98) || (fps == 23.976))
     {
-        this->_framerateString = std::string("24000/1001");
-        this->_framerate = _framerate_2398;
+        strncpy(this->_framerate, FRAMERATE_2398, 11);
         this->_divisors[3] = 24;
     }
     else if (fps == 29.97)
     {
-        this->_framerateString = std::string("30000/1001");
-        this->_framerate = _framerate_2997;
+        strncpy(this->_framerate, FRAMERATE_2997, 11);
         this->_divisors[3] = 30;
     }
     else
@@ -196,24 +245,20 @@ void Base::set_framerate(double fps, bool isDropframe)
     this->_initialized = true;
 }
 
-void Base::set_framerate(int fps, bool isDropframe)
+void Base::set_framerate(int fps)
 {
-    this->_dropframe = isDropframe;
     switch (fps)
     {
         case (24):
-            this->_framerateString = std::string("24/1");
-            this->_framerate = 24;
+            strncpy(this->_framerate, FRAMERATE_24, 5);
             this->_divisors[3] = 24;
             break;
         case (25):
-            this->_framerateString = std::string("25/1");
-            this->_framerate = 25;
+            strncpy(this->_framerate, FRAMERATE_25, 5);
             this->_divisors[3] = 25;
             break;
         case (30):
-            this->_framerateString = std::string("30/1");
-            this->_framerate = 30;
+            strncpy(this->_framerate, FRAMERATE_30, 5);
             this->_divisors[3] = 30;
             break;
         default:
@@ -224,6 +269,16 @@ void Base::set_framerate(int fps, bool isDropframe)
         this->_maximum[i] = this->_divisors[i] - 1;
     }
     this->_initialized = true;
+}
+
+void Base::set_dropframe(bool isDropframe)
+{
+    this->_dropframe = isDropframe;
+}
+
+bool Base::is_dropframe()
+{
+    return this->_dropframe;
 }
 
 void Base::set_timecode(int hr, int min, int sec, int frm)
@@ -241,13 +296,27 @@ void Base::set_timecode(std::array<int, 4> tc)
 
 void Base::set_timecode(int numFrames)
 {
-    std::array<int, 4> tc = _from_frames(numFrames);
-    set_timecode(tc[0], tc[1], tc[2], tc[3]);
+    set_timecode(0, 0, 0, numFrames);
+    // std::array<int, 4> tc = _from_frames(numFrames);
+    // set_timecode(tc[0], tc[1], tc[2], tc[3]);
+}
+
+void Base::set_timecode(const char* timecodeStr)
+{
+    std::array<int, 4> tc = string_to_tc(timecodeStr, &this->_dropframe);
+    set_timecode(tc);
 }
 
 void Base::clear_timecode()
 {
     set_timecode(0, 0, 0, 0);
+}
+
+void Base::set_timecode(Base& base)
+{
+    set_framerate(base._framerate);
+    set_dropframe(base._dropframe);
+    set_timecode(base._value);
 }
 
 std::array<int, 4> Base::get_timecode()
@@ -263,7 +332,7 @@ std::array<int, 4> Base::get_timecode()
     return output;
 }
 
-int Base::get_frames()
+inline int Base::get_frames()
 {
     return _to_frames(
             *(this->_hours),
@@ -271,6 +340,11 @@ int Base::get_frames()
             *(this->_seconds),
             *(this->_frames)
         );
+}
+
+void Base::get_timecode(char* buff)
+{
+    get_tc_string(buff, this->_value, this->_dropframe);
 }
 
 std::string Base::str()
@@ -327,66 +401,71 @@ Base TimecodeBase::operator-(Base& b1, const std::array<int, 4>& tc)
 }
 
 Clock::Clock() :
-Base(),
-sampleRate(0)
+Timestamp(),
+Base()
 {
-    this->timestampSSMLo = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
-    this->timestampSSMHi = this->timestampSSMLo + 1;
+    this->sampleRate = 0;
+    this->samplesSinceMidnight = 0;
+    this->timeReferenceLow = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
+    this->timeReferenceHigh = this->timeReferenceLow + 1;
 }
 
 Clock::~Clock()
 {
 }
 
-void Clock::_set_timestamp()
+inline void Clock::_check_initialization()
+{
+    Base::_check_initialization();
+    if (!this->sampleRate) throw SAMPLERATE_UNINITIALIZED;
+}
+
+inline void Clock::_set_timestamp()
 {
     // Calculate samples since midnight from current timecode
     this->samplesSinceMidnight = get_frames() * this->_samplesPerFrame;
 }
 
-void Clock::_set_timestamp(uint64_t numSamples)
+inline void Clock::_set_timestamp(uint64_t numSamples)
 {
     // Modify current timecode to reflect numSamples
     this->samplesSinceMidnight = numSamples;
     Base::set_timecode(numSamples / this->_samplesPerFrame);
 }
 
-void Clock::_set_timestamp(uint32_t ssmLo, uint32_t ssmHi)
+inline void Clock::_set_timestamp(uint32_t ssmLo, uint32_t ssmHi)
 {
-    *this->timestampSSMLo = ssmLo;
-    *this->timestampSSMHi = ssmHi;
+    *this->timeReferenceLow = ssmLo;
+    *this->timeReferenceHigh = ssmHi;
 }
 
-void Clock::_set_samples_per_frame()
+inline void Clock::_set_samples_per_frame()
 {
     this->_samplesPerFrame = this->sampleRate / this->_divisors[3];
 }
 
-void Clock::set_framerate(double fps, bool isDropframe)
+void Clock::set_framerate(const char* fps)
 {
-    Base::set_framerate(fps, isDropframe);
-    if (this->sampleRate)
-    {
-        _set_samples_per_frame();
-    }
+    Base::set_framerate(fps);
+    if (this->sampleRate) _set_samples_per_frame();
 }
 
-void Clock::set_framerate(int fps, bool isDropframe)
+
+void Clock::set_framerate(double fps)
 {
-    Base::set_framerate(fps, isDropframe);
-    if (this->sampleRate)
-    {
-        _set_samples_per_frame();
-    }
+    Base::set_framerate(fps);
+    if (this->sampleRate) _set_samples_per_frame();
 }
 
-void Clock::_check_initialization()
+void Clock::set_framerate(int fps)
 {
-    Base::_check_initialization();
-    if (!this->sampleRate)
-    {
-        throw SAMPLERATE_UNINITIALIZED;
-    }
+    Base::set_framerate(fps);
+    if (this->sampleRate) _set_samples_per_frame();
+}
+
+void Clock::set_dropframe(bool isDropframe)
+{
+    Base::set_dropframe(isDropframe);
 }
 
 void Clock::set_timecode(int hr, int min, int sec, int frm)
@@ -403,7 +482,24 @@ void Clock::set_timecode(std::array<int, 4> tc)
 void Clock::set_timecode(int numFrames)
 {
     Base::set_timecode(numFrames);
+    this->samplesSinceMidnight = numFrames * this->_samplesPerFrame;
+}
+
+void Clock::set_timecode(const char* timecodeStr)
+{
+    Base::set_timecode(timecodeStr);
     _set_timestamp();
+}
+
+void Clock::set_timecode(Clock& clock)
+{
+    this->sampleRate = clock.sampleRate;
+    Base::set_timecode(clock);
+}
+
+uint64_t Clock::get_timestamp()
+{
+    return this->samplesSinceMidnight;
 }
 
 void Clock::tick()
@@ -414,9 +510,6 @@ void Clock::tick()
 
 void Clock::set_sample_rate(uint32_t samplerate)
 {
-    this->sampleRate = samplerate;
-    if (this->_initialized)
-    {
-        _set_samples_per_frame();
-    }
+    WavMeta::WavFormat::set_sample_rate(samplerate);
+    if (this->_initialized) _set_samples_per_frame();
 }

@@ -5,6 +5,8 @@
 #include <sstream>
 #include <memory>
 
+#include "TimecodeBase.h"
+#include "WavHeader.h"
 #include "ErrorEnums.h"
 
 #include <iostream>
@@ -41,17 +43,16 @@ class CodingHistoryRow
 private:
     bool
         _isMPEG, _algoSet, _samplerateSet, _bitDepthSet,
-        _modeSet, _bitrateSet, _textSet;
-    bool* _setters[6];
+        _modeSet, _bitrateSet, _textSet, *_setters[6];
     uint16_t
         _algorithmLength, _samplerateLength, _bitrateLength,
-        _bitDepthLength, _modeLength;
-    uint16_t _textLength;
+        _bitDepthLength, _modeLength, _textLength;
     const static uint16_t _textLengthLimit;
     char
         _codingAlgorithm[16], _samplerate[16], _bitDepth[5],
         _mode[16], _bitrate[8], _text[1024], _internalBuffer[1200];
     uint32_t _rowSize;
+
 public:
     CodingHistoryRow();
     ~CodingHistoryRow();
@@ -70,28 +71,27 @@ public:
     void set_text(const char* text);
     void append_text(const char* text);
     void clear_text();
-    void copy_to_buffer(char* buff);
+    void get(char* buff);
+
+    uint32_t size();
+
     std::string str();
     const char* c_str();
-    uint32_t size();
 };
 
-class BEXTChunk
+class BEXTChunk : virtual public TimecodeBase::Timestamp, public WavMeta::Chunk
 {
 public:
-    char _bextChunkID[4];
-    uint32_t _bextChunkSize;
-
     BEXTChunk();
     ~BEXTChunk();
 
     virtual void clear();
 
     // Chunk size minus ID and size fields
-    virtual size_t size();
+    uint32_t size() override;
 
     // Size of entire chunk including ID and Size
-    virtual size_t total_size();
+    size_t total_size() override;
 
     // Export chunk including ID and size fields
     virtual size_t get(uint8_t* buff);
@@ -133,7 +133,8 @@ public:
 
 /*                            Timestamp                             */
 
-    uint32_t timeReferenceLow, timeReferenceHigh;
+    // uint64_t samplesSinceMidnight;
+    // uint32_t *timeReferenceLow, *timeReferenceHigh;
     virtual void set_timestamp(uint64_t samplesSinceMidnight);
     virtual void set_timestamp(uint32_t low, uint32_t high);
     virtual void clear_timestamp();
@@ -156,9 +157,6 @@ public:
 
 /*                            Loudness                              */
 
-    bool
-        _loudnessValueSet, _loudnessRangeSet, _maxTruePeakLevelSet,
-        _maxMomentaryLoudnessSet, _maxShortTermLoudnessSet;
     uint16_t
         loudnessValue, loudnessRange,
         maxTruePeakLevel, maxMomentaryLoudness, maxShortTermLoudness;

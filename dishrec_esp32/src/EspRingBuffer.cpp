@@ -66,12 +66,15 @@ void init_wav_file_objects()
 
 void open_new_file()
 {
-    std::stringstream ss;
+    char buff[200], takenum[4];
+    buff[0] = '\0';
     currentWriteFile = std::make_shared<EspSDWavFile>();
     currentWriteFile->set_format(currentWavFormat);
-    ss << currentWriteFilename << filenameDelimiter << std::setw(3);
-    ss << std::setfill('0') << ++currentWriteFileNumber;
-    currentWriteFile->set_filename(ss.str());
+    sprintf(takenum, "%03d", ++currentWriteFileNumber);
+    strcat(buff, currentWriteFilename.c_str());
+    strcat(buff, filenameDelimiter.c_str());
+    strcat(buff, takenum);
+    currentWriteFile->set_filename(buff);
     if (!currentWriteFile->open_write())
     {
         std::cerr << "Could not open new file" << std::endl;

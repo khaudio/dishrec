@@ -8,7 +8,7 @@
 #endif
 
 #include <string>
-#include <sstream>
+// #include <sstream>
 #include <map>
 #include <vector>
 
@@ -68,11 +68,18 @@ public:
 class TakeType : public Base
 {
 protected:
-    bool
-        _default, _no_good, _false_start, _wild_track,
-        _pickup, _rehearsal, _announcement, _sound_guide;
     void _apply();
+    void _get_flag_str(
+            char* buff,
+            bool& initialized,
+            bool flag,
+            const char* str
+        );
+
 public:
+    bool
+        defaultTake, no_good, false_start, wild_track,
+        pickup, rehearsal, announcement, sound_guide;
     TakeType(XMLDocument* xmldoc);
     void set_default();
     void set_no_good(bool flagged);
@@ -217,7 +224,7 @@ public:
     friend class IXML;
 };
 
-class IXML : public BEXT::BEXTChunk, public TimecodeBase::Clock
+class IXML : public TimecodeBase::Clock
 {
 public:
     XMLDocument ixml;
@@ -236,52 +243,111 @@ public:
     Location location;
     User user;
     uint16_t numTracks, numSyncPoints;
-    int takeNumber;
     static const char *_uidValidChars;
 
 protected:
     char _ixmlChunkID[4];
-    uint32_t _ixmlChunkSize;
+    size_t _ixmlChunkSize;
     uint16_t _ixmlVersionMajor, _ixmlVersionMinor;
     static const char *_ubitsValidChars, *_xmlEncoding;
     std::map<const uint16_t, std::shared_ptr<Track>> tracks;
     std::vector<std::shared_ptr<SyncPoint>> syncPoints;
     std::vector<XMLElement*> _trackElements;
 
-    // Additional empty space before data chunk
-    uint32_t _additionalLength;
-
 public:
     IXML();
     ~IXML();
     
-    void clear() override;
+    virtual void clear();
+
+    // Size of iXML chunk
+    virtual size_t size();
+
+    // Print XML only to const char*
+    const char* _xml_c_str();
+    
+    // Copy chunk to buffer
+    virtual size_t get(uint8_t* buff);
 
 /*                        Top Level Metadata                        */
+
+public:
+    // iXML version
     virtual void set_ixml_version(uint16_t major, uint16_t minor);
+    virtual std::pair<const uint16_t, const uint16_t> get_ixml_version();
+
+    // Project
     virtual void set_project(const char* projectName);
+    virtual const char* get_project();
+
+    // Tape/Sound Roll
     virtual void set_tape(const char* tapeName);
+    virtual const char* get_tape();
+
+    // Scene name
     virtual void set_scene(const char* sceneName);
+    virtual const char* get_scene();
+
+    // Take number
     virtual void set_take(int takeNum);
-    virtual void set_circled(bool isCircled);
-    virtual void set_file_uid();
-    virtual void set_ubits(uint8_t first, uint8_t second, uint8_t third, uint8_t fourth);
-    virtual void set_ubits(const char* userbits);
-    virtual void set_note(const char* message);
+    virtual int get_take();
 
 /*                             Take type                            */
+
+public:
+    // Circle Take
+    virtual void set_circled(bool isCircled);
+    virtual bool is_circled();
+
+    // File UID
+    virtual void set_file_uid();
+    virtual const char* get_file_uid();
+    
+    // Userbits
+    static void _assert_valid_ubits(const char* bits);
+    virtual void set_ubits(
+            uint8_t first,
+            uint8_t second,
+            uint8_t third,
+            uint8_t fourth
+        );
+    virtual void set_ubits(const char* bits);
+    virtual const uint8_t* get_ubits() const;
+
+    // Take note
+    virtual void set_note(const char* message);
+    virtual const char* get_note();
+
+    // Take type
     virtual void set_default_take_type();
+    virtual bool is_default_take_type();
+
     virtual void set_no_good(bool flagged);
+    virtual bool is_no_good();
+
     virtual void set_false_start(bool flagged);
+    virtual bool is_false_start();
+
     virtual void set_wild_track(bool flagged);
+    virtual bool is_wild_track();
+
     virtual void set_pickup(bool flagged);
+    virtual bool is_pickup();
+
     virtual void set_rehearsal(bool flagged);
+    virtual bool is_rehearsal();
+
     virtual void set_announcement(bool flagged);
+    virtual bool is_announcement();
+
     virtual void set_sound_guide(bool flagged);
+    virtual bool is_sound_guide();
+
 
 /*                              Speed                               */
+
 protected:
-    virtual void _set_framerate(const char* fps);
+    virtual void _set_framerate_str();
     virtual void _set_timestamp_ixml();
     void _set_timestamp() override;
     void _set_timestamp(uint64_t numSamples) override;
@@ -289,22 +355,29 @@ protected:
 
 public:
     void set_sample_rate(uint32_t samplerate) override;
-    virtual void set_bit_depth(uint16_t bitsPerSample);
-    void set_framerate(double fps, bool isDropframe) override;
-    void set_framerate(int fps, bool isDropframe) override;
+    void set_bit_depth(uint16_t bitsPerSample) override;
+    
+    void set_framerate(double fps) override;
+    void set_framerate(int fps) override;
+    void set_framerate(const char* fps) override;
+    void set_dropframe(bool isDropframe) override;
+
     void set_timecode(int hr, int min, int sec, int frm) override;
     void set_timecode(std::array<int, 4> tc) override;
     void set_timecode(int numFrames) override;
+    void set_timecode(TimecodeBase::Base& base) override;
+    void set_timecode(TimecodeBase::Clock& clock) override;
     void clear_timecode() override;
 
 /*                            Sync Points                           */
+
 protected:
-    static inline bool _sync_point_sorter(
+    static bool _sync_point_sorter(
             std::shared_ptr<SyncPoint> first,
             std::shared_ptr<SyncPoint> second
         );
-    inline size_t _get_sync_point_index(std::shared_ptr<SyncPoint> point);
-    inline void _update_sync_point_count();
+    size_t _get_sync_point_index(std::shared_ptr<SyncPoint> point);
+    void _update_sync_point_count();
     virtual std::shared_ptr<SyncPoint> _create_sync_point(uint64_t numSamples);
 
 public:
@@ -315,89 +388,103 @@ public:
     virtual void clear_sync_points();
 
 /*                              History                             */
+
     virtual void set_filename(const char* filename);
+    virtual const char* get_filename();
+
     virtual void set_parent_uid(const char* data);
+    virtual const char* get_parent_uid();
 
 /*                             File set                             */
+
     virtual void set_total_files(unsigned int numFiles);
+    virtual int get_total_files();
+    
     virtual void set_family_uid();
+    virtual const char* get_family_uid();
+    
     virtual void set_family_name(const char* familyName);
     virtual void set_family_name();
+    virtual const char* get_family_name();
+    
     virtual void set_file_set_index(const char* index);
+    virtual const char* get_file_set_index();
 
 /*                            Track list                            */
+
 protected:
     virtual void _write_track_list();
 
 public:
-    virtual void set_channels(uint16_t channels);
+    void set_channels(uint16_t channels) override;
     virtual uint16_t get_channels();
+
     virtual std::shared_ptr<Track> create_track();
     virtual std::shared_ptr<Track> get_track(const uint16_t index);
+
     virtual void destroy_track(std::shared_ptr<Track> track);
     virtual void destroy_track(const uint16_t index);
+
     virtual void disable_track(std::shared_ptr<Track> track);
     virtual void disable_track(const uint16_t index);
+    
     virtual void enable_track(std::shared_ptr<Track> track);
     virtual void enable_track(const uint16_t index);
 
 /*                               BEXT                               */
 
+public:
     // Originator
-    void set_originator(const char* newOriginator) override;
-    void clear_originator() override;
+    virtual void set_originator(const char* newOriginator);
+    virtual void clear_originator();
 
     // Originator Reference
-    void set_originator_reference(const char* newReference) override;
-    void clear_originator_reference() override;
+    virtual void set_originator_reference(const char* newReference);
+    virtual void clear_originator_reference();
 
     // Description
-    void set_description(const char* newDescription) override;
-    void clear_description() override;
+    virtual void set_description(const char* newDescription);
+    virtual void clear_description();
 
     // Origination Date
-    void set_date(int16_t year, uint8_t month, uint8_t day) override;
-    void set_date_str(const char* date) override;
-    void clear_date() override;
+    // virtual void set_date(int16_t year, uint8_t month, uint8_t day);
+    virtual void set_date_str(const char* date);
+    virtual void clear_date();
 
     // Origination Time
-    void set_time(uint8_t hour, uint8_t minute, uint8_t second) override;
-    void set_time_str(const char* time) override;
-    void clear_time() override;
+    // virtual void set_time(uint8_t hour, uint8_t minute, uint8_t second);
+    virtual void set_time_str(const char* time);
+    virtual void clear_time();
 
     // BWF Version
-    void set_bwf_version(uint16_t versionNumber) override;
+    virtual void set_bwf_version(uint16_t versionNumber);
 
     // UMID
-    void set_umid(const uint8_t* newUmid) override;
-    void clear_umid() override;
+    virtual void set_umid(const uint8_t* newUmid);
+    virtual void clear_umid();
 
     // Loudness
-    void set_loudness_value(uint16_t value) override;
-    void set_loudness_range(uint16_t range) override;
-    void set_loudness_max_true_peak(uint16_t level) override;
-    void set_loudness_max_momentary(uint16_t level) override;
-    void set_loudness_max_short_term(uint16_t value) override;
-    void clear_loudness() override;
+    virtual void set_loudness_value(uint16_t value);
+    virtual void set_loudness_range(uint16_t range);
+    virtual void set_loudness_max_true_peak(uint16_t level);
+    virtual void set_loudness_max_momentary(uint16_t level);
+    virtual void set_loudness_max_short_term(uint16_t value);
+    virtual void clear_loudness();
 
     // Reserved
-    void set_reserved() override;
+    // virtual void set_reserved(int length = 180);
+    virtual void set_reserved(const uint8_t* data);
 
     // Coding History
-    void set_coding_history(std::string history) override;
-    void set_coding_history(const char* history) override;
-    void set_coding_history(BEXT::CodingHistoryRow row) override;
-    void append_to_coding_history(BEXT::CodingHistoryRow row) override;
-    void clear_coding_history() override;
+    virtual void set_coding_history(std::string history);
+    virtual void set_coding_history(const char* history);
+    // virtual void set_coding_history(BEXT::CodingHistoryRow row);
+    // virtual void append_to_coding_history(BEXT::CodingHistoryRow row);
+    virtual void clear_coding_history();
 
     // Import data from external BEXT Chunk
     virtual void import_bext_chunk(BEXT::BEXTChunk& chunk);
 
-    const char* _xml_c_str();
-
-    size_t size() override;
-    
-    size_t get(uint8_t* buff) override;
 };
 
 };
