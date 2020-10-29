@@ -367,7 +367,7 @@ numSyncPoints(0)
     this->root->InsertEndChild(this->sync_point_list._element);
     this->root->InsertEndChild(this->location._element);
     this->root->InsertEndChild(this->user._element);
-    set_ixml_version(2, 10);
+    set_ixml_version(IXML_VERSION_MAJOR, IXML_VERSION_MINOR);
     clear();
     set_family_uid(); // Set random Family UID until overwritten
 }
@@ -872,7 +872,7 @@ const char* IXML::get_file_set_index()
 void IXML::set_channels(uint16_t channels)
 {
     int tracksToCreate = channels - this->tracks.size();
-    if (channels > 0) for (int i(0); i < tracksToCreate; ++i) create_track();
+    if (tracksToCreate > 0) for (int i(0); i < tracksToCreate; ++i) create_track();
     else if (tracksToCreate < 0)
     {
         int index(this->tracks.size() - 1);
@@ -881,6 +881,7 @@ void IXML::set_channels(uint16_t channels)
             this->tracks.erase(index--);
         }
     }
+    _write_track_list();
 }
 
 uint16_t IXML::get_channels()
@@ -929,9 +930,10 @@ void IXML::_write_track_list()
         if (track->_active)
         {
             track->set_interleave_index(++this->numTracks);
-            XMLElement* trackElement = this->_trackElements.emplace_back(
+            this->_trackElements.emplace_back(
                     this->track_list._element->InsertNewChildElement("TRACK")
                 );
+            XMLElement* trackElement = this->_trackElements.back();
             XMLElement* channelIndex = trackElement->InsertNewChildElement("CHANNEL_INDEX");
             XMLElement* interleaveIndex = trackElement->InsertNewChildElement("INTERLEAVE_INDEX");
             XMLElement* name = trackElement->InsertNewChildElement("NAME");
@@ -961,7 +963,8 @@ std::shared_ptr<Track> IXML::create_track()
     newTrack->set_channel_index(++this->numTracks);
     newTrack->set_name("");
     newTrack->set_function("");
-    this->tracks.insert_or_assign(newTrack->_index, newTrack);
+    std::pair<const uint16_t, std::shared_ptr<Track>> pair(newTrack->_index, newTrack);
+    this->tracks.insert(pair);
     _write_track_list();
     return newTrack;
 }

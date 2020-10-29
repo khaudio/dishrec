@@ -125,7 +125,7 @@ public:
     friend Clock;
 };
 
-class Clock : virtual public Timestamp, public Base, virtual public WavMeta::WavFormat
+class Clock : public Base, virtual public Timestamp, virtual public WavMeta::WavFormat
 {
 protected:
     uint32_t _samplesPerFrame;

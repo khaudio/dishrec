@@ -6,13 +6,19 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <exception>
 #include <map>
 
+#include "IntFloatConv.h"
 #include "WavHeader.h"
 #include "BEXTChunk.h"
 #include "iXML.h"
 #include "AudioDataPad.h"
 #include "BWF.h"
+#include "Loudness.h"
+
+#include "testdata.h"
+
 
 void print(const uint8_t* buff, size_t buffsize)
 {
@@ -35,9 +41,7 @@ int main()
     int i(0);
     std::cout << "Working... " << ++i << std::endl;
 
-    // iXML::IXML ixml;
     BWF::BroadcastWav wav;
-    // BEXT::BEXTChunk bext;
     BEXT::CodingHistoryRow row;
     row.set_pcm();
     row.set_sample_rate(48000);
@@ -68,12 +72,8 @@ int main()
     
     std::cout << "Working... " << ++i << std::endl;
 
-    // int wavhsize = 44;
-    // uint8_t wavhbuff[wavhsize];
-    // WavMeta::WavHeader wavheader;
     wav.set_format(params);
     wav.set_data_size(0);
-    // wav.get(wavhbuff);
     
     std::cout << "Working... " << ++i << std::endl;
     
@@ -85,16 +85,14 @@ int main()
     std::cout << "Setting " << "bit depth" << std::endl;
     wav.set_bit_depth(16);
     std::cout << "Setting " << "timecode" << std::endl;
-
+    wav.set_timecode(16, 14, 34, 0);
+    
     std::cout << "ssm: " << wav.samplesSinceMidnight << std::endl;
     std::cout << "ssm low: " << *wav.timeReferenceLow << std::endl;
     std::cout << "ssm high: " << *wav.timeReferenceHigh << std::endl;
 
-    wav.set_timecode(16, 14, 34, 0);
-    
     std::cout << "Working... " << ++i << std::endl;
 
-    // wav.import_bext_chunk(bext);
     wav.set_reserved();
 
     wav.set_project("dishrec test project");
@@ -103,7 +101,17 @@ int main()
     
     std::cout << "Working... " << ++i << std::endl;
 
-    std::shared_ptr<iXML::Track> trackOne = wav.create_track();
+    std::shared_ptr<iXML::Track> trackOne;
+    
+    try
+    {
+        trackOne = wav.get_track(1);
+    }
+    catch(const std::exception& e)
+    {
+        trackOne = wav.create_track();
+    }
+
     trackOne->set_name("BOOM1");
     trackOne->set_function("M/S MID");
     
@@ -126,13 +134,14 @@ int main()
     
     std::cout << "Working... " << ++i << std::endl;
 
-    wav.set_channels();
+    wav.set_channels(5);
+    wav.set_channels(2);
     
     std::cout << "Working... " << ++i << std::endl;
 
     wav.set_tape("tape name... set tape name to date?");
     wav.set_note("this is a note for this take");
-    wav.set_circled(true); // Circle this take
+    wav.set_circled(true);
     wav.set_rehearsal(true);
     wav.set_no_good(true);
     wav.set_ubits(0xde, 0xad, 0xbe, 0xef);
@@ -159,13 +168,53 @@ int main()
     asyncpoint = nullptr;
     wav.destroy_sync_point(asyncpoint);
 
+    std::cout << "Working... " << ++i << std::endl;
+
     const size_t metaBuffSize = wav.total_size();
     uint8_t metaBuff[metaBuffSize];
     wav.get(metaBuff);
 
-    print(metaBuff, metaBuffSize);
-    // print_hex(wavhbuff, wavheader.size());
+    // print_hex(metaBuff, metaBuffSize);
+    // print(metaBuff, metaBuffSize);
     printf("\nBroadcastWav Size: %lu\n", wav.size());
+
+    std::cout << "Creating loudness analyzer" << std::endl;
+
+    Loudness::Analyzer loudness;
+
+    std::cout << "Setting loudness analyzer format" << std::endl;
+
+    loudness.set_sample_rate(48000);
+    loudness.set_bit_depth(16);
+    loudness.set_channels(1);
+    loudness.set_format_code(WavMeta::FORMAT_PCM);
+
+    const size_t length(384000);
+
+    std::vector<int16_t> samples;
+    std::vector<double> floatVals;
+    for (size_t i(0); i < length; ++i)
+    {
+        floatVals.emplace_back(0);
+        samples.emplace_back(0);
+    }
+    
+    AudioAlgorithms::sine<double>(&floatVals, 1000, 48000);
+    float_to_int<double, int16_t>(&samples, &floatVals);
+    int_to_float<int16_t, double>(&floatVals, &samples);
+
+    for (size_t i(0); i < length; ++i) samples[i] *= .5f;
+
+    std::cout << "Adding frames to loudness analyzer" << std::endl;
+
+    loudness.add_frames(&samples);
+
+    std::cout << "Working... " << ++i << std::endl;
+
+    double loudnessGlobal = loudness.get_loudness_global();
+    printf("Loudness: %.2f LUFS\n", loudnessGlobal);
+    std::cout << "Loudness: " << std::fixed << std::setprecision(2);
+    std::cout << loudnessGlobal << " LUFS" << std::endl;
 
     std::cout << std::endl << std::endl;
 }

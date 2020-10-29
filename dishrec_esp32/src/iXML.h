@@ -1,16 +1,11 @@
 #ifndef IXML_H
 #define IXML_H
 
-#ifdef ESP32
-#include <tinyxml2.h>
-#else
-#include "../lib/tinyxml2/tinyxml2.h"
-#endif
-
 #include <string>
-// #include <sstream>
 #include <map>
 #include <vector>
+
+#include <tinyxml2.h>
 
 #include "TimecodeBase.h"
 #include "BEXTChunk.h"
@@ -20,6 +15,9 @@ using namespace tinyxml2;
 
 namespace iXML
 {
+
+#define IXML_VERSION_MAJOR          2
+#define IXML_VERSION_MINOR          10
 
 #ifndef MAX_TRACK_STR_LENGTH
 #define MAX_TRACK_STR_LENGTH        100
@@ -224,7 +222,7 @@ public:
     friend class IXML;
 };
 
-class IXML : public TimecodeBase::Clock
+class IXML : virtual public TimecodeBase::Clock
 {
 public:
     XMLDocument ixml;

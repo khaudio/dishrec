@@ -59,7 +59,7 @@ public:
     friend class BroadcastWav;
 };
 
-class BroadcastWav : public WavMeta::WavHeader, public iXML::IXML
+class BroadcastWav : virtual public WavMeta::WavHeader, virtual public iXML::IXML
 {
 public:
     int takeNumber;
@@ -94,30 +94,13 @@ public:
 /*                             Timecode                             */
 
 public:
-    // void set_framerate(double fps) override;
-    // void set_framerate(int fps) override;
-    // void set_framerate(const char* fps) override;
-
-    // void set_dropframe(bool isDropframe) override;
-    // bool is_dropframe() override;
-
-    // void set_timecode(int hr, int min, int sec, int frm);
-    // void set_timecode(std::array<int, 4> tc);
-    // void set_timecode(int numFrames);
-    // void set_timecode(TimecodeBase::Base& base) override;
-    // void set_timecode(TimecodeBase::Clock& clock) override;
-    // void clear_timecode();
-
-
-    /* -----FOR TESTING YALL----- */
-    uint64_t get_bext_timestamp();
-    /* -------------------------- */
-
-
-    // virtual bool is_dropframe();
-
-    // uint64_t get_timestamp();
-
+    void set_timecode(int hr, int min, int sec, int frm);
+    void set_timecode(std::array<int, 4> tc);
+    void set_timecode(int numFrames);
+    void set_timecode(TimecodeBase::Base& base) override;
+    void set_timecode(TimecodeBase::Clock& clock) override;
+    void clear_timecode();
+    
     // Userbits
     virtual void set_ubits(uint8_t first, uint8_t second, uint8_t third, uint8_t fourth);
     virtual void set_ubits(const char* bits);

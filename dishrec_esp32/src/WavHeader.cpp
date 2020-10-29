@@ -66,7 +66,6 @@ inline bool WavFormat::is_mpeg_1()
     return (this->formatCode == FORMAT_MPEG_1);
 }
 
-
 Chunk::Chunk()
 {
 }

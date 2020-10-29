@@ -10,4 +10,6 @@ Private.h
 bin/
 build/
 tinyxml2/
+libebur128/
+ebur128/
 main_dev_test

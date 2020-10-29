@@ -2,7 +2,6 @@
 
 using namespace BWF;
 
-
 ChunkSize64::ChunkSize64() :
 chunkSize64(0)
 {
@@ -127,76 +126,41 @@ void BroadcastWav::set_channels()
     set_channels(this->numTracks);
 }
 
-// void BroadcastWav::set_framerate(double fps)
-// {
-//     iXML::IXML::set_framerate(fps);
-// }
-
-// void BroadcastWav::set_framerate(int fps)
-// {
-//     iXML::IXML::set_framerate(fps);
-// }
-
-// void BroadcastWav::set_framerate(const char* fps)
-// {
-//     iXML::IXML::set_framerate(fps);
-// }
-
-// void BroadcastWav::set_timecode(int hr, int min, int sec, int frm)
-// {
-//     iXML::IXML::set_timecode(hr, min, sec, frm);
-//     // this->bextChunk.set_timestamp(this->timeReferenceLow, this->timeReferenceHigh);
-// }
-
-// void BroadcastWav::set_timecode(std::array<int, 4> tc)
-// {
-//     iXML::IXML::set_timecode(tc);
-// }
-
-// void BroadcastWav::set_timecode(int numFrames)
-// {
-//     iXML::IXML::set_timecode(numFrames);
-// }
-
-// void BroadcastWav::set_timecode(TimecodeBase::Base& base)
-// {
-//     iXML::IXML::set_timecode(base);
-//     // this->bextChunk.set_timestamp(this->timeReferenceLow, this->timeReferenceHigh);
-// }
-
-// void BroadcastWav::set_timecode(TimecodeBase::Clock& clock)
-// {
-//     iXML::IXML::set_timecode(clock);
-//     // this->bextChunk.set_timestamp(this->timeReferenceLow, this->timeReferenceHigh);
-// }
-
-
-
-
-
-uint64_t BroadcastWav::get_bext_timestamp()
+void BroadcastWav::set_timecode(int hr, int min, int sec, int frm)
 {
-    return this->bextChunk.samplesSinceMidnight;
+    iXML::IXML::set_timecode(hr, min, sec, frm);
+    this->bextChunk.set_timestamp(*this->timeReferenceLow, *this->timeReferenceHigh);
 }
 
+void BroadcastWav::set_timecode(std::array<int, 4> tc)
+{
+    iXML::IXML::set_timecode(tc);
+    this->bextChunk.set_timestamp(*this->timeReferenceLow, *this->timeReferenceHigh);
+}
 
+void BroadcastWav::set_timecode(int numFrames)
+{
+    iXML::IXML::set_timecode(numFrames);
+    this->bextChunk.set_timestamp(*this->timeReferenceLow, *this->timeReferenceHigh);
+}
 
+void BroadcastWav::set_timecode(TimecodeBase::Base& base)
+{
+    iXML::IXML::set_timecode(base);
+    this->bextChunk.set_timestamp(*this->timeReferenceLow, *this->timeReferenceHigh);
+}
 
+void BroadcastWav::set_timecode(TimecodeBase::Clock& clock)
+{
+    iXML::IXML::set_timecode(clock);
+    this->bextChunk.set_timestamp(*this->timeReferenceLow, *this->timeReferenceHigh);
+}
 
-// void BroadcastWav::clear_timecode()
-// {
-//     iXML::IXML::clear_timecode();
-// }
-
-// void BroadcastWav::set_dropframe(bool isDropframe)
-// {
-//     iXML::IXML::set_dropframe(isDropframe);
-// }
-
-// uint64_t BroadcastWav::get_timestamp()
-// {
-//     return TimecodeBase::Clock::get_timestamp();
-// }
+void BroadcastWav::clear_timecode()
+{
+    iXML::IXML::clear_timecode();
+    this->bextChunk.set_timestamp(*this->timeReferenceLow, *this->timeReferenceHigh);
+}
 
 void BroadcastWav::set_data_size(size_t numBytes)
 {

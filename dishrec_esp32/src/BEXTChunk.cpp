@@ -227,9 +227,9 @@ maxTruePeakLevel(0),
 maxMomentaryLoudness(0),
 maxShortTermLoudness(0)
 {
-    // this->samplesSinceMidnight = 0;
-    // this->timeReferenceLow = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
-    // this->timeReferenceHigh = this->timeReferenceLow + 1;
+    this->samplesSinceMidnight = 0;
+    this->timeReferenceLow = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
+    this->timeReferenceHigh = this->timeReferenceLow + 1;
     clear();
 }
 
