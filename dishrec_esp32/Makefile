@@ -1,5 +1,5 @@
 CXX = g++ -pipe
-CXXFLAGS = -std=gnu++2a -Wall -Wextra -Ofast -D _DEBUG -g
+CXXFLAGS = -std=gnu++2a -Wall -Wextra -O0 -D _DEBUG -g
 LDFLAGS = $(INC) -L$(LIB) -L$(LIB)/ebur128 -L$(LIB)/tinyxml2
 SRC = $(PWD)/src
 BUILD = $(PWD)/build
