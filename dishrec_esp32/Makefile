@@ -20,7 +20,7 @@ $(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWF.o $(BUILD)/Loudness
 $(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/libebur128.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/Loudness.cpp -o $(BUILD)/Loudness.o $(LDFLAGS) -lebur128.so
 
-$(BUILD)/RingBuffer.o: $(BUILD)/IntFloatConv.so | $(BUILD)
+$(BUILD)/RingBuffer.o: $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
 
 $(BUILD)/BWF.o: $(BUILD)/WavHeader.o $(BUILD)/AudioDataPad.o $(BUILD)/iXML.o | $(BUILD)
@@ -50,8 +50,8 @@ $(BUILD)/libebur128.so: | $(BUILD)
 $(BUILD)/testdata.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/testdata.cpp -o $(BUILD)/testdata.so $(LDFLAGS) -shared
 
-$(BUILD)/IntFloatConv.so: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/IntFloatConv.cpp -o $(BUILD)/IntFloatConv.so $(LDFLAGS) -shared
+$(BUILD)/AudioUtils.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioUtils.cpp -o $(BUILD)/AudioUtils.so $(LDFLAGS) -shared
 
 $(OUT) $(BUILD):
 	$(MKDIR) $@

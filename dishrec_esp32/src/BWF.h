@@ -172,11 +172,11 @@ public:
     void clear_umid() override;
 
     // Loudness
-    void set_loudness_value(uint16_t value) override;
-    void set_loudness_range(uint16_t range) override;
-    void set_loudness_max_true_peak(uint16_t level) override;
-    void set_loudness_max_momentary(uint16_t level) override;
-    void set_loudness_max_short_term(uint16_t value) override;
+    void set_loudness_value(double value) override;
+    void set_loudness_range(double range) override;
+    void set_loudness_max_true_peak(double level) override;
+    void set_loudness_max_momentary(double level) override;
+    void set_loudness_max_short_term(double value) override;
     void clear_loudness() override;
 
     // Reserved

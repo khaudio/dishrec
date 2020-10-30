@@ -9,15 +9,13 @@
 #include <exception>
 #include <map>
 
-#include "IntFloatConv.h"
+#include "AudioUtils.h"
 #include "WavHeader.h"
 #include "BEXTChunk.h"
 #include "iXML.h"
 #include "AudioDataPad.h"
 #include "BWF.h"
 #include "Loudness.h"
-
-#include "testdata.h"
 
 
 void print(const uint8_t* buff, size_t buffsize)
@@ -199,7 +197,7 @@ int main()
         samples.emplace_back(0);
     }
     
-    AudioAlgorithms::sine<double>(&floatVals, 1000, 48000);
+    sine<double>(&floatVals, 1000, 48000, nullptr);
     float_to_int<double, int16_t>(&samples, &floatVals);
     int_to_float<int16_t, double>(&floatVals, &samples);
 
@@ -218,3 +216,4 @@ int main()
 
     std::cout << std::endl << std::endl;
 }
+

@@ -1080,27 +1080,27 @@ void IXML::clear_umid()
     this->bext.bwf_umid->SetText(std::string(64, '0').c_str());
 }
 
-void IXML::set_loudness_value(uint16_t value)
+void IXML::set_loudness_value(double value)
 {
     this->bext.bwf_loudness_value->SetText(value);
 }
 
-void IXML::set_loudness_range(uint16_t range)
+void IXML::set_loudness_range(double range)
 {
     this->bext.bwf_loudness_range->SetText(range);
 }
 
-void IXML::set_loudness_max_true_peak(uint16_t level)
+void IXML::set_loudness_max_true_peak(double level)
 {
     this->bext.bwf_max_true_peak_level->SetText(level);
 }
 
-void IXML::set_loudness_max_momentary(uint16_t level)
+void IXML::set_loudness_max_momentary(double level)
 {
     this->bext.bwf_max_momentary_loudness->SetText(level);
 }
 
-void IXML::set_loudness_max_short_term(uint16_t value)
+void IXML::set_loudness_max_short_term(double value)
 {
     this->bext.bwf_max_short_term_loudness->SetText(value);
 }

@@ -1,9 +1,10 @@
-#include <ebur128.h>
-
-#include "WavHeader.h"
 
 #ifndef EBUR128LOUDNESS_H
 #define EBUR128LOUDNESS_H
+
+#include <ebur128.h>
+#include "WavHeader.h"
+#include "AudioUtils.h"
 
 namespace Loudness
 {
@@ -18,13 +19,18 @@ enum loudness_err
 class Analyzer : virtual public WavMeta::WavFormat
 {
 protected:
-public:
     int _ebur128Mode;
     bool _stateInitialized;
     ebur128_state* _state;
+    double
+        _maxShortTerm, 
+        _maxMomentary,
+        _maxTruePeak;
 
     virtual bool is_format_set();
     virtual void create_state();
+    
+    virtual void _check_err(int returnCode);
 
 public:
     Analyzer();
@@ -44,6 +50,18 @@ public:
     void add_frames(std::vector<double>* interleaved);
 
     double get_loudness_global();
+    double get_loudness_range();
+    double get_loudness_short_term();
+    double get_loudness_momentary();
+    double get_loudness_true_peak();
+    
+    /*virtual void set_loudness_value(double value);
+    virtual void set_loudness_range(double range);
+    virtual void set_loudness_max_true_peak(double level);
+    virtual void set_loudness_max_momentary(double level);
+    virtual void set_loudness_max_short_term(double value);
+    virtual void clear_loudness();*/
+    
 };
 
 };

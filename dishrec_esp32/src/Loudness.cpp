@@ -3,16 +3,19 @@
 using namespace Loudness;
 
 Analyzer::Analyzer() :
-_stateInitialized(false)
+_stateInitialized(false),
+_maxShortTerm(-HUGE_VAL), // LUFS
+_maxMomentary(-HUGE_VAL), // LUFS
+_maxTruePeak(-HUGE_VAL) // float
 {
-    // this->_ebur128Mode = (
-    //         EBUR128_MODE_M
-    //         | EBUR128_MODE_S
-    //         | EBUR128_MODE_I
-    //         | EBUR128_MODE_LRA
-    //         | EBUR128_MODE_TRUE_PEAK
-    //     );
-    this->_ebur128Mode = EBUR128_MODE_I;
+    this->_ebur128Mode = (
+            EBUR128_MODE_M
+            | EBUR128_MODE_S
+            | EBUR128_MODE_I
+            | EBUR128_MODE_LRA
+            | EBUR128_MODE_TRUE_PEAK
+        );
+    // this->_ebur128Mode = EBUR128_MODE_I;
     this->sampleRate = 0;
     this->bitDepth = 0;
     this->numChannels = 0;
@@ -20,6 +23,12 @@ _stateInitialized(false)
 
 Analyzer::~Analyzer()
 {
+}
+
+void Analyzer::_check_err(int returnCode)
+{
+    if (returnCode == EBUR128_SUCCESS) return;
+    else throw returnCode;
 }
 
 inline void Analyzer::set_channels(uint16_t channels)
@@ -67,7 +76,7 @@ inline void Analyzer::create_state()
         );
     for (int i(0); i < this->numChannels; ++i)
     {
-        ebur128_set_channel(this->_state, i, (i + 1));
+        _check_err(ebur128_set_channel(this->_state, i, (i + 1)));
     }
     this->_stateInitialized = true;
 }
@@ -75,6 +84,7 @@ inline void Analyzer::create_state()
 void Analyzer::clear()
 {
     if (!is_format_set()) throw FORMAT_NOT_SET;
+    if (this->_stateInitialized) free(this->_state);
     this->_state = ebur128_init(
             this->numChannels,
             this->sampleRate,
@@ -82,7 +92,7 @@ void Analyzer::clear()
         );
     for (int i(0); i < this->numChannels; ++i)
     {
-        ebur128_set_channel(this->_state, i, (i + 1));
+        _check_err(ebur128_set_channel(this->_state, i, (i + 1)));
     }
     this->_stateInitialized = true;
 }
@@ -94,43 +104,78 @@ ebur128_state* Analyzer::get_state()
 
 void Analyzer::add_frames(std::vector<int16_t>* interleaved)
 {
-    ebur128_add_frames_short(
+    _check_err(ebur128_add_frames_short(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
-        );
+        ));
 }
 
 void Analyzer::add_frames(std::vector<int>* interleaved)
 {
-    ebur128_add_frames_int(
+    _check_err(ebur128_add_frames_int(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
-        );
+        ));
 }
 
 void Analyzer::add_frames(std::vector<float>* interleaved)
 {
-    ebur128_add_frames_float(
+    _check_err(ebur128_add_frames_float(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
-        );
+        ));
 }
 
 void Analyzer::add_frames(std::vector<double>* interleaved)
 {
-    ebur128_add_frames_double(
+    _check_err(ebur128_add_frames_double(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
-        );
+        ));
 }
 
 double Analyzer::get_loudness_global()
 {
-    double loudnessValue;
-    ebur128_loudness_global(this->_state, &loudnessValue);
-    return loudnessValue;
+    double value;
+    _check_err(ebur128_loudness_global(this->_state, &value));
+    return value;
 }
+
+double Analyzer::get_loudness_range()
+{
+    double value;
+    _check_err(ebur128_loudness_range(this->_state, &value));
+    return value;
+}
+
+double Analyzer::get_loudness_short_term()
+{
+    double value;
+    _check_err(ebur128_loudness_shortterm(this->_state, &value));
+    this->_maxShortTerm = ((value > this->_maxShortTerm) ? value : this->_maxShortTerm);
+    return value;
+}
+
+double Analyzer::get_loudness_momentary()
+{
+    double value;
+    _check_err(ebur128_loudness_momentary(this->_state, &value));
+    this->_maxMomentary = ((value > this->_maxMomentary) ? value : this->_maxMomentary);
+    return value;
+}
+
+double Analyzer::get_loudness_true_peak()
+{
+    double value;
+    for (int i(0); i < this->numChannels; ++i) // 0 indexed or 1 for channel?
+    {
+        _check_err(ebur128_true_peak(this->_state, i, &value));
+        this->_maxTruePeak = ((value > this->_maxTruePeak) ? value : this->_maxTruePeak);
+    }
+    return value;
+}
+
