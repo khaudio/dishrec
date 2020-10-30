@@ -63,10 +63,10 @@ int main()
     std::cout << "Working... " << ++i << std::endl;
 
     WavMeta::WavFormat params;
-    params.sampleRate = 48000;
-    params.bitDepth = 16;
-    params.formatCode = WavMeta::FORMAT_PCM;
-    params.numChannels = 1;
+    params.set_sample_rate(48000);
+    params.set_bit_depth(16);
+    params.set_format_code(WavMeta::FORMAT_PCM);
+    params.set_channels(1);
     
     std::cout << "Working... " << ++i << std::endl;
 
@@ -191,17 +191,24 @@ int main()
 
     std::vector<int16_t> samples;
     std::vector<double> floatVals;
+
     for (size_t i(0); i < length; ++i)
     {
         floatVals.emplace_back(0);
         samples.emplace_back(0);
     }
+
+    RMS<double> meter(96000);
     
     sine<double>(&floatVals, 1000, 48000, nullptr);
     float_to_int<double, int16_t>(&samples, &floatVals);
     int_to_float<int16_t, double>(&floatVals, &samples);
+    
+    meter.set(samples);
 
     for (size_t i(0); i < length; ++i) samples[i] *= .5f;
+    for (size_t i(0); i < length; ++i) floatVals[i] *= .5f;
+
 
     std::cout << "Adding frames to loudness analyzer" << std::endl;
 
@@ -214,6 +221,7 @@ int main()
     std::cout << "Loudness: " << std::fixed << std::setprecision(2);
     std::cout << loudnessGlobal << " LUFS" << std::endl;
 
+    std::cout << "Meter avg: " << meter.get_dBFS() << " dBFS" << std::endl;
+
     std::cout << std::endl << std::endl;
 }
-

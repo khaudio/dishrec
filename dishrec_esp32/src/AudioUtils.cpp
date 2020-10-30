@@ -108,12 +108,6 @@ inline T get_decibels(T floatValue)
 }
 
 template <typename T>
-inline T get_abs_decibels(T floatValue)
-{
-    return 20 * log10(abs(floatValue));
-}
-
-template <typename T>
 inline T hann_window(T values, int length)
 {
     double divisor(length - 1);
@@ -190,13 +184,13 @@ void visualize(
 
 template <typename T>
 RMS<T>::RMS() :
-index(0)
+_index(0)
 {
 }
 
 template <typename T>
 RMS<T>::RMS(unsigned int windowLengthInSamples) :
-index(0)
+_index(0)
 {
     set_window(windowLengthInSamples);
 }
@@ -209,61 +203,155 @@ RMS<T>::~RMS()
 template <typename T>
 void RMS<T>::set_window(unsigned int numSamples)
 {
-    this->windowLength = numSamples;
-    this->window.reserve(this->windowLength);
-    for (unsigned int i(0); i < this->windowLength; ++i)
+    this->_windowLength = numSamples;
+    this->_window.reserve(this->_windowLength);
+    for (unsigned int i(0); i < this->_windowLength; ++i)
     {
-        this->window.emplace_back(get_zero<T>());
+        this->_window.emplace_back(get_zero<T>());
     }
 }
 
 template <typename T>
 inline void RMS<T>::set(T sample)
 {
-    this->window[index] = abs(sample);
-    index = (index++ >= this->windowLength ? 0 : index);
+    this->_window[this->_index] = std::abs(sample);
+    this->_index = (this->_index++ >= this->_windowLength ? 0 : this->_index);
+}
+
+template <typename T>
+template <typename I>
+inline void RMS<T>::set(I sample)
+{
+    T converted = int_to_float<I, T>(sample);
+    set(converted);
+}
+
+template <typename T>
+inline void RMS<T>::set(int8_t sample)
+{
+    set<int8_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(uint8_t sample)
+{
+    set<uint8_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(int16_t sample)
+{
+    set<int16_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(uint16_t sample)
+{
+    set<uint16_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(int32_t sample)
+{
+    set<int32_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(uint32_t sample)
+{
+    set<uint32_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(int64_t sample)
+{
+    set<int64_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(uint64_t sample)
+{
+    set<uint64_t>(sample);
 }
 
 template <typename T>
 inline void RMS<T>::set(std::vector<T> samples)
 {
-    unsigned int length = (
-            samples.size() <= this->windowLength
-            ? samples.size() : this->windowLength
-        );
-    std::copy(samples.begin(), samples.begin() + length, this->window.begin());
+    size_t length = samples.size();
+    for (size_t i(0); i < length; ++i) set(samples[i]);
 }
 
 template <typename T>
-inline T RMS<T>::get()
+template <typename I>
+inline void RMS<T>::set(std::vector<I> samples)
 {
-    if (!this->window.size()) throw WINDOW_NOT_SET;
-    return (
-            std::accumulate(this->window.begin(), this->window.end(), 0)
-            / this->windowLength
-        );
+    for (const I& sample: samples) set<I>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<int8_t> samples)
+{
+    for (const int8_t& sample: samples) set<int8_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<uint8_t> samples)
+{
+    for (const uint8_t& sample: samples) set<uint8_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<int16_t> samples)
+{
+    for (const int16_t& sample: samples) set<int16_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<uint16_t> samples)
+{
+    for (const uint16_t& sample: samples) set<uint16_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<int32_t> samples)
+{
+    for (const int32_t& sample: samples) set<int32_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<uint32_t> samples)
+{
+    for (const uint32_t& sample: samples) set<uint32_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<int64_t> samples)
+{
+    for (const int64_t& sample: samples) set<int64_t>(sample);
+}
+
+template <typename T>
+inline void RMS<T>::set(std::vector<uint64_t> samples)
+{
+    for (const uint64_t& sample: samples) set<uint64_t>(sample);
 }
 
 template <typename T>
 size_t RMS<T>::size()
 {
-    return this->windowLength;
+    return this->_windowLength;
 }
 
 template <typename T>
-RMSdB<T>::RMSdB() :
-RMS<T>()
+inline T RMS<T>::get()
 {
+    T sum(0);
+    for (unsigned int i(0); i < this->_windowLength; ++i) sum += this->_window[i];
+    return sum / this->_windowLength;
 }
 
 template <typename T>
-RMSdB<T>::RMSdB(unsigned int windowLengthInSamples) :
-RMS<T>(windowLengthInSamples)
-{
-}
-
-template <typename T>
-inline T RMSdB<T>::get()
+inline T RMS<T>::get_dBFS()
 {
     T value = RMS<T>::get();
     if (!value) return -HUGE_VAL;
@@ -449,10 +537,6 @@ template float get_decibels<float>(float);
 template double get_decibels<double>(double);
 template long double get_decibels<long double>(long double);
 
-template float get_abs_decibels<float>(float);
-template double get_abs_decibels<double>(double);
-template long double get_abs_decibels<long double>(long double);
-
 template std::vector<int8_t> hann_window<std::vector<int8_t>>(std::vector<int8_t>, int);
 template std::vector<uint8_t> hann_window<std::vector<uint8_t>>(std::vector<uint8_t>, int);
 template std::vector<int16_t> hann_window<std::vector<int16_t>>(std::vector<int16_t>, int);
@@ -482,7 +566,3 @@ template std::vector<long double> sine<long double>(long double, unsigned int, u
 template class RMS<float>;
 template class RMS<double>;
 template class RMS<long double>;
-
-template class RMSdB<float>;
-template class RMSdB<double>;
-template class RMSdB<long double>;
