@@ -14,7 +14,7 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(MORECXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWF.o $(BUILD)/Loudness.o $(BUILD)/testdata.so | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWF.o $(BUILD)/Loudness.o | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
 $(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/libebur128.so | $(BUILD)
@@ -46,9 +46,6 @@ $(BUILD)/tinyxml2.so: | $(BUILD)
 
 $(BUILD)/libebur128.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(LIB)/ebur128/ebur128.c -o $(BUILD)/libebur128.so $(LDFLAGS) -shared
-
-$(BUILD)/testdata.so: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/testdata.cpp -o $(BUILD)/testdata.so $(LDFLAGS) -shared
 
 $(BUILD)/AudioUtils.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioUtils.cpp -o $(BUILD)/AudioUtils.so $(LDFLAGS) -shared

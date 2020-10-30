@@ -9,7 +9,7 @@
 #include <limits>
 #include <vector>
 
-#include "IntFloatConv.h"
+#include "AudioUtils.h"
 
 namespace Buffer
 {
