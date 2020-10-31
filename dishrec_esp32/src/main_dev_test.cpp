@@ -16,6 +16,7 @@
 #include "AudioDataPad.h"
 #include "BWF.h"
 #include "Loudness.h"
+#include "Timer.h"
 
 
 void print(const uint8_t* buff, size_t buffsize)
@@ -133,7 +134,7 @@ int main()
     std::cout << "Working... " << ++i << std::endl;
 
     wav.set_channels(5);
-    wav.set_channels(2);
+    wav.set_channels(1);
     
     std::cout << "Working... " << ++i << std::endl;
 
@@ -166,62 +167,35 @@ int main()
     asyncpoint = nullptr;
     wav.destroy_sync_point(asyncpoint);
 
-    std::cout << "Working... " << ++i << std::endl;
-
-    const size_t metaBuffSize = wav.total_size();
-    uint8_t metaBuff[metaBuffSize];
-    wav.get(metaBuff);
-
-    // print_hex(metaBuff, metaBuffSize);
-    // print(metaBuff, metaBuffSize);
-    printf("\nBroadcastWav Size: %lu\n", wav.size());
-
-    std::cout << "Creating loudness analyzer" << std::endl;
-
-    Loudness::Analyzer loudness;
-
-    std::cout << "Setting loudness analyzer format" << std::endl;
-
-    loudness.set_sample_rate(48000);
-    loudness.set_bit_depth(16);
-    loudness.set_channels(1);
-    loudness.set_format_code(WavMeta::FORMAT_PCM);
-
     const size_t length(384000);
-
     std::vector<int16_t> samples;
     std::vector<double> floatVals;
-
     for (size_t i(0); i < length; ++i)
     {
         floatVals.emplace_back(0);
         samples.emplace_back(0);
     }
-
-    RMS<double> meter(96000);
-    
     sine<double>(&floatVals, 1000, 48000, nullptr);
     float_to_int<double, int16_t>(&samples, &floatVals);
     int_to_float<int16_t, double>(&floatVals, &samples);
-    
-    meter.set(samples);
-
-    for (size_t i(0); i < length; ++i) samples[i] *= .5f;
-    for (size_t i(0); i < length; ++i) floatVals[i] *= .5f;
-
 
     std::cout << "Adding frames to loudness analyzer" << std::endl;
 
-    loudness.add_frames(&samples);
+    wav.add_frames(&floatVals);
+    
+    std::cout << "Setting loudness" << std::endl;
 
-    std::cout << "Working... " << ++i << std::endl;
+    wav.set_loudness();
+    
+    std::cout << "Set loudness " << std::endl;
 
-    double loudnessGlobal = loudness.get_loudness_global();
-    printf("Loudness: %.2f LUFS\n", loudnessGlobal);
-    std::cout << "Loudness: " << std::fixed << std::setprecision(2);
-    std::cout << loudnessGlobal << " LUFS" << std::endl;
+    const size_t metaBuffSize = wav.total_size();
+    uint8_t metaBuff[metaBuffSize];
+    wav.get(metaBuff);
 
-    std::cout << "Meter avg: " << meter.get_dBFS() << " dBFS" << std::endl;
+    print(metaBuff, metaBuffSize);
+    printf("\nBroadcastWav Size: %lu\n", wav.size());
 
     std::cout << std::endl << std::endl;
+
 }

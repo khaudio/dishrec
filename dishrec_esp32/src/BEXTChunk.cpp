@@ -219,7 +219,7 @@ const char* CodingHistoryRow::c_str()
 BEXTChunk::BEXTChunk() :
 TimecodeBase::Timestamp(),
 Chunk("bext"),
-bwfVersion(0),
+bwfVersion(BEXTVERSION),
 _umidSet(false),
 loudnessValue(0),
 loudnessRange(0),
@@ -407,29 +407,34 @@ void BEXTChunk::clear_umid()
     this->_umidSet = false;
 }
 
-void BEXTChunk::set_loudness_value(uint16_t value)
+void BEXTChunk::set_loudness_value(double value)
 {
-    this->loudnessValue = value;
+    
+    // this->loudnessValue = value;
 }
 
-void BEXTChunk::set_loudness_range(uint16_t range)
+void BEXTChunk::set_loudness_range(double range)
 {
-    this->loudnessRange = range;
+    
+    // this->loudnessRange = range;
 }
 
-void BEXTChunk::set_loudness_max_true_peak(uint16_t level)
+void BEXTChunk::set_loudness_max_true_peak(double level)
 {
-    this->maxTruePeakLevel = level;
+    
+    // this->maxTruePeakLevel = level;
 }
 
-void BEXTChunk::set_loudness_max_momentary(uint16_t level)
+void BEXTChunk::set_loudness_max_momentary(double level)
 {
-    this->maxMomentaryLoudness = level;
+    
+    // this->maxMomentaryLoudness = level;
 }
 
-void BEXTChunk::set_loudness_max_short_term(uint16_t value)
+void BEXTChunk::set_loudness_max_short_term(double value)
 {
-    this->maxShortTermLoudness = value;
+    
+    // this->maxShortTermLoudness = value;
 }
 
 void BEXTChunk::clear_loudness()

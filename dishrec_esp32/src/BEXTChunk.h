@@ -17,6 +17,8 @@
 namespace BEXT
 {
 
+#define BEXTVERSION                 2
+
 class CodingHistoryRow;
 class BEXTChunk;
 
@@ -160,11 +162,11 @@ public:
     uint16_t
         loudnessValue, loudnessRange,
         maxTruePeakLevel, maxMomentaryLoudness, maxShortTermLoudness;
-    virtual void set_loudness_value(uint16_t value);
-    virtual void set_loudness_range(uint16_t range);
-    virtual void set_loudness_max_true_peak(uint16_t level);
-    virtual void set_loudness_max_momentary(uint16_t level);
-    virtual void set_loudness_max_short_term(uint16_t value);
+    virtual void set_loudness_value(double value);
+    virtual void set_loudness_range(double range);
+    virtual void set_loudness_max_true_peak(double level);
+    virtual void set_loudness_max_momentary(double level);
+    virtual void set_loudness_max_short_term(double value);
     virtual void clear_loudness();
     virtual bool loudness_is_set();
 

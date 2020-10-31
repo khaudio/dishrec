@@ -3,6 +3,7 @@
 
 #include "BEXTChunk.h"
 #include "iXML.h"
+#include "Loudness.h"
 
 namespace BWF
 {
@@ -59,7 +60,10 @@ public:
     friend class BroadcastWav;
 };
 
-class BroadcastWav : virtual public WavMeta::WavHeader, virtual public iXML::IXML
+class BroadcastWav :
+virtual public WavMeta::WavHeader,
+virtual public iXML::IXML,
+virtual public Loudness::Analyzer
 {
 public:
     int takeNumber;
@@ -90,6 +94,7 @@ public:
     void set_bit_depth(uint16_t bitsPerSample) override;
     void set_channels(uint16_t channels) override;
     virtual void set_channels();
+    void set_format_code(uint16_t formatcode) override;
 
 /*                             Timecode                             */
 
@@ -177,6 +182,7 @@ public:
     void set_loudness_max_true_peak(double level) override;
     void set_loudness_max_momentary(double level) override;
     void set_loudness_max_short_term(double value) override;
+    virtual void set_loudness();
     void clear_loudness() override;
 
     // Reserved
@@ -192,10 +198,6 @@ public:
 /*                               iXML                               */
 
 public:
-    // iXML version
-    virtual void set_ixml_version(uint16_t major, uint16_t minor);
-    virtual std::pair<const uint16_t, const uint16_t> get_ixml_version();
-
     // Project
     virtual void set_project(const char* projectName);
     virtual const char* get_project();

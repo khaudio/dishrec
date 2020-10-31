@@ -4,9 +4,10 @@ using namespace Loudness;
 
 Analyzer::Analyzer() :
 _stateInitialized(false),
-_maxShortTerm(-HUGE_VAL), // LUFS
-_maxMomentary(-HUGE_VAL), // LUFS
-_maxTruePeak(-HUGE_VAL) // float
+_maxShortTerm(-HUGE_VAL),
+_maxMomentary(-HUGE_VAL),
+_maxTruePeak(-HUGE_VAL),
+_maxTruePeakDecimal(0)
 {
     this->_ebur128Mode = (
             EBUR128_MODE_M
@@ -15,7 +16,6 @@ _maxTruePeak(-HUGE_VAL) // float
             | EBUR128_MODE_LRA
             | EBUR128_MODE_TRUE_PEAK
         );
-    // this->_ebur128Mode = EBUR128_MODE_I;
     this->sampleRate = 0;
     this->bitDepth = 0;
     this->numChannels = 0;
@@ -27,29 +27,28 @@ Analyzer::~Analyzer()
 
 void Analyzer::_check_err(int returnCode)
 {
-    if (returnCode == EBUR128_SUCCESS) return;
-    else throw returnCode;
+    if (returnCode != EBUR128_SUCCESS) throw returnCode;
 }
 
-inline void Analyzer::set_channels(uint16_t channels)
-{
-    WavMeta::WavFormat::set_channels(channels);
-    if (is_format_set()) create_state();
-}
-
-inline void Analyzer::set_sample_rate(uint32_t samplerate)
+void Analyzer::set_sample_rate(uint32_t samplerate)
 {
     WavMeta::WavFormat::set_sample_rate(samplerate);
     if (is_format_set()) create_state();
 }
 
-inline void Analyzer::set_bit_depth(uint16_t bitsPerSample)
+void Analyzer::set_bit_depth(uint16_t bitsPerSample)
 {
     WavMeta::WavFormat::set_bit_depth(bitsPerSample);
     if (is_format_set()) create_state();
 }
 
-inline void Analyzer::set_format_code(uint16_t formatcode)
+void Analyzer::set_channels(uint16_t channels)
+{
+    WavMeta::WavFormat::set_channels(channels);
+    if (is_format_set()) create_state();
+}
+
+void Analyzer::set_format_code(uint16_t formatcode)
 {
     WavMeta::WavFormat::set_format_code(formatcode);
     if (is_format_set()) create_state();
@@ -65,7 +64,7 @@ inline bool Analyzer::is_format_set()
         );
 }
 
-inline void Analyzer::create_state()
+void Analyzer::create_state()
 {
     if (this->_stateInitialized) return;
     if (!is_format_set()) throw FORMAT_NOT_SET;
@@ -94,6 +93,10 @@ void Analyzer::clear()
     {
         _check_err(ebur128_set_channel(this->_state, i, (i + 1)));
     }
+    this->_maxShortTerm = -HUGE_VAL;
+    this->_maxMomentary = -HUGE_VAL;
+    this->_maxTruePeak = -HUGE_VAL;
+    this->_maxTruePeakDecimal = 0;
     this->_stateInitialized = true;
 }
 
@@ -138,21 +141,21 @@ void Analyzer::add_frames(std::vector<double>* interleaved)
         ));
 }
 
-double Analyzer::get_loudness_global()
+double Analyzer::get_global()
 {
     double value;
     _check_err(ebur128_loudness_global(this->_state, &value));
     return value;
 }
 
-double Analyzer::get_loudness_range()
+double Analyzer::get_range()
 {
     double value;
     _check_err(ebur128_loudness_range(this->_state, &value));
     return value;
 }
 
-double Analyzer::get_loudness_short_term()
+double Analyzer::get_short_term()
 {
     double value;
     _check_err(ebur128_loudness_shortterm(this->_state, &value));
@@ -160,7 +163,7 @@ double Analyzer::get_loudness_short_term()
     return value;
 }
 
-double Analyzer::get_loudness_momentary()
+double Analyzer::get_momentary()
 {
     double value;
     _check_err(ebur128_loudness_momentary(this->_state, &value));
@@ -168,14 +171,16 @@ double Analyzer::get_loudness_momentary()
     return value;
 }
 
-double Analyzer::get_loudness_true_peak()
+double Analyzer::get_true_peak()
 {
+    /* Stores max true peak of all channels as float
+    but returns value in LUFS */
     double value;
-    for (int i(0); i < this->numChannels; ++i) // 0 indexed or 1 for channel?
+    for (int i(0); i < this->numChannels; ++i)
     {
         _check_err(ebur128_true_peak(this->_state, i, &value));
-        this->_maxTruePeak = ((value > this->_maxTruePeak) ? value : this->_maxTruePeak);
+        this->_maxTruePeakDecimal = ((value > this->_maxTruePeak) ? value : this->_maxTruePeak);
     }
-    return value;
+    this->_maxTruePeak = get_decibels(this->_maxTruePeakDecimal);
+    return this->_maxTruePeak;
 }
-

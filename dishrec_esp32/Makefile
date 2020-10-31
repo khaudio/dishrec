@@ -14,13 +14,13 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(MORECXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWF.o $(BUILD)/Loudness.o | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWF.o $(BUILD)/Loudness.o $(BUILD)/Timer.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
 $(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/libebur128.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/Loudness.cpp -o $(BUILD)/Loudness.o $(LDFLAGS) -lebur128.so
 
-$(BUILD)/RingBuffer.o: $(BUILD)/AudioUtils.so | $(BUILD)
+$(BUILD)/RingBuffer.o: $(BUILD)/RMS.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
 
 $(BUILD)/BWF.o: $(BUILD)/WavHeader.o $(BUILD)/AudioDataPad.o $(BUILD)/iXML.o | $(BUILD)
@@ -47,8 +47,14 @@ $(BUILD)/tinyxml2.so: | $(BUILD)
 $(BUILD)/libebur128.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(LIB)/ebur128/ebur128.c -o $(BUILD)/libebur128.so $(LDFLAGS) -shared
 
+$(BUILD)/RMS.so: $(BUILD)/AudioUtils.so | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/RMS.cpp -o $(BUILD)/RMS.so $(LDFLAGS) -shared
+
 $(BUILD)/AudioUtils.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioUtils.cpp -o $(BUILD)/AudioUtils.so $(LDFLAGS) -shared
+
+$(BUILD)/Timer.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/Timer.cpp -o $(BUILD)/Timer.so $(LDFLAGS) -shared
 
 $(OUT) $(BUILD):
 	$(MKDIR) $@

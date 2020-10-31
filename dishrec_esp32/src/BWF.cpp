@@ -85,6 +85,7 @@ size_t DS64Chunk::get(uint8_t* buff)
 BroadcastWav::BroadcastWav() :
 WavMeta::WavHeader(),
 iXML::IXML(),
+Loudness::Analyzer(),
 takeNumber(0),
 userbits{0, 0, 0, 0},
 _bw64(false)
@@ -105,18 +106,21 @@ void BroadcastWav::set_sample_rate(uint32_t samplerate)
 {
     WavHeader::set_sample_rate(samplerate);
     iXML::IXML::set_sample_rate(samplerate);
+    Loudness::Analyzer::set_sample_rate(samplerate);
 }
 
 void BroadcastWav::set_bit_depth(uint16_t bitsPerSample)
 {
     WavHeader::set_bit_depth(bitsPerSample);
     iXML::IXML::set_bit_depth(bitsPerSample);
+    Loudness::Analyzer::set_bit_depth(bitsPerSample);
 }
 
 void BroadcastWav::set_channels(uint16_t channels)
 {
     WavHeader::set_channels(channels);
     iXML::IXML::set_channels(channels);
+    Loudness::Analyzer::set_channels(channels);
 }
 
 void BroadcastWav::set_channels()
@@ -124,6 +128,12 @@ void BroadcastWav::set_channels()
     /* Set number of channels to number
     of tracks found in iXML TrackList */
     set_channels(this->numTracks);
+}
+
+void BroadcastWav::set_format_code(uint16_t formatcode)
+{
+    WavHeader::set_format_code(formatcode);
+    Loudness::Analyzer::set_format_code(formatcode);
 }
 
 void BroadcastWav::set_timecode(int hr, int min, int sec, int frm)
@@ -351,41 +361,51 @@ void BroadcastWav::clear_umid()
 void BroadcastWav::set_loudness_value(double value)
 {
     this->bextChunk.set_loudness_value(value);
-    iXML::IXML::set_loudness_value(this->bextChunk.loudnessValue);
+    iXML::IXML::set_loudness_value(value);
 }
 
 void BroadcastWav::set_loudness_range(double range)
 {
     this->bextChunk.set_loudness_range(range);
-    iXML::IXML::set_loudness_range(this->bextChunk.loudnessRange);
+    iXML::IXML::set_loudness_range(range);
 }
 
 void BroadcastWav::set_loudness_max_true_peak(double level)
 {
     this->bextChunk.set_loudness_max_true_peak(level);
-    iXML::IXML::set_loudness_max_true_peak(
-            this->bextChunk.maxTruePeakLevel
-        );
+    iXML::IXML::set_loudness_max_true_peak(level);
 }
 
 void BroadcastWav::set_loudness_max_momentary(double level)
 {
     this->bextChunk.set_loudness_max_momentary(level);
-    iXML::IXML::set_loudness_max_momentary(
-            this->bextChunk.maxMomentaryLoudness
-        );
+    iXML::IXML::set_loudness_max_momentary(level);
 }
 
 void BroadcastWav::set_loudness_max_short_term(double value)
 {
     this->bextChunk.set_loudness_max_short_term(value);
-    iXML::IXML::set_loudness_max_short_term(
-            this->bextChunk.maxShortTermLoudness
-        );
+    iXML::IXML::set_loudness_max_short_term(value);
+}
+
+void BroadcastWav::set_loudness()
+{
+    double value, range;
+    value = Loudness::Analyzer::get_global();
+    range = Loudness::Analyzer::get_range();
+    Loudness::Analyzer::get_short_term();
+    Loudness::Analyzer::get_momentary();
+    Loudness::Analyzer::get_true_peak();
+    set_loudness_value(value);
+    set_loudness_range(range);
+    set_loudness_max_short_term(this->_maxShortTerm);
+    set_loudness_max_momentary(this->_maxMomentary);
+    set_loudness_max_true_peak(this->_maxTruePeak);
 }
 
 void BroadcastWav::clear_loudness()
 {
+    Loudness::Analyzer::clear();
     this->bextChunk.clear_loudness();
     iXML::IXML::clear_loudness();
 }
@@ -424,19 +444,6 @@ void BroadcastWav::clear_coding_history()
 {
     this->bextChunk.clear_coding_history();
     iXML::IXML::clear_coding_history();
-}
-
-void BroadcastWav::set_ixml_version(uint16_t major, uint16_t minor)
-{
-    iXML::IXML::set_ixml_version(major, minor);
-}
-
-std::pair<const uint16_t, const uint16_t> BroadcastWav::get_ixml_version()
-{
-    return std::pair<const uint16_t, const uint16_t>(
-            this->_ixmlVersionMajor,
-            this->_ixmlVersionMinor
-        );
 }
 
 void BroadcastWav::set_project(const char* projectNameText)

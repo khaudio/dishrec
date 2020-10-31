@@ -12,8 +12,7 @@ namespace Loudness
 enum loudness_err
 {
     FORMAT_NOT_SET = 130,
-    STATES_NOT_INITIALIZED = 131,
-    STATE_NOT_FOUND = 132,
+    STATES_NOT_INITIALIZED = 131
 };
 
 class Analyzer : virtual public WavMeta::WavFormat
@@ -23,9 +22,10 @@ protected:
     bool _stateInitialized;
     ebur128_state* _state;
     double
-        _maxShortTerm, 
-        _maxMomentary,
-        _maxTruePeak;
+        _maxShortTerm,          //      LUFS        -inf - 0.0
+        _maxMomentary,          //      LUFS        -inf - 0.0
+        _maxTruePeak,           //      LUFS        -inf - 0.0
+        _maxTruePeakDecimal;    //      Decimal      0.0 - 1.0
 
     virtual bool is_format_set();
     virtual void create_state();
@@ -49,18 +49,11 @@ public:
     void add_frames(std::vector<float>* interleaved);
     void add_frames(std::vector<double>* interleaved);
 
-    double get_loudness_global();
-    double get_loudness_range();
-    double get_loudness_short_term();
-    double get_loudness_momentary();
-    double get_loudness_true_peak();
-    
-    /*virtual void set_loudness_value(double value);
-    virtual void set_loudness_range(double range);
-    virtual void set_loudness_max_true_peak(double level);
-    virtual void set_loudness_max_momentary(double level);
-    virtual void set_loudness_max_short_term(double value);
-    virtual void clear_loudness();*/
+    double get_global();
+    double get_range();
+    double get_short_term();
+    double get_momentary();
+    double get_true_peak();
     
 };
 

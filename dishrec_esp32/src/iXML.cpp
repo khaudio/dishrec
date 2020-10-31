@@ -152,6 +152,16 @@ Base(xmldoc, "HISTORY")
     this->parent_uid = _set_child_element("PARENT_UID");
 }
 
+LoudnessElement::LoudnessElement(XMLDocument* xmldoc) :
+Base(xmldoc, "LOUDNESS")
+{
+    this->loudness_value = _set_child_element("LOUDNESS_VALUE");
+    this->loudness_range = _set_child_element("LOUDNESS_RANGE");
+    this->max_true_peak_level = _set_child_element("MAX_TRUE_PEAK_LEVEL");
+    this->max_momentary_loudness = _set_child_element("MAX_MOMENTARY_LOUDNESS");
+    this->max_short_term_loudness = _set_child_element("MAX_SHORT_TERM_LOUDNESS");
+}
+
 FileSet::FileSet(XMLDocument* xmldoc) :
 Base(xmldoc, "FILE_SET")
 {
@@ -328,6 +338,7 @@ TimecodeBase::Clock(),
 take_type(&ixml),
 speed(&ixml),
 history(&ixml),
+loudness(&ixml),
 file_set(&ixml),
 track_list(&ixml),
 bext(&ixml),
@@ -361,6 +372,7 @@ numSyncPoints(0)
     this->root->InsertEndChild(this->take_type._element);
     this->root->InsertEndChild(this->speed._element);
     this->root->InsertEndChild(this->history._element);
+    this->root->InsertEndChild(this->loudness._element);
     this->root->InsertEndChild(this->file_set._element);
     this->root->InsertEndChild(this->track_list._element);
     this->root->InsertEndChild(this->bext._element);
@@ -388,8 +400,6 @@ void IXML::clear()
 
 void IXML::set_ixml_version(uint16_t major, uint16_t minor)
 {
-    this->_ixmlVersionMajor = major;
-    this->_ixmlVersionMinor = minor;
     char ixmlVersion[8];
     sprintf(ixmlVersion, "%u.%u", major, minor);
     this->ixml_version->SetText(ixmlVersion);
@@ -398,8 +408,8 @@ void IXML::set_ixml_version(uint16_t major, uint16_t minor)
 std::pair<const uint16_t, const uint16_t> IXML::get_ixml_version()
 {
     return std::pair<const uint16_t, const uint16_t>(
-            this->_ixmlVersionMajor,
-            this->_ixmlVersionMinor
+            IXML_VERSION_MAJOR,
+            IXML_VERSION_MINOR
         );
 }
 
@@ -1082,26 +1092,31 @@ void IXML::clear_umid()
 
 void IXML::set_loudness_value(double value)
 {
+    this->loudness.loudness_value->SetText(value);
     this->bext.bwf_loudness_value->SetText(value);
 }
 
 void IXML::set_loudness_range(double range)
 {
+    this->loudness.loudness_range->SetText(range);
     this->bext.bwf_loudness_range->SetText(range);
 }
 
 void IXML::set_loudness_max_true_peak(double level)
 {
+    this->loudness.max_true_peak_level->SetText(level);
     this->bext.bwf_max_true_peak_level->SetText(level);
 }
 
 void IXML::set_loudness_max_momentary(double level)
 {
+    this->loudness.max_momentary_loudness->SetText(level);
     this->bext.bwf_max_momentary_loudness->SetText(level);
 }
 
 void IXML::set_loudness_max_short_term(double value)
 {
+    this->loudness.max_short_term_loudness->SetText(value);
     this->bext.bwf_max_short_term_loudness->SetText(value);
 }
 

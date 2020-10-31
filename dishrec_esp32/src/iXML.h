@@ -114,6 +114,19 @@ public:
     friend class IXML;
 };
 
+class LoudnessElement : public Base
+{
+public:
+    XMLElement
+        *loudness_value,
+        *loudness_range,
+        *max_true_peak_level,
+        *max_momentary_loudness,
+        *max_short_term_loudness;
+    LoudnessElement(XMLDocument* xmldoc);
+    friend class IXML;
+};
+
 class FileSet : public Base
 {
 public:
@@ -234,19 +247,20 @@ public:
     TakeType take_type;
     Speed speed;
     History history;
+    LoudnessElement loudness;
     FileSet file_set;
     TrackList track_list;
     BEXTElement bext;
     SyncPointList sync_point_list;
     Location location;
     User user;
+
     uint16_t numTracks, numSyncPoints;
     static const char *_uidValidChars;
 
 protected:
     char _ixmlChunkID[4];
     size_t _ixmlChunkSize;
-    uint16_t _ixmlVersionMajor, _ixmlVersionMinor;
     static const char *_ubitsValidChars, *_xmlEncoding;
     std::map<const uint16_t, std::shared_ptr<Track>> tracks;
     std::vector<std::shared_ptr<SyncPoint>> syncPoints;

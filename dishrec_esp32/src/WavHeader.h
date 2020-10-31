@@ -41,13 +41,16 @@ class WavFormat
 public:
     uint32_t sampleRate;
     uint16_t bitDepth, numChannels, sampleWidth, formatCode;
+    
     virtual void set_bit_depth(uint16_t bitsPerSample);
     virtual void set_sample_rate(uint32_t samplerate);
     virtual void set_channels(uint16_t channels);
     virtual void set_format_code(uint16_t formatcode);
+    
     virtual void set_pcm();
     virtual void set_floating_point();
     virtual void set_mpeg_1();
+
     virtual bool is_pcm();
     virtual bool is_floating_point();
     virtual bool is_mpeg_1();
