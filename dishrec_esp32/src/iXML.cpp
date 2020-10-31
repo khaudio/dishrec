@@ -2,6 +2,13 @@
 
 using namespace iXML;
 
+void iXML::_get_flag_str(char* buff, bool& initialized, bool flag, const char* str)
+{
+    strcat(buff, ((flag && initialized) ? "," : ""));
+    strcat(buff, (flag ? str : ""));
+    initialized = (initialized || flag);
+}
+
 Base::Base(XMLDocument* xmldoc, const char* elementName)
 {
     this->ixml = xmldoc;
@@ -85,13 +92,6 @@ void TakeType::set_sound_guide(bool flagged)
     this->sound_guide = flagged;
     this->defaultTake = (flagged ? false : this->defaultTake);
     _apply();
-}
-
-inline void TakeType::_get_flag_str(char* buff, bool& initialized, bool flag, const char* str)
-{
-    strcat(buff, ((flag && initialized) ? "," : ""));
-    strcat(buff, (flag ? str : ""));
-    initialized = (initialized || flag);
 }
 
 void TakeType::_apply()
@@ -329,7 +329,17 @@ sync_point_list(&ixml),
 location(&ixml),
 user(&ixml),
 numTracks(0),
-numSyncPoints(0)
+numSyncPoints(0),
+_isInterior(false),
+_isExterior(false),
+_isTimeSunrise(false),
+_isTimeMorning(false),
+_isTimeMidday(false),
+_isTimeDay(false),
+_isTimeAfternoon(false),
+_isTimeEvening(false),
+_isTimeSunset(false),
+_isTimeNight(false)
 {
     memcpy(this->_ixmlChunkID, "iXML", 4);
     this->root = this->ixml.NewElement("BWFXML");
@@ -1161,9 +1171,11 @@ const char* IXML::get_location_name()
     return this->location.location_name->GetText();
 }
 
-void IXML::set_location_gps(const char* text)
+void IXML::set_location_gps(double longitude, double latitude)
 {
-    this->location.location_gps->SetText(text);
+    char buff[32];
+    sprintf(buff, "%10f, %10f", longitude, latitude);
+    this->location.location_gps->SetText(buff);
 }
 
 const char* IXML::get_location_gps()
@@ -1171,29 +1183,146 @@ const char* IXML::get_location_gps()
     return this->location.location_gps->GetText();
 }
 
-void IXML::set_location_altitude(const char* text)
+void IXML::set_location_altitude(int altitude)
 {
-    this->location.location_altitude->SetText(text);
+    this->location.location_altitude->SetText(altitude);
 }
 
 const char* IXML::get_location_altitude()
 {
+    // Returns altitude as text, not int
     return this->location.location_altitude->GetText();
 }
 
-void IXML::set_location_type(const char* text)
+void IXML::_set_location_type()
 {
-    this->location.location_type->SetText(text);
+    char buff[32];
+    bool firstFlagWritten(false);
+    buff[0] = '\0';
+    _get_flag_str(buff, firstFlagWritten, this->_isInterior, "INTERIOR");
+    _get_flag_str(buff, firstFlagWritten, this->_isExterior, "EXTERIOR");
+    this->location.location_type->SetText(buff);
+}
+
+void IXML::_set_location_time()
+{
+    char buff[64];
+    bool firstFlagWritten(false);
+    buff[0] = '\0';
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeSunrise, "SUNRISE");
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeMorning, "MORNING");
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeMidday, "MIDDAY");
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeDay, "DAY");
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeAfternoon, "AFTERNOON");
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeEvening, "EVENING");
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeSunset, "SUNSET");
+    _get_flag_str(buff, firstFlagWritten, this->_isTimeNight, "NIGHT");
+    this->location.location_time->SetText(buff);
+}
+
+void IXML::set_interior(bool flag)
+{
+    this->_isInterior = flag;
+}
+
+bool IXML::is_interior()
+{
+    return this->_isInterior;
+}
+
+void IXML::set_exterior(bool flag)
+{
+    this->_isExterior = flag;
+}
+
+bool IXML::is_exterior()
+{
+    return this->_isExterior;
+}
+
+void IXML::set_location_time_sunrise(bool flag)
+{
+    this->_isTimeSunrise = flag;
+}
+
+bool IXML::get_location_time_sunrise()
+{
+    return this->_isTimeSunrise;
+}
+
+void IXML::set_location_time_morning(bool flag)
+{
+    this->_isTimeMorning = flag;
+}
+
+bool IXML::get_location_time_morning()
+{
+    return this->_isTimeMorning;
+}
+
+void IXML::set_location_time_midday(bool flag)
+{
+    this->_isTimeMidday = flag;
+}
+
+bool IXML::get_location_time_midday()
+{
+    return this->_isTimeMidday;
+}
+
+void IXML::set_location_time_day(bool flag)
+{
+    this->_isTimeDay = flag;
+}
+
+bool IXML::get_location_time_day()
+{
+    return this->_isTimeDay;
+}
+
+void IXML::set_location_time_afternoon(bool flag)
+{
+    this->_isTimeAfternoon = flag;
+}
+
+bool IXML::get_location_time_afternoon()
+{
+    return this->_isTimeAfternoon;
+}
+
+void IXML::set_location_time_evening(bool flag)
+{
+    this->_isTimeEvening = flag;
+}
+
+bool IXML::get_location_time_evening()
+{
+    return this->_isTimeEvening;
+}
+
+void IXML::set_location_time_sunset(bool flag)
+{
+    this->_isTimeSunset = flag;
+}
+
+bool IXML::get_location_time_sunset()
+{
+    return this->_isTimeSunset;
+}
+
+void IXML::set_location_time_night(bool flag)
+{
+    this->_isTimeNight = flag;
+}
+
+bool IXML::get_location_time_night()
+{
+    return this->_isTimeNight;
 }
 
 const char* IXML::get_location_type()
 {
     return this->location.location_type->GetText();
-}
-
-void IXML::set_location_time(const char* text)
-{
-    this->location.location_time->SetText(text);
 }
 
 const char* IXML::get_location_time()

@@ -189,6 +189,14 @@ int main()
     
     std::cout << "Set loudness " << std::endl;
 
+    wav.set_country_code("US");
+    wav.set_org_code("DSR");
+    wav.set_audio_recorder_serial_number("DR0135792468");
+
+    wav.set_location_name("a mountain");
+    wav.set_location_gps(-37.235623, -21.6930463); // Correct number of spaces
+    wav.set_location_altitude(165413);
+
     const size_t metaBuffSize = wav.total_size();
     uint8_t metaBuff[metaBuffSize];
     wav.get(metaBuff);
@@ -196,10 +204,5 @@ int main()
     print(metaBuff, metaBuffSize);
     printf("\nBroadcastWav Size: %lu\n", wav.size());
 
-    wav.set_country_code("US");
-    wav.set_org_code("DSR");
-    wav.set_audio_recorder_serial_number("DR0135792468");
-
     std::cout << std::endl << std::endl;
-
 }

@@ -48,8 +48,12 @@ enum ixml_err
     ITEM_NOT_FOUND = 125
 };
 
-// void get_random_str(char* buff, uint32_t length);
-// void get_random_str(char* buff, uint32_t length, unsigned int seed);
+void _get_flag_str(
+        char* buff,
+        bool& initialized,
+        bool flag,
+        const char* str
+    );
 
 class Base
 {
@@ -68,12 +72,6 @@ class TakeType : public Base
 {
 protected:
     void _apply();
-    void _get_flag_str(
-            char* buff,
-            bool& initialized,
-            bool flag,
-            const char* str
-        );
 
 public:
     bool
@@ -504,20 +502,59 @@ public:
 
 /*                             Location                             */
 
+protected:
+    bool
+        _isInterior, _isExterior,
+        _isTimeSunrise, _isTimeMorning, _isTimeMidday,
+        _isTimeDay, _isTimeAfternoon, _isTimeEvening,
+        _isTimeSunset, _isTimeNight;
+
 public:
     virtual void set_location_name(const char* text);
     virtual const char* get_location_name();
 
-    virtual void set_location_gps(const char* text);
+    virtual void set_location_gps(double longitude, double latitude);
     virtual const char* get_location_gps();
 
-    virtual void set_location_altitude(const char* text);
+    virtual void set_location_altitude(int altitude);
     virtual const char* get_location_altitude();
+    
+protected:
+    virtual void _set_location_type();
+    virtual void _set_location_time();
 
-    virtual void set_location_type(const char* text);
+public:
+    virtual void set_interior(bool flag);
+    virtual bool is_interior();
+
+    virtual void set_exterior(bool flag);
+    virtual bool is_exterior();
+
+    virtual void set_location_time_sunrise(bool flag);
+    virtual bool get_location_time_sunrise();
+
+    virtual void set_location_time_morning(bool flag);
+    virtual bool get_location_time_morning();
+
+    virtual void set_location_time_midday(bool flag);
+    virtual bool get_location_time_midday();
+
+    virtual void set_location_time_day(bool flag);
+    virtual bool get_location_time_day();
+
+    virtual void set_location_time_afternoon(bool flag);
+    virtual bool get_location_time_afternoon();
+
+    virtual void set_location_time_evening(bool flag);
+    virtual bool get_location_time_evening();
+
+    virtual void set_location_time_sunset(bool flag);
+    virtual bool get_location_time_sunset();
+
+    virtual void set_location_time_night(bool flag);
+    virtual bool get_location_time_night();
+
     virtual const char* get_location_type();
-
-    virtual void set_location_time(const char* text);
     virtual const char* get_location_time();
 
 /*                               User                               */
