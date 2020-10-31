@@ -7,6 +7,7 @@
 #include <numeric>
 #include <iostream>
 #include <memory>
+#include <cstring>
 
 #ifndef M_PIl
 #define M_PIl \
@@ -90,6 +91,13 @@ void visualize(
         double width = 70,
         double length = 0,
         bool fill = false
+    );
+
+void get_random_str(
+        char* buff,
+        size_t length,
+        const char* validChars,
+        unsigned int seed = 0
     );
 
 template float get_zero<float>();

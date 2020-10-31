@@ -50,10 +50,10 @@ int main()
     wav.set_coding_history(row);
     const char* descrip = "an informational string";
     const char* orig = "dishrec";
-    const char* origref = "some reference thing";
+    // const char* origref = "some reference thing";
     wav.set_description(descrip);
     wav.set_originator(orig);
-    wav.set_originator_reference(origref);
+    // wav.set_originator_reference(origref);
     
     std::cout << "Working... " << ++i << std::endl;
 
@@ -195,6 +195,10 @@ int main()
 
     print(metaBuff, metaBuffSize);
     printf("\nBroadcastWav Size: %lu\n", wav.size());
+
+    wav.set_country_code("US");
+    wav.set_org_code("DSR");
+    wav.set_audio_recorder_serial_number("DR0135792468");
 
     std::cout << std::endl << std::endl;
 

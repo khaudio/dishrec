@@ -2,23 +2,6 @@
 
 using namespace iXML;
 
-const char* IXML::_ubitsValidChars = "0123456789abcdef";
-const char* IXML::_uidValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-const char* IXML::_xmlEncoding = "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-
-
-void iXML::get_random_str(char* buff, uint32_t length)
-{
-    srand(time(NULL));
-    for (uint32_t i(0); i < length; ++i) buff[i] = IXML::_uidValidChars[(rand() % 36)];
-}
-
-void iXML::get_random_str(char* buff, uint32_t length, unsigned int seed)
-{
-    srand(time(0) + seed);
-    for (uint32_t i(0); i < length; ++i) buff[i] = IXML::_uidValidChars[(rand() % 36)];
-}
-
 Base::Base(XMLDocument* xmldoc, const char* elementName)
 {
     this->ixml = xmldoc;
@@ -472,7 +455,7 @@ void IXML::set_file_uid()
     const char* sceneNameText = this->scene->GetText();
     while (sceneNameText[i] != '\0') sceneSum += static_cast<uint16_t>(sceneNameText[i++]);
     unsigned int seed = (get_frames() * 2) + 3483423 + sceneSum;
-    get_random_str(buff, 32, seed);
+    get_random_str(buff, 32, IXML::_uidValidChars, seed);
     this->file_uid->SetText(buff);
 }
 
@@ -841,7 +824,7 @@ void IXML::set_family_uid()
     const char* sceneName = this->scene->GetText();
     while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
     unsigned int seed = (get_frames() / 2) - 1085976 + sceneSum;
-    get_random_str(buff, 32, seed);
+    get_random_str(buff, 32, IXML::_uidValidChars, seed);
     this->file_set.family_uid->SetText(buff);
 }
 
@@ -1168,10 +1151,210 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     set_loudness_max_short_term(chunk.maxShortTermLoudness);
 }
 
+void IXML::set_location_name(const char* text)
+{
+    this->location.location_name->SetText(text);
+}
+
+const char* IXML::get_location_name()
+{
+    return this->location.location_name->GetText();
+}
+
+void IXML::set_location_gps(const char* text)
+{
+    this->location.location_gps->SetText(text);
+}
+
+const char* IXML::get_location_gps()
+{
+    return this->location.location_gps->GetText();
+}
+
+void IXML::set_location_altitude(const char* text)
+{
+    this->location.location_altitude->SetText(text);
+}
+
+const char* IXML::get_location_altitude()
+{
+    return this->location.location_altitude->GetText();
+}
+
+void IXML::set_location_type(const char* text)
+{
+    this->location.location_type->SetText(text);
+}
+
+const char* IXML::get_location_type()
+{
+    return this->location.location_type->GetText();
+}
+
+void IXML::set_location_time(const char* text)
+{
+    this->location.location_time->SetText(text);
+}
+
+const char* IXML::get_location_time()
+{
+    return this->location.location_time->GetText();
+}
+
+void IXML::set_full_title(const char* text)
+{
+    this->user.full_title->SetText(text);
+}
+
+const char* IXML::get_full_title()
+{
+    return this->user.full_title->GetText();
+}
+
+void IXML::set_director_name(const char* text)
+{
+    this->user.director_name->SetText(text);
+}
+
+const char* IXML::get_director_name()
+{
+    return this->user.director_name->GetText();
+}
+
+void IXML::set_production_name(const char* text)
+{
+    this->user.production_name->SetText(text);
+}
+
+const char* IXML::get_production_name()
+{
+    return this->user.production_name->GetText();
+}
+
+void IXML::set_production_address(const char* text)
+{
+    this->user.production_address->SetText(text);
+}
+
+const char* IXML::get_production_address()
+{
+    return this->user.production_address->GetText();
+}
+
+void IXML::set_production_email(const char* text)
+{
+    this->user.production_email->SetText(text);
+}
+
+const char* IXML::get_production_email()
+{
+    return this->user.production_email->GetText();
+}
+
+void IXML::set_production_phone(const char* text)
+{
+    this->user.production_phone->SetText(text);
+}
+
+const char* IXML::get_production_phone()
+{
+    return this->user.production_phone->GetText();
+}
+
+void IXML::set_production_note(const char* text)
+{
+    this->user.production_note->SetText(text);
+}
+
+const char* IXML::get_production_note()
+{
+    return this->user.production_note->GetText();
+}
+
+void IXML::set_sound_mixer_name(const char* text)
+{
+    this->user.sound_mixer_name->SetText(text);
+}
+
+const char* IXML::get_sound_mixer_name()
+{
+    return this->user.sound_mixer_name->GetText();
+}
+
+void IXML::set_sound_mixer_address(const char* text)
+{
+    this->user.sound_mixer_address->SetText(text);
+}
+
+const char* IXML::get_sound_mixer_address()
+{
+    return this->user.sound_mixer_address->GetText();
+}
+
+void IXML::set_sound_mixer_email(const char* text)
+{
+    this->user.sound_mixer_email->SetText(text);
+}
+
+const char* IXML::get_sound_mixer_email()
+{
+    return this->user.sound_mixer_email->GetText();
+}
+
+void IXML::set_sound_mixer_phone(const char* text)
+{
+    this->user.sound_mixer_phone->SetText(text);
+}
+
+const char* IXML::get_sound_mixer_phone()
+{
+    return this->user.sound_mixer_phone->GetText();
+}
+
+void IXML::set_sound_mixer_note(const char* text)
+{
+    this->user.sound_mixer_note->SetText(text);
+}
+
+const char* IXML::get_sound_mixer_note()
+{
+    return this->user.sound_mixer_note->GetText();
+}
+
+void IXML::set_audio_recorder_model(const char* text)
+{
+    this->user.audio_recorder_model->SetText(text);
+}
+
+const char* IXML::get_audio_recorder_model()
+{
+    return this->user.audio_recorder_model->GetText();
+}
+
+void IXML::set_audio_recorder_serial_number(const char* text)
+{
+    this->user.audio_recorder_serial_number->SetText(text);
+}
+
+const char* IXML::get_audio_recorder_serial_number()
+{
+    return this->user.audio_recorder_serial_number->GetText();
+}
+
+void IXML::set_audio_recorder_firmware(const char* text)
+{
+    this->user.audio_recorder_firmware->SetText(text);
+}
+
+const char* IXML::get_audio_recorder_firmware()
+{
+    return this->user.audio_recorder_firmware->GetText();
+}
+
 size_t IXML::size()
 {
     // Add NULL term + XML version/encoding + LF
-    this->_ixmlChunkSize = strlen(
+    this->_ixmlChunkSize = std::strlen(
             reinterpret_cast<const char*>(_xml_c_str())
         ) + 41;
     this->_ixmlChunkSize += (this->_ixmlChunkSize % 2);
@@ -1191,7 +1374,7 @@ size_t IXML::get(uint8_t* buff)
     if (this->numTracks != get_channels()) throw TRACK_COUNT_MISMATCH;
     const char* cstr = _xml_c_str();
     
-    size_t xmlLength = strlen(cstr) + 1;
+    size_t xmlLength = std::strlen(cstr) + 1;
     this->_ixmlChunkSize = xmlLength + 40;
 
     // Pad with NULL if size is odd number of bytes

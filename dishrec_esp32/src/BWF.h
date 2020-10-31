@@ -8,6 +8,7 @@
 namespace BWF
 {
 
+class BEXTWrapper;
 class ChunkSize64;
 class DS64Chunk;
 class BroadcastWav;
@@ -57,6 +58,11 @@ public:
 
     size_t get(uint8_t* buff) override;
 
+    friend class BroadcastWav;
+};
+
+class BEXTWrapper : virtual public BEXT::BEXTChunk
+{
     friend class BroadcastWav;
 };
 
@@ -144,7 +150,7 @@ public:
 /*                               BEXT                               */
 
 protected:
-    BEXT::BEXTChunk bextChunk;
+    BEXTWrapper bextChunk;
 
 public:
     // Originator
@@ -152,6 +158,8 @@ public:
     void clear_originator() override;
 
     // Originator Reference
+    void set_country_code(const char* code);
+    void set_org_code(const char* code);
     void set_originator_reference(const char* newReference) override;
     void clear_originator_reference() override;
 
@@ -199,62 +207,29 @@ public:
 
 public:
     // Project
-    virtual void set_project(const char* projectName);
-    virtual const char* get_project();
+    void set_project(const char* projectName) override;
 
     // Tape/Sound Roll
-    virtual void set_tape(const char* tapeName);
-    virtual const char* get_tape();
+    void set_tape(const char* tapeName) override;
 
     // Scene name
-    virtual void set_scene(const char* sceneName);
-    virtual const char* get_scene();
+    void set_scene(const char* sceneName) override;
 
     // Take number
-    virtual void set_take(int takeNum);
-    virtual int get_take();
+    void set_take(int takeNum) override;
+    int get_take() override;
+    virtual int increment_take();
 
     // Circle Take
-    virtual void set_circled(bool isCircled);
-    virtual bool is_circled();
+    bool _circled;
+    void set_circled(bool isCircled) override;
+    bool is_circled() override;
 
-    // File UID
-    virtual void set_file_uid();
-    virtual const char* get_file_uid();
-    
-    // Take note
-    virtual void set_note(const char* message);
-    virtual const char* get_note();
+    // Track List
+    void _write_track_list() override;
 
-    // Take type
-    virtual void set_default_take_type();
-    virtual bool is_default_take_type();
-
-    virtual void set_no_good(bool flagged);
-    virtual bool is_no_good();
-
-    virtual void set_false_start(bool flagged);
-    virtual bool is_false_start();
-
-    virtual void set_wild_track(bool flagged);
-    virtual bool is_wild_track();
-
-    virtual void set_pickup(bool flagged);
-    virtual bool is_pickup();
-
-    virtual void set_rehearsal(bool flagged);
-    virtual bool is_rehearsal();
-
-    virtual void set_announcement(bool flagged);
-    virtual bool is_announcement();
-
-    virtual void set_sound_guide(bool flagged);
-    virtual bool is_sound_guide();
-
-//     // BEXT
-// public:
-//     void import_bext_chunk(BEXT::BEXTChunk& chunk);
-
+    // User
+    void set_audio_recorder_serial_number(const char* text) override;
 };
 
 };

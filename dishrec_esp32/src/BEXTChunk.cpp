@@ -242,7 +242,11 @@ void BEXTChunk::clear()
     set_bwf_version(BWFVERSION);
     clear_description();
     clear_originator();
+    #if AUTO_ORIG_REF_USID
+    _set_random_str();
+    #else
     clear_originator_reference();
+    #endif
     clear_date();
     clear_time();
     clear_umid();
@@ -281,6 +285,45 @@ void BEXTChunk::clear_originator()
     memset(this->originator, 0, 33);
 }
 
+void BEXTChunk::_set_country_code(const char* code)
+{
+    /* Per EBU R99-1999:
+    Country code: (2 characters) based on
+    the ISO 3166 standard */
+    #if AUTO_ORIG_REF_USID
+    memcpy(this->originatorReference, code, 2);
+    #endif
+}
+
+void BEXTChunk::_set_org_code(const char* code)
+{
+    /* Per EBU R99-1999: Organisation code: (3 characters)
+    based on the EBU facility codes. */
+    #if AUTO_ORIG_REF_USID
+    memcpy(this->originatorReference + 2, code, 3);
+    #endif
+}
+
+void BEXTChunk::_set_random_str()
+{
+    /* Per EBU R99-1999:
+    Random Number (9 characters 0-9) Generated locally
+    by the recorder using some reasonably random algorithm. */
+    get_random_str(this->originatorReference + 23, 9, BEXTChunk::_usidRandomValidChars, 0);
+}
+
+void BEXTChunk::set_audio_recorder_serial_number(const char* text)
+{
+    /* Per EBU R99-1999:
+    Serial number: (12 characters extracted from
+    the recorder model and serial number)
+    This should identify the machine’s type
+    and serial number. */
+    #if AUTO_ORIG_REF_USID
+    memcpy(this->originatorReference + 5, text, 12);
+    #endif
+}
+
 void BEXTChunk::set_originator_reference(const char* newReference)
 {
     /* Per EBU TECH 3285:
@@ -292,6 +335,9 @@ void BEXTChunk::set_originator_reference(const char* newReference)
 void BEXTChunk::clear_originator_reference()
 {
     memset(this->originatorReference, 0, 33);
+    #if AUTO_ORIG_REF_USID
+    _set_random_str();
+    #endif
 }
 
 void BEXTChunk::set_date(int16_t year, uint8_t month, uint8_t day)
@@ -321,17 +367,30 @@ void BEXTChunk::set_time(uint8_t hour, uint8_t minute, uint8_t second)
     The format shall be « ‘hour’-‘minute’-‘second’» with 2 characters per
     item. */
     sprintf(this->originationTime, "%02u:%02u:%02u", hour, minute, second);
+    #if AUTO_ORIG_REF_USID
+    memcpy(this->originatorReference + 17, this->originationTime, 2);
+    memcpy(this->originatorReference + 19, this->originationTime + 3, 2);
+    memcpy(this->originatorReference + 21, this->originationTime + 6, 2);
+    #endif
 }
 
 void BEXTChunk::set_time_str(const char* time)
 {
     // Set time string literal directly
     strncpy(this->originationTime, time, 8);
+    #if AUTO_ORIG_REF_USID
+    memcpy(this->originatorReference + 17, time, 2);
+    memcpy(this->originatorReference + 19, time + 3, 2);
+    memcpy(this->originatorReference + 21, time + 6, 2);
+    #endif
 }
 
 void BEXTChunk::clear_time()
 {
     strncpy(this->originationTime, "00-00-00", 9);
+    #if AUTO_ORIG_REF_USID
+    memcpy(this->originatorReference + 17, "000000", 6);
+    #endif
 }
 
 void BEXTChunk::set_timestamp(uint64_t samplesSinceMidnight)

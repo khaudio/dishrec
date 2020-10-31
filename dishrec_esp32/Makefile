@@ -32,13 +32,13 @@ $(BUILD)/WavHeader.o: | $(BUILD)
 $(BUILD)/AudioDataPad.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioDataPad.cpp -o $(BUILD)/AudioDataPad.o $(LDFLAGS)
 
-$(BUILD)/iXML.o: $(BUILD)/tinyxml2.so $(BUILD)/BEXTChunk.o $(BUILD)/TimecodeBase.o | $(BUILD)
+$(BUILD)/iXML.o: $(BUILD)/tinyxml2.so $(BUILD)/BEXTChunk.o $(BUILD)/TimecodeBase.o $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/iXML.cpp -o $(BUILD)/iXML.o $(LDFLAGS)
 
 $(BUILD)/TimecodeBase.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/TimecodeBase.cpp -o $(BUILD)/TimecodeBase.o $(LDFLAGS)
 
-$(BUILD)/BEXTChunk.o: | $(BUILD)
+$(BUILD)/BEXTChunk.o: $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/BEXTChunk.cpp -o $(BUILD)/BEXTChunk.o $(LDFLAGS)
 
 $(BUILD)/tinyxml2.so: | $(BUILD)

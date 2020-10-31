@@ -1,6 +1,8 @@
 TODO:
 
     bwf
+        circle changes filename
+            precede with "@"
         reserve enough meta space to write when file is done
             keep in mind sync point and track # limits
 

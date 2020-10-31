@@ -88,7 +88,8 @@ iXML::IXML(),
 Loudness::Analyzer(),
 takeNumber(0),
 userbits{0, 0, 0, 0},
-_bw64(false)
+_bw64(false),
+_circled(false)
 {
 }
 
@@ -280,6 +281,16 @@ void BroadcastWav::clear_originator()
     iXML::IXML::clear_originator();
 }
 
+void BroadcastWav::set_country_code(const char* code)
+{
+    this->bextChunk._set_country_code(code);
+}
+
+void BroadcastWav::set_org_code(const char* code)
+{
+    this->bextChunk._set_org_code(code);
+}
+
 void BroadcastWav::set_originator_reference(const char* newReference)
 {
     this->bextChunk.set_originator_reference(newReference);
@@ -326,18 +337,21 @@ void BroadcastWav::set_time(uint8_t hour, uint8_t minute, uint8_t second)
 {
     this->bextChunk.set_time(hour, minute, second);
     iXML::IXML::set_time_str(this->bextChunk.originationTime);
+    iXML::IXML::set_originator_reference(this->bextChunk.originatorReference);
 }
 
 void BroadcastWav::set_time_str(const char* time)
 {
     this->bextChunk.set_time_str(time);
     iXML::IXML::set_time_str(this->bextChunk.originationTime);
+    iXML::IXML::set_originator_reference(this->bextChunk.originatorReference);
 }
 
 void BroadcastWav::clear_time()
 {
     this->bextChunk.clear_time();
     iXML::IXML::clear_time();
+    iXML::IXML::set_originator_reference(this->bextChunk.originatorReference);
 }
 
 void BroadcastWav::set_bwf_version(uint16_t versionNumber)
@@ -451,19 +465,9 @@ void BroadcastWav::set_project(const char* projectNameText)
     iXML::IXML::set_project(projectNameText);
 }
 
-const char* BroadcastWav::get_project()
-{
-    return this->project->GetText();
-}
-
 void BroadcastWav::set_tape(const char* tapeNameText)
 {
     iXML::IXML::set_tape(tapeNameText);
-}
-
-const char* BroadcastWav::get_tape()
-{
-    return this->tape->GetText();
 }
 
 void BroadcastWav::set_scene(const char* sceneNameText)
@@ -471,13 +475,9 @@ void BroadcastWav::set_scene(const char* sceneNameText)
     iXML::IXML::set_scene(sceneNameText);
 }
 
-const char* BroadcastWav::get_scene()
-{
-    return this->scene->GetText();;
-}
-
 void BroadcastWav::set_take(int takeNum)
 {
+    this->takeNumber = takeNum;
     iXML::IXML::set_take(takeNum);
 }
 
@@ -486,24 +486,21 @@ int BroadcastWav::get_take()
     return this->takeNumber;
 }
 
+int BroadcastWav::increment_take()
+{
+    set_take(++this->takeNumber);
+    return this->takeNumber;
+}
+
 void BroadcastWav::set_circled(bool isCircled)
 {
-    iXML::IXML::set_circled(isCircled);
+    this->_circled = isCircled;
+    iXML::IXML::set_circled(this->_circled);
 }
 
 bool BroadcastWav::is_circled()
 {
-    return this->circled->GetText();
-}
-
-void BroadcastWav::set_file_uid()
-{
-    iXML::IXML::set_file_uid();
-}
-
-const char* BroadcastWav::get_file_uid()
-{
-    return this->file_uid->GetText();
+    return this->_circled;
 }
 
 void BroadcastWav::set_ubits(
@@ -531,110 +528,17 @@ uint8_t* BroadcastWav::get_ubits()
     return this->userbits;
 }
 
-void BroadcastWav::set_note(const char* message)
+void BroadcastWav::_write_track_list()
 {
-    iXML::IXML::set_note(message);
+    iXML::IXML::_write_track_list();
+    this->numChannels = this->numTracks;
 }
 
-const char* BroadcastWav::get_note()
+void BroadcastWav::set_audio_recorder_serial_number(const char* text)
 {
-    return this->note->GetText();
+    this->bextChunk.set_audio_recorder_serial_number(text);
+    iXML::IXML::set_audio_recorder_serial_number(text);
 }
-
-void BroadcastWav::set_default_take_type()
-{
-    iXML::IXML::set_default_take_type();
-}
-
-bool BroadcastWav::is_default_take_type()
-{
-    return this->take_type.defaultTake;
-}
-
-void BroadcastWav::set_no_good(bool flagged)
-{
-    iXML::IXML::set_no_good(flagged);
-}
-
-bool BroadcastWav::is_no_good()
-{
-    return this->take_type.no_good;
-}
-
-void BroadcastWav::set_false_start(bool flagged)
-{
-    iXML::IXML::set_false_start(flagged);
-}
-
-bool BroadcastWav::is_false_start()
-{
-    return this->take_type.false_start;
-}
-
-void BroadcastWav::set_wild_track(bool flagged)
-{
-    iXML::IXML::set_wild_track(flagged);
-}
-
-bool BroadcastWav::is_wild_track()
-{
-    return this->take_type.wild_track;
-}
-
-void BroadcastWav::set_pickup(bool flagged)
-{
-    iXML::IXML::set_pickup(flagged);
-}
-
-bool BroadcastWav::is_pickup()
-{
-    return this->take_type.pickup;
-}
-
-void BroadcastWav::set_rehearsal(bool flagged)
-{
-    iXML::IXML::set_rehearsal(flagged);
-}
-
-bool BroadcastWav::is_rehearsal()
-{
-    return this->take_type.rehearsal;
-}
-
-void BroadcastWav::set_announcement(bool flagged)
-{
-    iXML::IXML::set_announcement(flagged);
-}
-
-bool BroadcastWav::is_announcement()
-{
-    return this->take_type.announcement;
-}
-
-void BroadcastWav::set_sound_guide(bool flagged)
-{
-    iXML::IXML::set_sound_guide(flagged);
-}
-
-bool BroadcastWav::is_sound_guide()
-{
-    return this->take_type.sound_guide;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 size_t BroadcastWav::size()
 {

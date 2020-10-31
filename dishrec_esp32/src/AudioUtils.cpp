@@ -191,6 +191,21 @@ void visualize(
     }
 }
 
+void get_random_str(
+        char* buff,
+        size_t length,
+        const char* validChars,
+        unsigned int seed
+    )
+{
+    srand(time(NULL) + seed);
+    size_t available(std::strlen(validChars));
+    for (size_t i(0); i < length; ++i)
+    {
+        buff[i] = validChars[(rand() % available)];
+    }
+}
+
 template void clip_float(float& value);
 template void clip_float(double& value);
 template void clip_float(long double& value);

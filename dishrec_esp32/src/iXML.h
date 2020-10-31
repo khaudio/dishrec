@@ -10,6 +10,7 @@
 #include "TimecodeBase.h"
 #include "BEXTChunk.h"
 #include "ErrorEnums.h"
+#include "AudioUtils.h"
 
 #define IXML_VERSION_MAJOR          2
 #define IXML_VERSION_MINOR          10
@@ -44,11 +45,11 @@ enum ixml_err
     INVALID_UID_LENGTH = 122,
     SYNC_POINT_TIMESTAMP_NOT_SET = 123,
     SYNC_POINT_NOT_FOUND = 124,
-    ITEM_NOT_FOUND = 125,
+    ITEM_NOT_FOUND = 125
 };
 
-void get_random_str(char* buff, uint32_t length);
-void get_random_str(char* buff, uint32_t length, unsigned int seed);
+// void get_random_str(char* buff, uint32_t length);
+// void get_random_str(char* buff, uint32_t length, unsigned int seed);
 
 class Base
 {
@@ -256,12 +257,15 @@ public:
     User user;
 
     uint16_t numTracks, numSyncPoints;
-    static const char *_uidValidChars;
+    // static const char *_uidValidChars;
+    static constexpr const char* _uidValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 protected:
     char _ixmlChunkID[4];
     size_t _ixmlChunkSize;
-    static const char *_ubitsValidChars, *_xmlEncoding;
+    // static const char *_ubitsValidChars, *_xmlEncoding;
+    static constexpr const char* _ubitsValidChars = "0123456789abcdef";
+    static constexpr const char* _xmlEncoding = "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     std::map<const uint16_t, std::shared_ptr<Track>> tracks;
     std::vector<std::shared_ptr<SyncPoint>> syncPoints;
     std::vector<XMLElement*> _trackElements;
@@ -407,6 +411,16 @@ public:
     virtual void set_parent_uid(const char* data);
     virtual const char* get_parent_uid();
 
+
+/*                             Loudness                             */
+
+    virtual void set_loudness_value(double value);
+    virtual void set_loudness_range(double range);
+    virtual void set_loudness_max_true_peak(double level);
+    virtual void set_loudness_max_momentary(double level);
+    virtual void set_loudness_max_short_term(double value);
+    virtual void clear_loudness();
+
 /*                             File set                             */
 
     virtual void set_total_files(unsigned int numFiles);
@@ -475,16 +489,7 @@ public:
     virtual void set_umid(const uint8_t* newUmid);
     virtual void clear_umid();
 
-    // Loudness
-    virtual void set_loudness_value(double value);
-    virtual void set_loudness_range(double range);
-    virtual void set_loudness_max_true_peak(double level);
-    virtual void set_loudness_max_momentary(double level);
-    virtual void set_loudness_max_short_term(double value);
-    virtual void clear_loudness();
-
     // Reserved
-    // virtual void set_reserved(int length = 180);
     virtual void set_reserved(const uint8_t* data);
 
     // Coding History
@@ -496,6 +501,72 @@ public:
 
     // Import data from external BEXT Chunk
     virtual void import_bext_chunk(BEXT::BEXTChunk& chunk);
+
+/*                             Location                             */
+
+public:
+    virtual void set_location_name(const char* text);
+    virtual const char* get_location_name();
+
+    virtual void set_location_gps(const char* text);
+    virtual const char* get_location_gps();
+
+    virtual void set_location_altitude(const char* text);
+    virtual const char* get_location_altitude();
+
+    virtual void set_location_type(const char* text);
+    virtual const char* get_location_type();
+
+    virtual void set_location_time(const char* text);
+    virtual const char* get_location_time();
+
+/*                               User                               */
+
+public:
+    virtual void set_full_title(const char* text);
+    virtual const char* get_full_title();
+    
+    virtual void set_director_name(const char* text);
+    virtual const char* get_director_name();
+    
+    virtual void set_production_name(const char* text);
+    virtual const char* get_production_name();
+    
+    virtual void set_production_address(const char* text);
+    virtual const char* get_production_address();
+    
+    virtual void set_production_email(const char* text);
+    virtual const char* get_production_email();
+    
+    virtual void set_production_phone(const char* text);
+    virtual const char* get_production_phone();
+    
+    virtual void set_production_note(const char* text);
+    virtual const char* get_production_note();
+    
+    virtual void set_sound_mixer_name(const char* text);
+    virtual const char* get_sound_mixer_name();
+    
+    virtual void set_sound_mixer_address(const char* text);
+    virtual const char* get_sound_mixer_address();
+    
+    virtual void set_sound_mixer_email(const char* text);
+    virtual const char* get_sound_mixer_email();
+    
+    virtual void set_sound_mixer_phone(const char* text);
+    virtual const char* get_sound_mixer_phone();
+    
+    virtual void set_sound_mixer_note(const char* text);
+    virtual const char* get_sound_mixer_note();
+    
+    virtual void set_audio_recorder_model(const char* text);
+    virtual const char* get_audio_recorder_model();
+    
+    virtual void set_audio_recorder_serial_number(const char* text);
+    virtual const char* get_audio_recorder_serial_number();
+    
+    virtual void set_audio_recorder_firmware(const char* text);
+    virtual const char* get_audio_recorder_firmware();
 
 };
 

@@ -17,6 +17,11 @@
 
 #define BWFVERSION                  2
 
+/* Unique Source Identifier (USID) per EBU R99-1999 */
+#ifndef AUTO_ORIG_REF_USID
+#define AUTO_ORIG_REF_USID          false
+#endif
+
 namespace BEXT
 {
 
@@ -101,7 +106,16 @@ public:
 
 /*                       Originator Reference                       */
 
+protected:
+    static constexpr const char* _usidRandomValidChars = "0123456789";
+    void _set_country_code(const char* code);
+    void _set_org_code(const char* code);
+    void _set_random_str();
+
+public:
+    bool _autoOriginatorReferenceUSID;
     char originatorReference[33];
+    virtual void set_audio_recorder_serial_number(const char* text);
     virtual void set_originator_reference(const char* newReference);
     virtual void clear_originator_reference();
 

@@ -140,9 +140,6 @@ protected:
     virtual void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi);
 
 public:
-    // uint64_t samplesSinceMidnight;
-    // uint32_t *timeReferenceLow, *timeReferenceHigh;
-
     Clock();
     ~Clock();
     
