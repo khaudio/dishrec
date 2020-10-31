@@ -219,7 +219,7 @@ const char* CodingHistoryRow::c_str()
 BEXTChunk::BEXTChunk() :
 TimecodeBase::Timestamp(),
 Chunk("bext"),
-bwfVersion(BEXTVERSION),
+bwfVersion(BWFVERSION),
 _umidSet(false),
 loudnessValue(0x7FFF),
 loudnessRange(0x7FFF),
@@ -239,7 +239,7 @@ BEXTChunk::~BEXTChunk()
 
 void BEXTChunk::clear()
 {
-    set_bwf_version(2);
+    set_bwf_version(BWFVERSION);
     clear_description();
     clear_originator();
     clear_originator_reference();

@@ -15,7 +15,7 @@
 #ifndef BEXTCHUNK_H
 #define BEXTCHUNK_H
 
-#define BEXTVERSION                 2
+#define BWFVERSION                  2
 
 namespace BEXT
 {
