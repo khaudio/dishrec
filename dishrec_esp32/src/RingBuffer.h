@@ -18,6 +18,7 @@ class Ring
 {
 public:
     uint8_t ringLength;
+
     Ring();
     ~Ring();
 };
@@ -25,15 +26,15 @@ public:
 template <typename T = double>
 class RingBuffer : virtual public Ring
 {
+protected:
+    int
+        _totalWritableLength, _buffered,
+        _samplesWritten, _samplesRemaining;
+    T _zero;
+
 public:
     uint32_t bufferLength, totalRingSampleLength, bytesPerBuffer;
     uint8_t readIndex, writeIndex;
-    int
-        samplesWritten,
-        samplesRemaining,
-        _totalWritableLength,
-        _buffered;
-    T _zero;
     std::vector<std::vector<T>> ring;
 
     RingBuffer(int bufferSize = 1024, uint8_t ringSize = 8);
@@ -44,7 +45,7 @@ public:
     int samples_buffered();
     int available();
 
-    void fill(T filler=0, bool force = false);
+    void fill(T filler = 0, bool force = false);
     void zero(uint8_t bufferIndex);
 
     void rotate_read_buffer();
@@ -53,7 +54,10 @@ public:
 
     bool writable();
 
+protected:
     std::vector<T> _read();
+
+public:
     std::vector<T> read();
 
     uint8_t* get_read_ptr();
@@ -61,10 +65,12 @@ public:
     void* get_read_void_ptr();
     void* get_write_void_ptr();
 
+protected:
     int _write(std::vector<T> data, bool force = false);
     int _write(T data, bool force = false);
     int _write_trim(std::vector<T>& data, bool force = false);
     
+public:
     int write(T data, bool force = false);
     int write(std::vector<T> data, bool force = false);
     int write(uint8_t* data, size_t numBytes, bool force = false);

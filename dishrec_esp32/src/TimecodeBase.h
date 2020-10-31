@@ -13,8 +13,6 @@
 #include "ErrorEnums.h"
 #include "WavHeader.h"
 
-namespace TimecodeBase
-{
 
 // Framerate strings
 #define FRAMERATE_2398              "24000/1001"
@@ -29,7 +27,10 @@ namespace TimecodeBase
 #define FRAMERATE_NUM_2997          29.97
 #define FRAMERATE_NUM_30            30
 
+namespace TimecodeBase
+{
 
+class Timestamp;
 class Base;
 class Clock;
 
@@ -64,6 +65,7 @@ class Timestamp
 public:
     uint64_t samplesSinceMidnight;
     uint32_t *timeReferenceLow, *timeReferenceHigh;
+
     Timestamp();
     ~Timestamp();
 };
@@ -138,8 +140,8 @@ protected:
     virtual void _set_timestamp(uint32_t ssmLo, uint32_t ssmHi);
 
 public:
-    uint64_t samplesSinceMidnight;
-    uint32_t *timeReferenceLow, *timeReferenceHigh;
+    // uint64_t samplesSinceMidnight;
+    // uint32_t *timeReferenceLow, *timeReferenceHigh;
 
     Clock();
     ~Clock();

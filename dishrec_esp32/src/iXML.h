@@ -11,17 +11,17 @@
 #include "BEXTChunk.h"
 #include "ErrorEnums.h"
 
-using namespace tinyxml2;
-
-namespace iXML
-{
-
 #define IXML_VERSION_MAJOR          2
 #define IXML_VERSION_MINOR          10
 
 #ifndef MAX_TRACK_STR_LENGTH
 #define MAX_TRACK_STR_LENGTH        100
 #endif
+
+using namespace tinyxml2;
+
+namespace iXML
+{
 
 class Base;
 class TakeType;

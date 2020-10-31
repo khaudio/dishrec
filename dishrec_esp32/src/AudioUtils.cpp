@@ -104,6 +104,8 @@ inline T get_radians(T degrees)
 template <typename T>
 inline T get_decibels(T floatValue)
 {
+    /* Get decibels in dBFS from floating point value
+    in range 0.0 to 1.0 */
     return 20 * log10(floatValue);
 }
 

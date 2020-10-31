@@ -221,11 +221,11 @@ TimecodeBase::Timestamp(),
 Chunk("bext"),
 bwfVersion(BEXTVERSION),
 _umidSet(false),
-loudnessValue(0),
-loudnessRange(0),
-maxTruePeakLevel(0),
-maxMomentaryLoudness(0),
-maxShortTermLoudness(0)
+loudnessValue(0x7FFF),
+loudnessRange(0x7FFF),
+maxTruePeakLevel(0x7FFF),
+maxMomentaryLoudness(0x7FFF),
+maxShortTermLoudness(0x7FFF)
 {
     this->samplesSinceMidnight = 0;
     this->timeReferenceLow = reinterpret_cast<uint32_t*>(&(this->samplesSinceMidnight));
@@ -407,43 +407,49 @@ void BEXTChunk::clear_umid()
     this->_umidSet = false;
 }
 
+int BEXTChunk::_convert_loudness_to_int(double value)
+{
+    double scaled = value * 100;
+    return static_cast<int16_t>(scaled + sgn<double>(scaled) * .5);
+}
+
 void BEXTChunk::set_loudness_value(double value)
 {
-    
-    // this->loudnessValue = value;
+    this->loudnessValue = _convert_loudness_to_int(value);
 }
 
 void BEXTChunk::set_loudness_range(double range)
 {
-    
-    // this->loudnessRange = range;
+    this->loudnessRange = _convert_loudness_to_int(range);
 }
 
 void BEXTChunk::set_loudness_max_true_peak(double level)
 {
-    
-    // this->maxTruePeakLevel = level;
+    this->maxTruePeakLevel = _convert_loudness_to_int(level);
 }
 
 void BEXTChunk::set_loudness_max_momentary(double level)
 {
-    
-    // this->maxMomentaryLoudness = level;
+    this->maxMomentaryLoudness = _convert_loudness_to_int(level);
 }
 
 void BEXTChunk::set_loudness_max_short_term(double value)
 {
-    
-    // this->maxShortTermLoudness = value;
+    this->maxShortTermLoudness = _convert_loudness_to_int(value);
 }
 
 void BEXTChunk::clear_loudness()
 {
-    this->loudnessValue = 0;
-    this->loudnessRange = 0;
-    this->maxTruePeakLevel = 0;
-    this->maxMomentaryLoudness = 0;
-    this->maxShortTermLoudness = 0;
+    /* Per EBU TECH 3285:
+    If any of the loudness parameters are not being used
+    then their 16-bit integer values shall be set to
+    7FFFh, which is a value outside the range of
+    the parameter values. */
+    this->loudnessValue = 0x7FFF;
+    this->loudnessRange = 0x7FFF;
+    this->maxTruePeakLevel = 0x7FFF;
+    this->maxMomentaryLoudness = 0x7FFF;
+    this->maxShortTermLoudness = 0x7FFF;
 }
 
 void BEXTChunk::set_reserved()

@@ -159,7 +159,6 @@ public:
 
     virtual size_t import_format_chunk(const uint8_t* data);
 
-    // virtual bool is_floating_point();
     virtual bool is_set();
 
 /*                               Data                               */

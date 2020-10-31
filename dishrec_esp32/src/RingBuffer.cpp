@@ -21,8 +21,8 @@ bufferLength(bufferSize)
     this->totalRingSampleLength = this->ringLength * this->bufferLength;
     this->_totalWritableLength = this->totalRingSampleLength - this->bufferLength;
     this->bytesPerBuffer = this->bufferLength * sizeof(T);
-    this->samplesRemaining = this->bufferLength;
-    this->samplesWritten = 0;
+    this->_samplesRemaining = this->bufferLength;
+    this->_samplesWritten = 0;
     this->_buffered = 0;
     this->ring.reserve(this->ringLength);
     for (int i(0); i < this->ringLength; ++i)
@@ -100,8 +100,8 @@ void RingBuffer<T>::rotate_write_buffer()
     {
         this->writeIndex = 0;
     }
-    this->samplesWritten = 0;
-    this->samplesRemaining = this->bufferLength;
+    this->_samplesWritten = 0;
+    this->_samplesRemaining = this->bufferLength;
 
     this->_buffered += this->bufferLength;
 }
@@ -183,9 +183,9 @@ int RingBuffer<T>::_write(T data, bool force)
     {
         return 0;
     }
-    this->ring[this->writeIndex][this->samplesWritten] = data;
-    ++this->samplesWritten;
-    if (--this->samplesRemaining <= 0)
+    this->ring[this->writeIndex][this->_samplesWritten] = data;
+    ++this->_samplesWritten;
+    if (--this->_samplesRemaining <= 0)
     {
         rotate_write_buffer();
     }
@@ -201,15 +201,15 @@ int RingBuffer<T>::_write(std::vector<T> data, bool force)
     int8_t index(this->ringLength);
     while ((remaining > 0) && (writable() || force) && (index-- > 0))
     {
-        if (remaining > this->samplesRemaining)
+        if (remaining > this->_samplesRemaining)
         {
             std::copy(
                     data.begin() + written,
-                    data.begin() + written + this->samplesRemaining,
-                    this->ring[this->writeIndex].begin() + this->samplesWritten
+                    data.begin() + written + this->_samplesRemaining,
+                    this->ring[this->writeIndex].begin() + this->_samplesWritten
                 );
-            written += this->samplesRemaining;
-            remaining -= this->samplesRemaining;
+            written += this->_samplesRemaining;
+            remaining -= this->_samplesRemaining;
             rotate_write_buffer();
         }
         else
@@ -217,13 +217,13 @@ int RingBuffer<T>::_write(std::vector<T> data, bool force)
             std::copy(
                     data.begin() + written,
                     data.end(),
-                    this->ring[this->writeIndex].begin() + this->samplesWritten
+                    this->ring[this->writeIndex].begin() + this->_samplesWritten
                 );
-            this->samplesWritten += remaining;
-            this->samplesRemaining -= remaining;
+            this->_samplesWritten += remaining;
+            this->_samplesRemaining -= remaining;
             written += remaining;
             remaining = 0;
-            if (this->samplesRemaining <= 0)
+            if (this->_samplesRemaining <= 0)
             {
                 rotate_write_buffer();
             }

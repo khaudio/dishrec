@@ -7,6 +7,7 @@
 
 #include "TimecodeBase.h"
 #include "WavHeader.h"
+#include "AudioUtils.h"
 #include "ErrorEnums.h"
 
 #include <iostream>
@@ -14,10 +15,10 @@
 #ifndef BEXTCHUNK_H
 #define BEXTCHUNK_H
 
+#define BEXTVERSION                 2
+
 namespace BEXT
 {
-
-#define BEXTVERSION                 2
 
 class CodingHistoryRow;
 class BEXTChunk;
@@ -28,16 +29,7 @@ enum bext_coding_history_err
     SAMPLE_RATE_NOT_SET = 81,
     BIT_DEPTH_NOT_SET = 82,
     MODE_NOT_SET = 83,
-    BIT_RATE_NOT_SET = 84,
-    NOT_EXPORTED = 85
-};
-
-enum bext_chunk_err
-{
-    INVALID_UMID_LENGTH = 90,
-    DATE_NOT_SET = 91,
-    TIME_NOT_SET = 92,
-    LOUDNESS_NOT_SET = 93
+    BIT_RATE_NOT_SET = 84
 };
 
 class CodingHistoryRow
@@ -135,8 +127,6 @@ public:
 
 /*                            Timestamp                             */
 
-    // uint64_t samplesSinceMidnight;
-    // uint32_t *timeReferenceLow, *timeReferenceHigh;
     virtual void set_timestamp(uint64_t samplesSinceMidnight);
     virtual void set_timestamp(uint32_t low, uint32_t high);
     virtual void clear_timestamp();
@@ -159,7 +149,11 @@ public:
 
 /*                            Loudness                              */
 
-    uint16_t
+protected:
+    virtual int _convert_loudness_to_int(double value);
+
+public:
+    int16_t
         loudnessValue, loudnessRange,
         maxTruePeakLevel, maxMomentaryLoudness, maxShortTermLoudness;
     virtual void set_loudness_value(double value);

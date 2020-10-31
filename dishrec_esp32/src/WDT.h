@@ -10,7 +10,7 @@
 /* To feed wdt normally, use esp_task_wdt_reset() */
 
 void disable_wdt();
-inline void force_reset_wdt_0();
-inline void force_reset_wdt_1();
+void force_reset_wdt_0();
+void force_reset_wdt_1();
 
 #endif
