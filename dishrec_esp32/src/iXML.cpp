@@ -1173,8 +1173,8 @@ const char* IXML::get_location_name()
 
 void IXML::set_location_gps(double longitude, double latitude)
 {
-    char buff[64];
-    sprintf(buff, "%g, %g", longitude, latitude);
+    char buff[33];
+    sprintf(buff, "%.8g, %.8g", longitude, latitude);
     this->location.location_gps->SetText(buff);
 }
 
