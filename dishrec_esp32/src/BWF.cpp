@@ -91,6 +91,7 @@ userbits{0, 0, 0, 0},
 _bw64(false),
 _circled(false)
 {
+    set_bwf_version(BWFVERSION);
 }
 
 BroadcastWav::~BroadcastWav()
