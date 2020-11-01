@@ -293,7 +293,7 @@ Base(xmldoc, "LOCATION")
     this->location_gps = _set_child_element("LOCATION_GPS");
     this->location_altitude = _set_child_element("LOCATION_ALTITUDE");
     this->location_type = _set_child_element("LOCATION_TYPE");
-    this->location_time = _set_child_element("LOCATION_TYPE");
+    this->location_time = _set_child_element("LOCATION_TIME");
 }
 
 User::User(XMLDocument* xmldoc) :
