@@ -19,6 +19,12 @@
 #define MAX_TRACK_STR_LENGTH        100
 #endif
 
+#ifndef XML_ENCODING_STR
+#define XML_ENCODING_STR            "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+#endif
+
+#define IXML_UID_VALID_CHARS        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
 using namespace tinyxml2;
 
 namespace iXML
@@ -48,7 +54,7 @@ enum ixml_err
     ITEM_NOT_FOUND = 125
 };
 
-void _get_flag_str(
+void get_flag_str(
         char* buff,
         bool& initialized,
         bool flag,
@@ -71,7 +77,7 @@ public:
 class TakeType : public Base
 {
 protected:
-    void _apply();
+    void _set_element();
 
 public:
     bool
@@ -79,13 +85,7 @@ public:
         pickup, rehearsal, announcement, sound_guide;
     TakeType(XMLDocument* xmldoc);
     void set_default();
-    void set_no_good(bool flagged);
-    void set_false_start(bool flagged);
-    void set_wild_track(bool flagged);
-    void set_pickup(bool flagged);
-    void set_rehearsal(bool flagged);
-    void set_announcement(bool flagged);
-    void set_sound_guide(bool flagged);
+    bool is_default();
     friend class IXML;
 };
 
@@ -119,9 +119,9 @@ public:
     XMLElement
         *loudness_value,
         *loudness_range,
-        *max_true_peak_level,
+        *max_short_term_loudness,
         *max_momentary_loudness,
-        *max_short_term_loudness;
+        *max_true_peak_level;
     LoudnessElement(XMLDocument* xmldoc);
     friend class IXML;
 };
@@ -171,8 +171,9 @@ public:
         *bwf_time_reference_low, *bwf_time_reference_high,
         *bwf_version, *bwf_umid,
         *bwf_loudness_value, *bwf_loudness_range,
-        *bwf_max_true_peak_level, *bwf_max_momentary_loudness,
         *bwf_max_short_term_loudness,
+        *bwf_max_momentary_loudness,
+        *bwf_max_true_peak_level,
         *bwf_reserved, *bwf_coding_history;
     BEXTElement(XMLDocument* xmldoc);
     friend class IXML;
@@ -210,6 +211,15 @@ public:
 
 class Location : public Base
 {
+protected:
+    bool
+        _isInterior, _isExterior,
+        _isTimeSunrise, _isTimeMorning, _isTimeMidday,
+        _isTimeDay, _isTimeAfternoon, _isTimeEvening,
+        _isTimeSunset, _isTimeNight;
+    void _set_type();
+    void _set_time();
+
 public:
     XMLElement
         *location_name, *location_gps, *location_altitude,
@@ -255,15 +265,10 @@ public:
     User user;
 
     uint16_t numTracks, numSyncPoints;
-    // static const char *_uidValidChars;
-    static constexpr const char* _uidValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 protected:
     char _ixmlChunkID[4];
     size_t _ixmlChunkSize;
-    // static const char *_ubitsValidChars, *_xmlEncoding;
-    static constexpr const char* _ubitsValidChars = "0123456789abcdef";
-    static constexpr const char* _xmlEncoding = "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     std::map<const uint16_t, std::shared_ptr<Track>> tracks;
     std::vector<std::shared_ptr<SyncPoint>> syncPoints;
     std::vector<XMLElement*> _trackElements;
@@ -336,27 +341,26 @@ public:
     virtual void set_default_take_type();
     virtual bool is_default_take_type();
 
-    virtual void set_no_good(bool flagged);
+    virtual void set_no_good(bool flag = true);
     virtual bool is_no_good();
 
-    virtual void set_false_start(bool flagged);
+    virtual void set_false_start(bool flag = true);
     virtual bool is_false_start();
 
-    virtual void set_wild_track(bool flagged);
+    virtual void set_wild_track(bool flag = true);
     virtual bool is_wild_track();
 
-    virtual void set_pickup(bool flagged);
+    virtual void set_pickup(bool flag = true);
     virtual bool is_pickup();
 
-    virtual void set_rehearsal(bool flagged);
+    virtual void set_rehearsal(bool flag = true);
     virtual bool is_rehearsal();
 
-    virtual void set_announcement(bool flagged);
+    virtual void set_announcement(bool flag = true);
     virtual bool is_announcement();
 
-    virtual void set_sound_guide(bool flagged);
+    virtual void set_sound_guide(bool flag = true);
     virtual bool is_sound_guide();
-
 
 /*                              Speed                               */
 
@@ -414,9 +418,9 @@ public:
 
     virtual void set_loudness_value(double value);
     virtual void set_loudness_range(double range);
-    virtual void set_loudness_max_true_peak(double level);
-    virtual void set_loudness_max_momentary(double level);
     virtual void set_loudness_max_short_term(double value);
+    virtual void set_loudness_max_momentary(double level);
+    virtual void set_loudness_max_true_peak(double level);
     virtual void clear_loudness();
 
 /*                             File set                             */
@@ -493,21 +497,12 @@ public:
     // Coding History
     virtual void set_coding_history(std::string history);
     virtual void set_coding_history(const char* history);
-    // virtual void set_coding_history(BEXT::CodingHistoryRow row);
-    // virtual void append_to_coding_history(BEXT::CodingHistoryRow row);
     virtual void clear_coding_history();
 
     // Import data from external BEXT Chunk
     virtual void import_bext_chunk(BEXT::BEXTChunk& chunk);
 
 /*                             Location                             */
-
-protected:
-    bool
-        _isInterior, _isExterior,
-        _isTimeSunrise, _isTimeMorning, _isTimeMidday,
-        _isTimeDay, _isTimeAfternoon, _isTimeEvening,
-        _isTimeSunset, _isTimeNight;
 
 public:
     virtual void set_location_name(const char* text);
@@ -518,40 +513,36 @@ public:
 
     virtual void set_location_altitude(int altitude);
     virtual const char* get_location_altitude();
-    
-protected:
-    virtual void _set_location_type();
-    virtual void _set_location_time();
 
 public:
-    virtual void set_interior(bool flag);
+    virtual void set_interior(bool flag = true);
     virtual bool is_interior();
 
-    virtual void set_exterior(bool flag);
+    virtual void set_exterior(bool flag = true);
     virtual bool is_exterior();
 
-    virtual void set_location_time_sunrise(bool flag);
+    virtual void set_location_time_sunrise(bool flag = true);
     virtual bool get_location_time_sunrise();
 
-    virtual void set_location_time_morning(bool flag);
+    virtual void set_location_time_morning(bool flag = true);
     virtual bool get_location_time_morning();
 
-    virtual void set_location_time_midday(bool flag);
+    virtual void set_location_time_midday(bool flag = true);
     virtual bool get_location_time_midday();
 
-    virtual void set_location_time_day(bool flag);
+    virtual void set_location_time_day(bool flag = true);
     virtual bool get_location_time_day();
 
-    virtual void set_location_time_afternoon(bool flag);
+    virtual void set_location_time_afternoon(bool flag = true);
     virtual bool get_location_time_afternoon();
 
-    virtual void set_location_time_evening(bool flag);
+    virtual void set_location_time_evening(bool flag = true);
     virtual bool get_location_time_evening();
 
-    virtual void set_location_time_sunset(bool flag);
+    virtual void set_location_time_sunset(bool flag = true);
     virtual bool get_location_time_sunset();
 
-    virtual void set_location_time_night(bool flag);
+    virtual void set_location_time_night(bool flag = true);
     virtual bool get_location_time_night();
 
     virtual const char* get_location_type();

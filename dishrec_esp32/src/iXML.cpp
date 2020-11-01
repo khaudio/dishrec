@@ -2,7 +2,7 @@
 
 using namespace iXML;
 
-void iXML::_get_flag_str(char* buff, bool& initialized, bool flag, const char* str)
+void iXML::get_flag_str(char* buff, bool& initialized, bool flag, const char* str)
 {
     strcat(buff, ((flag && initialized) ? "," : ""));
     strcat(buff, (flag ? str : ""));
@@ -42,71 +42,35 @@ void TakeType::set_default()
     this->rehearsal = false;
     this->announcement = false;
     this->sound_guide = false;
-    _apply();
 }
 
-void TakeType::set_no_good(bool flagged)
+bool TakeType::is_default()
 {
-    this->no_good = flagged;
-    this->defaultTake = (flagged ? false : this->defaultTake);
-    _apply();
+    this->defaultTake = !(
+            this->no_good
+            || this->false_start
+            || this->wild_track
+            || this->pickup
+            || this->rehearsal
+            || this->announcement
+            || this->sound_guide
+        );
+    return this->defaultTake;
 }
 
-void TakeType::set_false_start(bool flagged)
+void TakeType::_set_element()
 {
-    this->false_start = flagged;
-    this->defaultTake = (flagged ? false : this->defaultTake);
-    _apply();
-}
-
-void TakeType::set_wild_track(bool flagged)
-{
-    this->wild_track = flagged;
-    this->defaultTake = (flagged ? false : this->defaultTake);
-    _apply();
-}
-
-void TakeType::set_pickup(bool flagged)
-{
-    this->pickup = flagged;
-    this->defaultTake = (flagged ? false : this->defaultTake);
-    _apply();
-}
-
-void TakeType::set_rehearsal(bool flagged)
-{
-    this->rehearsal = flagged;
-    this->defaultTake = (flagged ? false : this->defaultTake);
-    _apply();
-}
-
-void TakeType::set_announcement(bool flagged)
-{
-    this->announcement = flagged;
-    this->defaultTake = (flagged ? false : this->defaultTake);
-    _apply();
-}
-
-void TakeType::set_sound_guide(bool flagged)
-{
-    this->sound_guide = flagged;
-    this->defaultTake = (flagged ? false : this->defaultTake);
-    _apply();
-}
-
-void TakeType::_apply()
-{
-    bool initialized(false);
     char buff[80];
+    bool firstFlagWritten(false);
     buff[0] = '\0';
-    _get_flag_str(buff, initialized, this->defaultTake, "DEFAULT");
-    _get_flag_str(buff, initialized, this->no_good, "NO_GOOD");
-    _get_flag_str(buff, initialized, this->false_start, "FALSE_START");
-    _get_flag_str(buff, initialized, this->wild_track, "WILD_TRACK");
-    _get_flag_str(buff, initialized, this->pickup, "PICKUP");
-    _get_flag_str(buff, initialized, this->rehearsal, "REHEARSAL");
-    _get_flag_str(buff, initialized, this->announcement, "ANNOUNCEMENT");
-    _get_flag_str(buff, initialized, this->sound_guide, "SOUND_GUIDE");
+    get_flag_str(buff, firstFlagWritten, is_default(), "DEFAULT");
+    get_flag_str(buff, firstFlagWritten, this->no_good, "NO_GOOD");
+    get_flag_str(buff, firstFlagWritten, this->false_start, "FALSE_START");
+    get_flag_str(buff, firstFlagWritten, this->wild_track, "WILD_TRACK");
+    get_flag_str(buff, firstFlagWritten, this->pickup, "PICKUP");
+    get_flag_str(buff, firstFlagWritten, this->rehearsal, "REHEARSAL");
+    get_flag_str(buff, firstFlagWritten, this->announcement, "ANNOUNCEMENT");
+    get_flag_str(buff, firstFlagWritten, this->sound_guide, "SOUND_GUIDE");
     this->_element->SetText(buff);
 }
 
@@ -140,9 +104,9 @@ Base(xmldoc, "LOUDNESS")
 {
     this->loudness_value = _set_child_element("LOUDNESS_VALUE");
     this->loudness_range = _set_child_element("LOUDNESS_RANGE");
-    this->max_true_peak_level = _set_child_element("MAX_TRUE_PEAK_LEVEL");
-    this->max_momentary_loudness = _set_child_element("MAX_MOMENTARY_LOUDNESS");
     this->max_short_term_loudness = _set_child_element("MAX_SHORT_TERM_LOUDNESS");
+    this->max_momentary_loudness = _set_child_element("MAX_MOMENTARY_LOUDNESS");
+    this->max_true_peak_level = _set_child_element("MAX_TRUE_PEAK_LEVEL");
 }
 
 FileSet::FileSet(XMLDocument* xmldoc) :
@@ -210,9 +174,9 @@ Base(xmldoc, "BEXT")
     this->bwf_coding_history = _set_child_element("BWF_CODING_HISTORY");
     this->bwf_loudness_value = _set_child_element("BWF_LOUDNESS_VALUE");
     this->bwf_loudness_range = _set_child_element("BWF_LOUDNESS_RANGE");
-    this->bwf_max_true_peak_level = _set_child_element("BWF_MAX_TRUE_PEAK_LEVEL");
-    this->bwf_max_momentary_loudness = _set_child_element("BWF_MAX_MOMENTARY_LOUDNESS");
     this->bwf_max_short_term_loudness = _set_child_element("BWF_MAX_SHORT_TERM_LOUDNESS");
+    this->bwf_max_momentary_loudness = _set_child_element("BWF_MAX_MOMENTARY_LOUDNESS");
+    this->bwf_max_true_peak_level = _set_child_element("BWF_MAX_TRUE_PEAK_LEVEL");
 }
 
 SyncPoint::SyncPoint(XMLDocument* xmldoc) :
@@ -287,13 +251,49 @@ Base(xmldoc, "SYNC_POINT_LIST")
 }
 
 Location::Location(XMLDocument* xmldoc) :
-Base(xmldoc, "LOCATION")
+Base(xmldoc, "LOCATION"),
+_isInterior(false),
+_isExterior(false),
+_isTimeSunrise(false),
+_isTimeMorning(false),
+_isTimeMidday(false),
+_isTimeDay(false),
+_isTimeAfternoon(false),
+_isTimeEvening(false),
+_isTimeSunset(false),
+_isTimeNight(false)
 {
     this->location_name = _set_child_element("LOCATION_NAME");
     this->location_gps = _set_child_element("LOCATION_GPS");
     this->location_altitude = _set_child_element("LOCATION_ALTITUDE");
     this->location_type = _set_child_element("LOCATION_TYPE");
     this->location_time = _set_child_element("LOCATION_TIME");
+}
+
+void Location::_set_type()
+{
+    char buff[32];
+    bool firstFlagWritten(false);
+    buff[0] = '\0';
+    get_flag_str(buff, firstFlagWritten, this->_isInterior, "INT");
+    get_flag_str(buff, firstFlagWritten, this->_isExterior, "EXT");
+    this->location_type->SetText(buff);
+}
+
+void Location::_set_time()
+{
+    char buff[64];
+    bool firstFlagWritten(false);
+    buff[0] = '\0';
+    get_flag_str(buff, firstFlagWritten, this->_isTimeSunrise, "SUNRISE");
+    get_flag_str(buff, firstFlagWritten, this->_isTimeMorning, "MORNING");
+    get_flag_str(buff, firstFlagWritten, this->_isTimeMidday, "MIDDAY");
+    get_flag_str(buff, firstFlagWritten, this->_isTimeDay, "DAY");
+    get_flag_str(buff, firstFlagWritten, this->_isTimeAfternoon, "AFTERNOON");
+    get_flag_str(buff, firstFlagWritten, this->_isTimeEvening, "EVENING");
+    get_flag_str(buff, firstFlagWritten, this->_isTimeSunset, "SUNSET");
+    get_flag_str(buff, firstFlagWritten, this->_isTimeNight, "NIGHT");
+    this->location_time->SetText(buff);
 }
 
 User::User(XMLDocument* xmldoc) :
@@ -329,17 +329,7 @@ sync_point_list(&ixml),
 location(&ixml),
 user(&ixml),
 numTracks(0),
-numSyncPoints(0),
-_isInterior(false),
-_isExterior(false),
-_isTimeSunrise(false),
-_isTimeMorning(false),
-_isTimeMidday(false),
-_isTimeDay(false),
-_isTimeAfternoon(false),
-_isTimeEvening(false),
-_isTimeSunset(false),
-_isTimeNight(false)
+numSyncPoints(0)
 {
     memcpy(this->_ixmlChunkID, "iXML", 4);
     this->root = this->ixml.NewElement("BWFXML");
@@ -465,7 +455,7 @@ void IXML::set_file_uid()
     const char* sceneNameText = this->scene->GetText();
     while (sceneNameText[i] != '\0') sceneSum += static_cast<uint16_t>(sceneNameText[i++]);
     unsigned int seed = (get_frames() * 2) + 3483423 + sceneSum;
-    get_random_str(buff, 32, IXML::_uidValidChars, seed);
+    get_random_str(buff, 32, IXML_UID_VALID_CHARS, seed);
     this->file_uid->SetText(buff);
 }
 
@@ -488,7 +478,7 @@ void IXML::_assert_valid_ubits(const char* bits)
     {
         for (uint8_t j(0); j < 16; ++j)
         {
-            if (bits[i] == _ubitsValidChars[j])
+            if (bits[i] == UBITS_VALID_CHARS[j])
             {
                 goto skip;
             }
@@ -526,12 +516,12 @@ void IXML::set_default_take_type()
 
 bool IXML::is_default_take_type()
 {
-    return this->take_type.defaultTake;
+    return this->take_type.is_default();
 }
 
-void IXML::set_no_good(bool flagged)
+void IXML::set_no_good(bool flag)
 {
-    this->take_type.set_no_good(flagged);
+    this->take_type.no_good = flag;
 }
 
 bool IXML::is_no_good()
@@ -539,9 +529,9 @@ bool IXML::is_no_good()
     return this->take_type.no_good;
 }
 
-void IXML::set_false_start(bool flagged)
+void IXML::set_false_start(bool flag)
 {
-    this->take_type.set_false_start(flagged);
+    this->take_type.false_start = flag;
 }
 
 bool IXML::is_false_start()
@@ -549,9 +539,9 @@ bool IXML::is_false_start()
     return this->take_type.false_start;
 }
 
-void IXML::set_wild_track(bool flagged)
+void IXML::set_wild_track(bool flag)
 {
-    this->take_type.set_wild_track(flagged);
+    this->take_type.wild_track = flag;
 }
 
 bool IXML::is_wild_track()
@@ -559,9 +549,9 @@ bool IXML::is_wild_track()
     return this->take_type.wild_track;
 }
 
-void IXML::set_pickup(bool flagged)
+void IXML::set_pickup(bool flag)
 {
-    this->take_type.set_pickup(flagged);
+    this->take_type.pickup = flag;
 }
 
 bool IXML::is_pickup()
@@ -569,18 +559,18 @@ bool IXML::is_pickup()
     return this->take_type.pickup;
 }
 
-void IXML::set_rehearsal(bool flagged)
+void IXML::set_rehearsal(bool flag)
 {
-    this->take_type.set_rehearsal(flagged);
+    this->take_type.rehearsal = flag;
 }
 bool IXML::is_rehearsal()
 {
     return this->take_type.rehearsal;
 }
 
-void IXML::set_announcement(bool flagged)
+void IXML::set_announcement(bool flag)
 {
-    this->take_type.set_announcement(flagged);
+    this->take_type.announcement = flag;
 }
 
 bool IXML::is_announcement()
@@ -588,9 +578,9 @@ bool IXML::is_announcement()
     return this->take_type.announcement;
 }
 
-void IXML::set_sound_guide(bool flagged)
+void IXML::set_sound_guide(bool flag)
 {
-    this->take_type.set_sound_guide(flagged);
+    this->take_type.sound_guide = flag;
 }
 
 bool IXML::is_sound_guide()
@@ -834,7 +824,7 @@ void IXML::set_family_uid()
     const char* sceneName = this->scene->GetText();
     while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
     unsigned int seed = (get_frames() / 2) - 1085976 + sceneSum;
-    get_random_str(buff, 32, IXML::_uidValidChars, seed);
+    get_random_str(buff, 32, IXML_UID_VALID_CHARS, seed);
     this->file_set.family_uid->SetText(buff);
 }
 
@@ -1089,22 +1079,10 @@ void IXML::set_loudness_value(double value)
     this->bext.bwf_loudness_value->SetText(value);
 }
 
-void IXML::set_loudness_range(double range)
+void IXML::set_loudness_range(double value)
 {
-    this->loudness.loudness_range->SetText(range);
-    this->bext.bwf_loudness_range->SetText(range);
-}
-
-void IXML::set_loudness_max_true_peak(double level)
-{
-    this->loudness.max_true_peak_level->SetText(level);
-    this->bext.bwf_max_true_peak_level->SetText(level);
-}
-
-void IXML::set_loudness_max_momentary(double level)
-{
-    this->loudness.max_momentary_loudness->SetText(level);
-    this->bext.bwf_max_momentary_loudness->SetText(level);
+    this->loudness.loudness_range->SetText(value);
+    this->bext.bwf_loudness_range->SetText(value);
 }
 
 void IXML::set_loudness_max_short_term(double value)
@@ -1113,13 +1091,25 @@ void IXML::set_loudness_max_short_term(double value)
     this->bext.bwf_max_short_term_loudness->SetText(value);
 }
 
+void IXML::set_loudness_max_momentary(double value)
+{
+    this->loudness.max_momentary_loudness->SetText(value);
+    this->bext.bwf_max_momentary_loudness->SetText(value);
+}
+
+void IXML::set_loudness_max_true_peak(double value)
+{
+    this->loudness.max_true_peak_level->SetText(value);
+    this->bext.bwf_max_true_peak_level->SetText(value);
+}
+
 void IXML::clear_loudness()
 {
     this->bext.bwf_loudness_value->SetText("");
     this->bext.bwf_loudness_range->SetText("");
-    this->bext.bwf_max_true_peak_level->SetText("");
-    this->bext.bwf_max_momentary_loudness->SetText("");
     this->bext.bwf_max_short_term_loudness->SetText("");
+    this->bext.bwf_max_momentary_loudness->SetText("");
+    this->bext.bwf_max_true_peak_level->SetText("");
 }
 
 void IXML::set_reserved(const uint8_t* data)
@@ -1156,9 +1146,9 @@ void IXML::import_bext_chunk(BEXT::BEXTChunk& chunk)
     set_coding_history(chunk.codingHistory.c_str());
     set_loudness_value(chunk.loudnessValue);
     set_loudness_range(chunk.loudnessRange);
-    set_loudness_max_true_peak(chunk.maxTruePeakLevel);
-    set_loudness_max_momentary(chunk.maxMomentaryLoudness);
     set_loudness_max_short_term(chunk.maxShortTermLoudness);
+    set_loudness_max_momentary(chunk.maxMomentaryLoudness);
+    set_loudness_max_true_peak(chunk.maxTruePeakLevel);
 }
 
 void IXML::set_location_name(const char* text)
@@ -1194,130 +1184,104 @@ const char* IXML::get_location_altitude()
     return this->location.location_altitude->GetText();
 }
 
-void IXML::_set_location_type()
-{
-    char buff[32];
-    bool firstFlagWritten(false);
-    buff[0] = '\0';
-    _get_flag_str(buff, firstFlagWritten, this->_isInterior, "INTERIOR");
-    _get_flag_str(buff, firstFlagWritten, this->_isExterior, "EXTERIOR");
-    this->location.location_type->SetText(buff);
-}
-
-void IXML::_set_location_time()
-{
-    char buff[64];
-    bool firstFlagWritten(false);
-    buff[0] = '\0';
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeSunrise, "SUNRISE");
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeMorning, "MORNING");
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeMidday, "MIDDAY");
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeDay, "DAY");
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeAfternoon, "AFTERNOON");
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeEvening, "EVENING");
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeSunset, "SUNSET");
-    _get_flag_str(buff, firstFlagWritten, this->_isTimeNight, "NIGHT");
-    this->location.location_time->SetText(buff);
-}
-
 void IXML::set_interior(bool flag)
 {
-    this->_isInterior = flag;
+    this->location._isInterior = flag;
 }
 
 bool IXML::is_interior()
 {
-    return this->_isInterior;
+    return this->location._isInterior;
 }
 
 void IXML::set_exterior(bool flag)
 {
-    this->_isExterior = flag;
+    this->location._isExterior = flag;
 }
 
 bool IXML::is_exterior()
 {
-    return this->_isExterior;
+    return this->location._isExterior;
 }
 
 void IXML::set_location_time_sunrise(bool flag)
 {
-    this->_isTimeSunrise = flag;
+    this->location._isTimeSunrise = flag;
 }
 
 bool IXML::get_location_time_sunrise()
 {
-    return this->_isTimeSunrise;
+    return this->location._isTimeSunrise;
 }
 
 void IXML::set_location_time_morning(bool flag)
 {
-    this->_isTimeMorning = flag;
+    this->location._isTimeMorning = flag;
 }
 
 bool IXML::get_location_time_morning()
 {
-    return this->_isTimeMorning;
+    return this->location._isTimeMorning;
 }
 
 void IXML::set_location_time_midday(bool flag)
 {
-    this->_isTimeMidday = flag;
+    this->location._isTimeMidday = flag;
 }
 
 bool IXML::get_location_time_midday()
 {
-    return this->_isTimeMidday;
+    return this->location._isTimeMidday;
 }
 
 void IXML::set_location_time_day(bool flag)
 {
-    this->_isTimeDay = flag;
+    this->location._isTimeDay = flag;
 }
 
 bool IXML::get_location_time_day()
 {
-    return this->_isTimeDay;
+    return this->location._isTimeDay;
 }
 
 void IXML::set_location_time_afternoon(bool flag)
 {
-    this->_isTimeAfternoon = flag;
+    this->location._isTimeAfternoon = flag;
 }
 
 bool IXML::get_location_time_afternoon()
 {
-    return this->_isTimeAfternoon;
+    return this->location._isTimeAfternoon;
 }
 
 void IXML::set_location_time_evening(bool flag)
 {
-    this->_isTimeEvening = flag;
+    this->location._isTimeEvening = flag;
 }
 
 bool IXML::get_location_time_evening()
 {
-    return this->_isTimeEvening;
+    return this->location._isTimeEvening;
 }
 
 void IXML::set_location_time_sunset(bool flag)
 {
-    this->_isTimeSunset = flag;
+    this->location._isTimeSunset = flag;
 }
 
 bool IXML::get_location_time_sunset()
 {
-    return this->_isTimeSunset;
+    return this->location._isTimeSunset;
 }
 
 void IXML::set_location_time_night(bool flag)
 {
-    this->_isTimeNight = flag;
+    this->location._isTimeNight = flag;
 }
 
 bool IXML::get_location_time_night()
 {
-    return this->_isTimeNight;
+    return this->location._isTimeNight;
 }
 
 const char* IXML::get_location_type()
@@ -1493,6 +1457,9 @@ size_t IXML::size()
 const char* IXML::_xml_c_str()
 {
     XMLPrinter printer;
+    this->take_type._set_element();
+    this->location._set_type();
+    this->location._set_time();
     this->ixml.Print(&printer);
     const char* cstr = printer.CStr();
     return cstr;
@@ -1512,7 +1479,8 @@ size_t IXML::get(uint8_t* buff)
     size_t index(8);
     memcpy(buff, this->_ixmlChunkID, 4);
     memcpy(buff + 4, &this->_ixmlChunkSize, 4);
-    memcpy(buff + index, this->_xmlEncoding, 40);
+    // memcpy(buff + index, this->_xmlEncoding, 40);
+    memcpy(buff + index, XML_ENCODING_STR, 40);
     index += 40;
     memcpy(buff + index, cstr, xmlLength);
     index += xmlLength;

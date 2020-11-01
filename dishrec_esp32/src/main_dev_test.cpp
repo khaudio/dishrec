@@ -196,6 +196,12 @@ int main()
     wav.set_location_name("a mountain");
     wav.set_location_gps(-37.235623, -21.6930463); // Correct number of spaces
     wav.set_location_altitude(165413);
+    wav.set_location_time_evening(true);
+    wav.set_location_time_night();
+    wav.set_location_time_evening(false);
+    wav.set_location_time_evening(true);
+    wav.set_interior();
+    wav.set_exterior();
 
     const size_t metaBuffSize = wav.total_size();
     uint8_t metaBuff[metaBuffSize];

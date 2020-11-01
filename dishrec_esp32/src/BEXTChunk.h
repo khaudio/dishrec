@@ -22,6 +22,14 @@
 #define AUTO_ORIG_REF_USID          false
 #endif
 
+#ifndef CODING_HISTORY_TEXT_MAX_LEN
+#define CODING_HISTORY_TEXT_MAX_LEN 1024
+#endif
+
+#ifndef USID_RAND_VALID_CHARS
+#define USID_RAND_VALID_CHARS       "0123456789"
+#endif
+
 namespace BEXT
 {
 
@@ -46,10 +54,9 @@ private:
     uint16_t
         _algorithmLength, _samplerateLength, _bitrateLength,
         _bitDepthLength, _modeLength, _textLength;
-    const static uint16_t _textLengthLimit;
     char
         _codingAlgorithm[16], _samplerate[16], _bitDepth[5],
-        _mode[16], _bitrate[8], _text[1024], _internalBuffer[1200];
+        _mode[16], _bitrate[8], _text[1024];
     uint32_t _rowSize;
 
 public:
@@ -107,7 +114,6 @@ public:
 /*                       Originator Reference                       */
 
 protected:
-    static constexpr const char* _usidRandomValidChars = "0123456789";
     void _set_country_code(const char* code);
     void _set_org_code(const char* code);
     void _set_random_str();
@@ -163,18 +169,15 @@ public:
 
 /*                            Loudness                              */
 
-protected:
-    virtual int _convert_loudness_to_int(double value);
-
 public:
     int16_t
         loudnessValue, loudnessRange,
         maxTruePeakLevel, maxMomentaryLoudness, maxShortTermLoudness;
-    virtual void set_loudness_value(double value);
-    virtual void set_loudness_range(double range);
-    virtual void set_loudness_max_true_peak(double level);
-    virtual void set_loudness_max_momentary(double level);
-    virtual void set_loudness_max_short_term(double value);
+    virtual int16_t set_loudness_value(double value);
+    virtual int16_t set_loudness_range(double range);
+    virtual int16_t set_loudness_max_true_peak(double level);
+    virtual int16_t set_loudness_max_momentary(double level);
+    virtual int16_t set_loudness_max_short_term(double value);
     virtual void clear_loudness();
     virtual bool loudness_is_set();
 

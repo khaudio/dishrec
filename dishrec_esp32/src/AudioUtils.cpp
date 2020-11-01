@@ -117,6 +117,13 @@ inline int sgn(T value)
 }
 
 template <typename T>
+inline int16_t convert_loudness_to_int(T value)
+{
+    T scaled = value * 100;
+    return (scaled + sgn<T>(scaled) * .5);
+}
+
+template <typename T>
 inline T hann_window(T values, int length)
 {
     double divisor(length - 1);
@@ -392,6 +399,10 @@ template int sgn(int8_t);
 template int sgn(int16_t);
 template int sgn(int32_t);
 template int sgn(int64_t);
+
+template int16_t convert_loudness_to_int(float);
+template int16_t convert_loudness_to_int(double);
+template int16_t convert_loudness_to_int(long double);
 
 template std::vector<int8_t> hann_window<std::vector<int8_t>>(std::vector<int8_t>, int);
 template std::vector<uint8_t> hann_window<std::vector<uint8_t>>(std::vector<uint8_t>, int);

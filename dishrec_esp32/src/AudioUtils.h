@@ -63,8 +63,11 @@ T get_radians(T degrees = 0);
 template <typename T>
 T get_decibels(T floatValue);
 
-template <typename T>
+template <typename T = double>
 int sgn(T value);
+
+template <typename T = double>
+int16_t convert_loudness_to_int(T value);
 
 template <typename T>
 T hann_window(T values, int length);

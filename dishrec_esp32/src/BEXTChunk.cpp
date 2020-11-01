@@ -2,8 +2,6 @@
 
 using namespace BEXT;
 
-const uint16_t CodingHistoryRow::_textLengthLimit = 1024;
-
 CodingHistoryRow::CodingHistoryRow() :
 _isMPEG(false),
 _algoSet(false),
@@ -125,7 +123,7 @@ void CodingHistoryRow::set_text(const char* text)
 {
     uint16_t length = strlen(text) + 2;
     sprintf(this->_text, "T=");
-    if (length <= this->_textLengthLimit)
+    if (length <= CODING_HISTORY_TEXT_MAX_LEN)
     {
         strncpy(this->_text + 2, text, length);
         this->_textLength = length;
@@ -137,7 +135,7 @@ void CodingHistoryRow::append_text(const char* text)
 {
     // Truncate and append text
     this->_textLength = strlen(text);
-    int16_t remaining = (this->_textLengthLimit - 2) - this->_textLength;
+    int16_t remaining = (CODING_HISTORY_TEXT_MAX_LEN - 2) - this->_textLength;
     if (remaining <= 0) return;
     strcat(this->_text, "; ");
     strncat(this->_text, text, remaining);
@@ -154,6 +152,9 @@ void CodingHistoryRow::clear_text()
 
 void CodingHistoryRow::get(char* buff)
 {
+    /* Prints to buffer
+    Ends with newline
+    Does not add NULL term */
     if (!(this->_algoSet)) throw CODING_ALGORITHM_NOT_SET;
     if (!(this->_samplerateSet)) throw SAMPLE_RATE_NOT_SET;
     if (!(this->_bitDepthSet)) throw BIT_DEPTH_NOT_SET;
@@ -206,14 +207,18 @@ uint32_t CodingHistoryRow::size()
 
 std::string CodingHistoryRow::str()
 {
-    get(this->_internalBuffer);
-    return std::string(this->_internalBuffer);
+    const uint32_t length(size());
+    char buff[length];
+    get(buff);
+    return std::string(buff);
 }
 
 const char* CodingHistoryRow::c_str()
 {
-    get(this->_internalBuffer);
-    return this->_internalBuffer;
+    const uint32_t length(size());
+    char buff[length];
+    get(buff);
+    return buff;
 }
 
 BEXTChunk::BEXTChunk() :
@@ -309,7 +314,7 @@ void BEXTChunk::_set_random_str()
     /* Per EBU R99-1999:
     Random Number (9 characters 0-9) Generated locally
     by the recorder using some reasonably random algorithm. */
-    get_random_str(this->originatorReference + 23, 9, BEXTChunk::_usidRandomValidChars, 0);
+    get_random_str(this->originatorReference + 23, 9, USID_RAND_VALID_CHARS, 0);
 }
 
 void BEXTChunk::set_audio_recorder_serial_number(const char* text)
@@ -466,35 +471,39 @@ void BEXTChunk::clear_umid()
     this->_umidSet = false;
 }
 
-int BEXTChunk::_convert_loudness_to_int(double value)
+int16_t BEXTChunk::set_loudness_value(double value)
 {
-    double scaled = value * 100;
-    return static_cast<int16_t>(scaled + sgn<double>(scaled) * .5);
+    // Returns converted int16_t value per EBU TECH 3285
+    this->loudnessValue = convert_loudness_to_int<double>(value);
+    return this->loudnessValue;
 }
 
-void BEXTChunk::set_loudness_value(double value)
+int16_t BEXTChunk::set_loudness_range(double range)
 {
-    this->loudnessValue = _convert_loudness_to_int(value);
+    // Returns converted int16_t value per EBU TECH 3285
+    this->loudnessRange = convert_loudness_to_int<double>(range);
+    return this->loudnessRange;
 }
 
-void BEXTChunk::set_loudness_range(double range)
+int16_t BEXTChunk::set_loudness_max_short_term(double value)
 {
-    this->loudnessRange = _convert_loudness_to_int(range);
+    // Returns converted int16_t value per EBU TECH 3285
+    this->maxShortTermLoudness = convert_loudness_to_int<double>(value);
+    return this->maxShortTermLoudness;
 }
 
-void BEXTChunk::set_loudness_max_true_peak(double level)
+int16_t BEXTChunk::set_loudness_max_momentary(double level)
 {
-    this->maxTruePeakLevel = _convert_loudness_to_int(level);
+    // Returns converted int16_t value per EBU TECH 3285
+    this->maxMomentaryLoudness = convert_loudness_to_int<double>(level);
+    return this->maxMomentaryLoudness;
 }
 
-void BEXTChunk::set_loudness_max_momentary(double level)
+int16_t BEXTChunk::set_loudness_max_true_peak(double level)
 {
-    this->maxMomentaryLoudness = _convert_loudness_to_int(level);
-}
-
-void BEXTChunk::set_loudness_max_short_term(double value)
-{
-    this->maxShortTermLoudness = _convert_loudness_to_int(value);
+    // Returns converted int16_t value per EBU TECH 3285
+    this->maxTruePeakLevel = convert_loudness_to_int<double>(level);
+    return this->maxTruePeakLevel;
 }
 
 void BEXTChunk::clear_loudness()
@@ -542,7 +551,6 @@ void BEXTChunk::set_coding_history(const char* history)
 {
     this->codingHistory = std::string(history);
 }
-
 
 void BEXTChunk::append_to_coding_history(CodingHistoryRow row)
 {

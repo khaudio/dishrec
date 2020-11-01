@@ -187,9 +187,9 @@ public:
     // Loudness
     void set_loudness_value(double value) override;
     void set_loudness_range(double range) override;
-    void set_loudness_max_true_peak(double level) override;
-    void set_loudness_max_momentary(double level) override;
     void set_loudness_max_short_term(double value) override;
+    void set_loudness_max_momentary(double level) override;
+    void set_loudness_max_true_peak(double level) override;
     virtual void set_loudness();
     void clear_loudness() override;
 

@@ -378,28 +378,28 @@ void BroadcastWav::set_loudness_value(double value)
     iXML::IXML::set_loudness_value(value);
 }
 
-void BroadcastWav::set_loudness_range(double range)
+void BroadcastWav::set_loudness_range(double value)
 {
-    this->bextChunk.set_loudness_range(range);
-    iXML::IXML::set_loudness_range(range);
-}
-
-void BroadcastWav::set_loudness_max_true_peak(double level)
-{
-    this->bextChunk.set_loudness_max_true_peak(level);
-    iXML::IXML::set_loudness_max_true_peak(level);
-}
-
-void BroadcastWav::set_loudness_max_momentary(double level)
-{
-    this->bextChunk.set_loudness_max_momentary(level);
-    iXML::IXML::set_loudness_max_momentary(level);
+    this->bextChunk.set_loudness_range(value);
+    iXML::IXML::set_loudness_range(value);
 }
 
 void BroadcastWav::set_loudness_max_short_term(double value)
 {
     this->bextChunk.set_loudness_max_short_term(value);
     iXML::IXML::set_loudness_max_short_term(value);
+}
+
+void BroadcastWav::set_loudness_max_momentary(double value)
+{
+    this->bextChunk.set_loudness_max_momentary(value);
+    iXML::IXML::set_loudness_max_momentary(value);
+}
+
+void BroadcastWav::set_loudness_max_true_peak(double value)
+{
+    this->bextChunk.set_loudness_max_true_peak(value);
+    iXML::IXML::set_loudness_max_true_peak(value);
 }
 
 void BroadcastWav::set_loudness()

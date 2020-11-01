@@ -13,6 +13,7 @@
 #include "ErrorEnums.h"
 #include "WavHeader.h"
 
+#define UBITS_VALID_CHARS           "0123456789abcdef"
 
 // Framerate strings
 #define FRAMERATE_2398              "24000/1001"
