@@ -40,7 +40,7 @@ int main()
     int i(0);
     std::cout << "Working... " << ++i << std::endl;
 
-    BWF::BroadcastWav wav;
+    BWFHeader::BroadcastWav wav;
     BEXT::CodingHistoryRow row;
     row.set_pcm();
     row.set_sample_rate(48000);
@@ -50,10 +50,10 @@ int main()
     wav.set_coding_history(row);
     const char* descrip = "an informational string";
     const char* orig = "dishrec";
-    // const char* origref = "some reference thing";
+    const char* origref = "some reference thing";
     wav.set_description(descrip);
     wav.set_originator(orig);
-    // wav.set_originator_reference(origref);
+    wav.set_originator_reference(origref);
     
     std::cout << "Working... " << ++i << std::endl;
 

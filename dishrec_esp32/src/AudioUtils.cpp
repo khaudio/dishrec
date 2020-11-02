@@ -211,6 +211,7 @@ void get_random_str(
     {
         buff[i] = validChars[(rand() % available)];
     }
+    buff[length] = '\0';
 }
 
 template void clip_float(float& value);

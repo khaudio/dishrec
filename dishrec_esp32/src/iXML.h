@@ -106,6 +106,9 @@ public:
 
 class History : public Base
 {
+protected:
+    XMLText* _parent_uid;
+
 public:
     XMLElement
         *original_filename, *parent_filename, *parent_uid;
@@ -128,6 +131,9 @@ public:
 
 class FileSet : public Base
 {
+protected:
+    XMLText* _family_uid;
+
 public:
     XMLElement
         *total_files, *family_uid,
@@ -165,7 +171,7 @@ public:
 class BEXTElement : public Base
 {
 protected:
-    XMLText *_reserved, *_umid; // Data
+    XMLText *_reserved, *_umid;
 
 public:
     XMLElement
@@ -322,6 +328,7 @@ public:
     virtual bool is_circled();
 
     // File UID
+    XMLText* _file_uid;
     virtual void set_file_uid();
     virtual const char* get_file_uid();
     

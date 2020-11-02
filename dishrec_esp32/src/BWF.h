@@ -5,7 +5,7 @@
 #include "iXML.h"
 #include "Loudness.h"
 
-namespace BWF
+namespace BWFHeader
 {
 
 class BEXTWrapper;

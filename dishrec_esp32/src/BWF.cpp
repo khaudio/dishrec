@@ -1,6 +1,6 @@
 #include "BWF.h"
 
-using namespace BWF;
+using namespace BWFHeader;
 
 ChunkSize64::ChunkSize64() :
 chunkSize64(0)

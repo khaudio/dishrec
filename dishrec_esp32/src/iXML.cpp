@@ -102,6 +102,8 @@ Base(xmldoc, "HISTORY")
     this->original_filename = _set_child_element("ORIGINAL_FILENAME");
     this->parent_filename = _set_child_element("PARENT_FILENAME");
     this->parent_uid = _set_child_element("PARENT_UID");
+    this->_parent_uid = this->ixml->NewText("");
+    this->parent_uid->InsertEndChild(this->_parent_uid);
 }
 
 LoudnessElement::LoudnessElement(XMLDocument* xmldoc) :
@@ -121,6 +123,8 @@ Base(xmldoc, "FILE_SET")
     this->family_uid = _set_child_element("FAMILY_UID");
     this->family_name = _set_child_element("FAMILY_NAME");
     this->file_set_index = _set_child_element("FILE_SET_INDEX");
+    this->_family_uid = this->ixml->NewText("");
+    this->family_uid->InsertEndChild(this->_family_uid);
 }
 
 Track::Track(XMLDocument* xmldoc) :
@@ -351,6 +355,8 @@ _digitizerSampleRate(sampleRate)
     this->take = this->ixml.NewElement("TAKE");
     this->circled = this->ixml.NewElement("CIRCLED");
     this->file_uid = this->ixml.NewElement("FILE_UID");
+    this->_file_uid = this->ixml.NewText("");
+    this->file_uid->InsertEndChild(this->_file_uid);
     this->ubits = this->ixml.NewElement("UBITS");
     this->note = this->ixml.NewElement("NOTE");
     this->root->InsertEndChild(this->ixml_version);
@@ -445,7 +451,7 @@ void IXML::set_take(int takeNumText)
 
 int IXML::get_take()
 {
-    return atoi(this->take->GetText());
+    return std::atoi(this->take->GetText());
 }
 
 void IXML::set_circled(bool isCircled)
@@ -461,12 +467,12 @@ bool IXML::is_circled()
 void IXML::set_file_uid()
 {
     int sceneSum(0), i(0);
-    char buff[32];
+    char buff[33];
     const char* sceneNameText = this->scene->GetText();
     while (sceneNameText[i] != '\0') sceneSum += static_cast<uint16_t>(sceneNameText[i++]);
     unsigned int seed = (get_frames() * 2) + 3483423 + sceneSum;
     get_random_str(buff, 32, IXML_UID_VALID_CHARS, seed);
-    this->file_uid->SetText(buff);
+    this->_file_uid->SetValue(buff);
 }
 
 const char* IXML::get_file_uid()
@@ -839,7 +845,7 @@ const char* IXML::get_filename()
 
 void IXML::set_parent_uid(const char* data)
 {
-    this->history.parent_uid->SetText(data);
+    this->history._parent_uid->SetValue(data);
 }
 
 const char* IXML::get_parent_uid()
@@ -854,18 +860,18 @@ void IXML::set_total_files(unsigned int numFiles)
 
 int IXML::get_total_files()
 {
-    return atoi(this->file_set.total_files->GetText());
+    return std::atoi(this->file_set.total_files->GetText());
 }
 
 void IXML::set_family_uid()
 {
     int sceneSum(0), i(0);
-    char buff[32];
+    char buff[33];
     const char* sceneName = this->scene->GetText();
     while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
     unsigned int seed = (get_frames() / 2) - 1085976 + sceneSum;
     get_random_str(buff, 32, IXML_UID_VALID_CHARS, seed);
-    this->file_set.family_uid->SetText(buff);
+    this->file_set._family_uid->SetValue(buff);
 }
 
 const char* IXML::get_family_uid()
