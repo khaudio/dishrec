@@ -158,6 +158,12 @@ void DataChunk::set_chunk_size(std::vector<T>& data)
     this->chunkSize = (data.size() * sizeof(T));
 }
 
+template <typename T>
+void DataChunk::add_to_chunk_size(std::vector<T>& data)
+{
+    this->chunkSize += (data.size() * sizeof(T));
+}
+
 FormatChunk::FormatChunk() :
 Chunk("fmt ")
 {

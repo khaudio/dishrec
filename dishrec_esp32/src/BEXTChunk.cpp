@@ -213,13 +213,6 @@ std::string CodingHistoryRow::str()
     return std::string(buff);
 }
 
-const char* CodingHistoryRow::c_str()
-{
-    const uint32_t length(size());
-    char buff[length];
-    get(buff);
-    return buff;
-}
 
 BEXTChunk::BEXTChunk() :
 TimecodeBase::Timestamp(),
@@ -581,10 +574,7 @@ uint32_t BEXTChunk::size()
         + Reserved (180)
         = 602 + Coding History Size */
     this->chunkSize = 602 + this->codingHistory.size();
-    if (this->chunkSize % 2)
-    {
-        this->chunkSize += 1;
-    }
+    this->chunkSize += (this->chunkSize % 2);
     return this->chunkSize;
 }
 

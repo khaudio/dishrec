@@ -21,9 +21,8 @@ public:
     virtual int_fast32_t get_padded_width();
 };
 
-class AudioInt : public PadMeta<int_fast32_t>
+class AudioInt : virtual public PadMeta<int_fast32_t>
 {
-protected:
 public:
     AudioInt();
     ~AudioInt();

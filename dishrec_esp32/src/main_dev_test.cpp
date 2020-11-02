@@ -14,7 +14,7 @@
 #include "BEXTChunk.h"
 #include "iXML.h"
 #include "AudioDataPad.h"
-#include "BWF.h"
+#include "BWFHeader.h"
 #include "Loudness.h"
 #include "Timer.h"
 
@@ -194,7 +194,7 @@ int main()
     wav.set_audio_recorder_serial_number("DR0135792468");
 
     wav.set_location_name("a mountain");
-    wav.set_location_gps(-37.235623, -21.6930463); // Correct number of spaces
+    wav.set_location_gps(-37.235623, -21.6930463);
     wav.set_location_altitude(165413);
     wav.set_location_time_evening(true);
     wav.set_location_time_night();
@@ -207,10 +207,16 @@ int main()
 
     std::cout << "is " << (wav.is_overcranked() ? "" : "not ") << "overcranked" << std::endl;
 
+    wav.set_circled(false);
+    std::cout << wav.get_scene() << std::endl;
+    wav.set_circled(true);
+    std::cout << wav.get_scene() << std::endl;
+
     const size_t metaBuffSize = wav.total_size();
     uint8_t metaBuff[metaBuffSize];
     wav.get(metaBuff);
-    print(metaBuff, metaBuffSize);
+    // print(metaBuff, metaBuffSize);
     printf("\nBroadcastWav Size: %lu\n", wav.size());
+
     std::cout << std::endl << std::endl;
 }

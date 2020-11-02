@@ -389,10 +389,10 @@ IXML::~IXML()
 
 void IXML::clear()
 {
-    set_circled(false);
-    set_ubits(0x00, 0x00, 0x00, 0x00);
     set_scene("");
+    set_ubits(0x00, 0x00, 0x00, 0x00);
     set_take(1);
+    set_circled(false);
     set_file_uid();
     set_family_uid();
 }

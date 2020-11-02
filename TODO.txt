@@ -1,8 +1,6 @@
 TODO:
 
     bwf
-        circle changes filename
-            precede with "@"
         reserve enough meta space to write when file is done
             keep in mind sync point and track # limits
 
@@ -21,13 +19,7 @@ TODO:
                     need to time to frames per buffer for channels > 1
 
     ixml
-        set set_umid and set_reserved correctly
-            to not just resolve to "true"
         check file_set_index setter
-        setter methods for +-1% sample rates
-            set note field under speed to note speedup or slowdown
-            digitizer_sample_rate, etc
-        user fields and so on
 
     EspSDWavFile
         fix EspSDWavFile::write_header() with new getter instead of old get_header()

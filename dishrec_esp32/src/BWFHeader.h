@@ -8,9 +8,10 @@
 namespace BWFHeader
 {
 
-class BEXTWrapper;
+class FileMeta;
 class ChunkSize64;
 class DS64Chunk;
+class BEXTWrapper;
 class BroadcastWav;
 
 class ChunkSize64

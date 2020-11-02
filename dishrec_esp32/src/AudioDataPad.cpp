@@ -13,7 +13,7 @@ PadMeta<T>::~PadMeta()
 }
 
 template <typename T>
-bool PadMeta<T>::is_padded()
+inline bool PadMeta<T>::is_padded()
 {
     return (this->_usableWidth < this->_absoluteWidth);
 }
@@ -30,19 +30,19 @@ void PadMeta<T>::set_usable_width(int_fast32_t numBytes)
 }
 
 template <typename T>
-int_fast32_t PadMeta<T>::get_usable_width()
+inline int_fast32_t PadMeta<T>::get_usable_width()
 {
     return this->_usableWidth;
 }
 
 template <typename T>
-int_fast32_t PadMeta<T>::get_absolute_width()
+inline int_fast32_t PadMeta<T>::get_absolute_width()
 {
     return this->_absoluteWidth;
 }
 
 template <typename T>
-int_fast32_t PadMeta<T>::get_padded_width()
+inline int_fast32_t PadMeta<T>::get_padded_width()
 {
     return this->_paddedWidth;
 }
@@ -50,6 +50,8 @@ int_fast32_t PadMeta<T>::get_padded_width()
 AudioInt::AudioInt() :
 PadMeta<int_fast32_t>()
 {
+    this->_usableWidth = sizeof(int_fast32_t);
+    this->_absoluteWidth = sizeof(int_fast32_t);
 }
 
 AudioInt::~AudioInt()
@@ -65,3 +67,4 @@ template class PadMeta<int_fast32_t>;
 template class PadMeta<uint8_t>;
 template class PadMeta<float>;
 template class PadMeta<double>;
+template class PadMeta<long double>;

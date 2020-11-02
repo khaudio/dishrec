@@ -1,4 +1,4 @@
-#include "BWF.h"
+#include "BWFHeader.h"
 
 using namespace BWFHeader;
 
@@ -92,6 +92,7 @@ _bw64(false),
 _circled(false)
 {
     set_bwf_version(BWFVERSION);
+    unset_wav_64();
 }
 
 BroadcastWav::~BroadcastWav()
@@ -495,6 +496,23 @@ int BroadcastWav::increment_take()
 
 void BroadcastWav::set_circled(bool isCircled)
 {
+    if (isCircled != this->_circled)
+    {
+        const char* sceneName(get_scene());
+        const size_t length(std::strlen(sceneName) + 2);
+        char buff[length];
+        buff[0] = '\0';
+        if (isCircled && !this->_circled)
+        {
+            std::strcat(buff, "@");
+            std::strcat(buff, sceneName);
+        }
+        else if (!isCircled && this->_circled && sceneName[0] == '@')
+        {
+            std::memmove(buff, sceneName + 1, length - 1);
+        }
+        set_scene(buff);
+    }
     this->_circled = isCircled;
     iXML::IXML::set_circled(this->_circled);
 }
@@ -570,6 +588,7 @@ size_t BroadcastWav::get(uint8_t* buff)
 {
     size();
     size_t index(this->riffChunk.get(buff));
+    index += this->ds64Chunk.get(buff + index);
     index += this->bextChunk.get(buff + index);
     index += iXML::IXML::get(buff + index);
     index += this->formatChunk.get(buff + index);

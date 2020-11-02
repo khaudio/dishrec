@@ -2,7 +2,7 @@
 #ifndef EBUR128LOUDNESS_H
 #define EBUR128LOUDNESS_H
 
-#include <ebur128.h>
+#include "../lib/ebur128/ebur128.h"
 #include "WavHeader.h"
 #include "AudioUtils.h"
 

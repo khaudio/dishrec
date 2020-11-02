@@ -14,7 +14,7 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(MORECXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWF.o $(BUILD)/Loudness.o $(BUILD)/Timer.so | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWFHeader.o $(BUILD)/Loudness.o $(BUILD)/Timer.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
 $(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/libebur128.so | $(BUILD)
@@ -23,8 +23,8 @@ $(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/libebur128.so | $(BUILD)
 $(BUILD)/RingBuffer.o: $(BUILD)/RMS.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
 
-$(BUILD)/BWF.o: $(BUILD)/WavHeader.o $(BUILD)/AudioDataPad.o $(BUILD)/iXML.o | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/BWF.cpp -o $(BUILD)/BWF.o $(LDFLAGS)
+$(BUILD)/BWFHeader.o: $(BUILD)/WavHeader.o $(BUILD)/AudioDataPad.o $(BUILD)/iXML.o | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/BWFHeader.cpp -o $(BUILD)/BWFHeader.o $(LDFLAGS)
 
 $(BUILD)/WavHeader.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/WavHeader.cpp -o $(BUILD)/WavHeader.o $(LDFLAGS)

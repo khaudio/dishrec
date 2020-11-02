@@ -94,6 +94,8 @@ public:
     DataChunk();
     template <typename T>
     void set_chunk_size(std::vector<T>& data);
+    template <typename T>
+    void add_to_chunk_size(std::vector<T>& data);
 };
 
 class FormatChunk : public Chunk

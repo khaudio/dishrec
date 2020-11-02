@@ -62,6 +62,12 @@ private:
 public:
     CodingHistoryRow();
     ~CodingHistoryRow();
+
+    uint32_t size();
+
+    void get(char* buff);
+    std::string str();
+
     void set_analogue();
     void set_pcm();
     void set_mpeg(uint8_t type, uint8_t layer);
@@ -77,12 +83,6 @@ public:
     void set_text(const char* text);
     void append_text(const char* text);
     void clear_text();
-    void get(char* buff);
-
-    uint32_t size();
-
-    std::string str();
-    const char* c_str();
 };
 
 class BEXTChunk : virtual public TimecodeBase::Timestamp, public WavMeta::Chunk
