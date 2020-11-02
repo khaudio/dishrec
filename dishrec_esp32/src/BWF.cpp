@@ -106,9 +106,9 @@ void BroadcastWav::clear()
 
 void BroadcastWav::set_sample_rate(uint32_t samplerate)
 {
-    WavHeader::set_sample_rate(samplerate);
     iXML::IXML::set_sample_rate(samplerate);
-    Loudness::Analyzer::set_sample_rate(samplerate);
+    WavHeader::set_sample_rate(this->sampleRate);
+    Loudness::Analyzer::set_sample_rate(this->sampleRate);
 }
 
 void BroadcastWav::set_bit_depth(uint16_t bitsPerSample)

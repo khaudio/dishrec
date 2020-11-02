@@ -112,6 +112,63 @@ std::array<int, 4> TimecodeBase::string_to_tc(std::string formatted, bool* isDro
     return timecode;
 }
 
+uint32_t TimecodeBase::get_overcrank_rate(uint32_t samplerate)
+{
+    switch (samplerate)
+    {
+        case (48000):
+            return OVERCRANK_48000;
+        case (96000):
+            return OVERCRANK_96000;
+        case (192000):
+            return OVERCRANK_192000;
+        default:
+            return std::round(samplerate * OVERCRANK_MULTIPLIER);
+    }
+}
+
+uint32_t TimecodeBase::get_undercrank_rate(uint32_t samplerate)
+{
+    /* Return standard sample rate from +0.1% rate
+    Explicitly calls std::floor to ensure truncation */
+    switch (samplerate)
+    {
+        case (OVERCRANK_48000):
+            return 48000;
+        case (OVERCRANK_96000):
+            return 96000;
+        case (OVERCRANK_192000):
+            return 192000;
+        default:
+            return std::floor((samplerate * 1000) / 1001);
+    }
+}
+
+bool TimecodeBase::is_overcrank_rate(uint32_t samplerate)
+{
+    /* Checks if sample rate is 0.1% overcranked
+    Compatible with sample rates > 1MHz; e.g., DSD */
+    return (samplerate != (
+            (samplerate < 1000000) ?
+            (std::floor(samplerate / 1000) * 1000)
+            : (std::floor(samplerate / 1000000) * 1000000)
+        ));
+}
+
+const char* TimecodeBase::get_overcrank_framerate(const char* framerateStr)
+{
+    if (!std::strcmp(framerateStr, FRAMERATE_2398)) return FRAMERATE_24;
+    else if (!std::strcmp(framerateStr, FRAMERATE_2997)) return FRAMERATE_30;
+    else throw INVALID_FRAMERATE;
+}
+
+const char* TimecodeBase::get_undercrank_framerate(const char* framerateStr)
+{
+    if (!std::strcmp(framerateStr, FRAMERATE_24)) return FRAMERATE_2398;
+    else if (!std::strcmp(framerateStr, FRAMERATE_30)) return FRAMERATE_2997;
+    else throw INVALID_FRAMERATE;
+}
+
 Base::Base() :
 _initialized(false),
 _dropped(0)

@@ -2,6 +2,7 @@
 #define TIMECODEBASE_H
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -13,9 +14,6 @@
 #include "ErrorEnums.h"
 #include "WavHeader.h"
 
-#define UBITS_VALID_CHARS           "0123456789abcdef"
-
-// Framerate strings
 #define FRAMERATE_2398              "24000/1001"
 #define FRAMERATE_24                "24/1"
 #define FRAMERATE_25                "25/1"
@@ -27,6 +25,14 @@
 #define FRAMERATE_NUM_25            25
 #define FRAMERATE_NUM_2997          29.97
 #define FRAMERATE_NUM_30            30
+
+#define OVERCRANK_MULTIPLIER        1.001f
+
+#define OVERCRANK_48000             48048
+#define OVERCRANK_96000             96096
+#define OVERCRANK_192000            192192
+
+#define UBITS_VALID_CHARS           "0123456789abcdef"
 
 namespace TimecodeBase
 {
@@ -54,6 +60,11 @@ std::string tc_to_string(
         bool isDropframe
     );
 std::array<int, 4> string_to_tc(std::string formatted);
+uint32_t get_overcrank_rate(uint32_t samplerate);
+uint32_t get_undercrank_rate(uint32_t samplerate);
+bool is_overcrank_rate(uint32_t samplerate);
+const char* get_overcrank_framerate(const char* framerateStr);
+const char* get_undercrank_framerate(const char* framerateStr);
 
 Base operator-(const Base& b);
 Base operator+(Base& b1, const Base& b2);
@@ -161,7 +172,6 @@ public:
 
     virtual uint64_t get_timestamp();
     virtual void tick();
-    
 };
 
 };

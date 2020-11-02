@@ -164,6 +164,9 @@ public:
 
 class BEXTElement : public Base
 {
+protected:
+    XMLText *_reserved, *_umid; // Data
+
 public:
     XMLElement
         *bwf_originator, *bwf_originator_reference, *bwf_description,
@@ -365,6 +368,8 @@ public:
 /*                              Speed                               */
 
 protected:
+    uint32_t _digitizerSampleRate;
+
     virtual void _set_framerate_str();
     virtual void _set_timestamp_ixml();
     void _set_timestamp() override;
@@ -374,6 +379,9 @@ protected:
 public:
     void set_sample_rate(uint32_t samplerate) override;
     void set_bit_depth(uint16_t bitsPerSample) override;
+
+    virtual void set_overcrank(bool flag);
+    virtual bool is_overcranked();
     
     void set_framerate(double fps) override;
     void set_framerate(int fps) override;
@@ -488,7 +496,7 @@ public:
     virtual void set_bwf_version(uint16_t versionNumber);
 
     // UMID
-    virtual void set_umid(const uint8_t* newUmid);
+    virtual void set_umid(const uint8_t* data);
     virtual void clear_umid();
 
     // Reserved

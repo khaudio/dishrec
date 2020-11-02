@@ -203,12 +203,14 @@ int main()
     wav.set_interior();
     wav.set_exterior();
 
+    wav.set_sample_rate(48000);
+
+    std::cout << "is " << (wav.is_overcranked() ? "" : "not ") << "overcranked" << std::endl;
+
     const size_t metaBuffSize = wav.total_size();
     uint8_t metaBuff[metaBuffSize];
     wav.get(metaBuff);
-
     print(metaBuff, metaBuffSize);
     printf("\nBroadcastWav Size: %lu\n", wav.size());
-
     std::cout << std::endl << std::endl;
 }

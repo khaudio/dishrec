@@ -2,7 +2,12 @@
 
 using namespace iXML;
 
-void iXML::get_flag_str(char* buff, bool& initialized, bool flag, const char* str)
+void iXML::get_flag_str(
+        char* buff,
+        bool& initialized,
+        bool flag,
+        const char* str
+    )
 {
     strcat(buff, ((flag && initialized) ? "," : ""));
     strcat(buff, (flag ? str : ""));
@@ -177,6 +182,10 @@ Base(xmldoc, "BEXT")
     this->bwf_max_short_term_loudness = _set_child_element("BWF_MAX_SHORT_TERM_LOUDNESS");
     this->bwf_max_momentary_loudness = _set_child_element("BWF_MAX_MOMENTARY_LOUDNESS");
     this->bwf_max_true_peak_level = _set_child_element("BWF_MAX_TRUE_PEAK_LEVEL");
+    this->_reserved = this->ixml->NewText("");
+    this->bwf_reserved->InsertEndChild(this->_reserved);
+    this->_umid = this->ixml->NewText("");
+    this->bwf_umid->InsertEndChild(this->_umid);
 }
 
 SyncPoint::SyncPoint(XMLDocument* xmldoc) :
@@ -329,7 +338,8 @@ sync_point_list(&ixml),
 location(&ixml),
 user(&ixml),
 numTracks(0),
-numSyncPoints(0)
+numSyncPoints(0),
+_digitizerSampleRate(sampleRate)
 {
     memcpy(this->_ixmlChunkID, "iXML", 4);
     this->root = this->ixml.NewElement("BWFXML");
@@ -588,12 +598,42 @@ bool IXML::is_sound_guide()
     return this->take_type.sound_guide;
 }
 
+void IXML::set_overcrank(bool flag)
+{
+    this->_digitizerSampleRate = (
+            flag
+            ? TimecodeBase::get_overcrank_rate(this->sampleRate)
+            : this->sampleRate
+        );
+    this->speed.digitizer_sample_rate->SetText(this->_digitizerSampleRate);
+    this->speed.master_speed->SetText(
+            flag ?
+            TimecodeBase::get_overcrank_framerate(this->_framerate)
+            : this->_framerate
+        );
+    this->speed.note->SetText(
+            flag ?
+            "0.1% Overcrank"
+            : ""
+        );
+}
+
+bool IXML::is_overcranked()
+{
+    return this->sampleRate != this->_digitizerSampleRate;
+}
+
 void IXML::set_sample_rate(uint32_t samplerate)
 {
-    TimecodeBase::Clock::set_sample_rate(samplerate);
-    this->speed.file_sample_rate->SetText(samplerate);
-    this->speed.digitizer_sample_rate->SetText(samplerate);
-    this->speed.timestamp_sample_rate->SetText(samplerate);
+    bool isOvercrankRate(TimecodeBase::is_overcrank_rate(samplerate));
+    TimecodeBase::Clock::set_sample_rate(
+            isOvercrankRate ?
+            TimecodeBase::get_undercrank_rate(samplerate)
+            : samplerate
+        );
+    this->speed.file_sample_rate->SetText(this->sampleRate);
+    this->speed.timestamp_sample_rate->SetText(this->sampleRate);
+    set_overcrank(isOvercrankRate);
 }
 
 void IXML::set_bit_depth(uint16_t bitsPerSample)
@@ -1063,14 +1103,14 @@ void IXML::set_bwf_version(uint16_t versionNumber)
     this->bext.bwf_version->SetText(buff);
 }
 
-void IXML::set_umid(const uint8_t* newUmid)
+void IXML::set_umid(const uint8_t* data)
 {
-    this->bext.bwf_umid->SetText(newUmid);
+    this->bext._umid->SetValue(reinterpret_cast<const char*>(data));
 }
 
 void IXML::clear_umid()
 {
-    this->bext.bwf_umid->SetText(std::string(64, '0').c_str());
+    this->bext._umid->SetValue(std::string(64, '0').c_str());
 }
 
 void IXML::set_loudness_value(double value)
@@ -1114,7 +1154,7 @@ void IXML::clear_loudness()
 
 void IXML::set_reserved(const uint8_t* data)
 {
-    this->bext.bwf_reserved->SetText(data);
+    this->bext._reserved->SetValue(reinterpret_cast<const char*>(data));
 }
 
 void IXML::set_coding_history(std::string history)
