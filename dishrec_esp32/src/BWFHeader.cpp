@@ -564,6 +564,9 @@ size_t BroadcastWav::size()
     // _riffType + Data chunk ID and size
     this->_headerSize = 12;
     
+    // ds64Chunk
+    this->_headerSize += this->ds64Chunk.total_size();
+    
     // BEXT chunk
     this->_headerSize += this->bextChunk.total_size();
 

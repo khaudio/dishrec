@@ -221,7 +221,8 @@ int main()
 
     std::cout << "Creating uint8_t buffer for header..." << std::endl;
 
-    uint8_t metaBuff[metaBuffSize];
+    uint8_t* metaBuff;
+    metaBuff = new uint8_t[metaBuffSize];
 
     std::cout << "Getting header..." << std::endl;
 
