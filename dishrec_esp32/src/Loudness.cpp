@@ -9,6 +9,7 @@ _maxMomentary(-HUGE_VAL),
 _maxTruePeak(-HUGE_VAL),
 _maxTruePeakDecimal(0)
 {
+    #ifdef EBUR128_H_
     this->_ebur128Mode = (
             EBUR128_MODE_M
             | EBUR128_MODE_S
@@ -16,6 +17,9 @@ _maxTruePeakDecimal(0)
             | EBUR128_MODE_LRA
             | EBUR128_MODE_TRUE_PEAK
         );
+    #else
+    this->_ebur128Mode = 0;
+    #endif
     this->sampleRate = 0;
     this->bitDepth = 0;
     this->numChannels = 0;
@@ -27,7 +31,9 @@ Analyzer::~Analyzer()
 
 void Analyzer::_check_err(int returnCode)
 {
+    #ifdef EBUR128_H_
     if (returnCode != EBUR128_SUCCESS) throw returnCode;
+    #endif
 }
 
 void Analyzer::set_sample_rate(uint32_t samplerate)
@@ -68,6 +74,7 @@ void Analyzer::create_state()
 {
     if (this->_stateInitialized) return;
     if (!is_format_set()) throw FORMAT_NOT_SET;
+    #ifdef EBUR128_H_
     this->_state = ebur128_init(
             this->numChannels,
             this->sampleRate,
@@ -77,12 +84,14 @@ void Analyzer::create_state()
     {
         _check_err(ebur128_set_channel(this->_state, i, (i + 1)));
     }
+    #endif
     this->_stateInitialized = true;
 }
 
 void Analyzer::clear()
 {
     if (!is_format_set()) throw FORMAT_NOT_SET;
+    #ifdef EBUR128_H_
     if (this->_stateInitialized) free(this->_state);
     this->_state = ebur128_init(
             this->numChannels,
@@ -93,6 +102,7 @@ void Analyzer::clear()
     {
         _check_err(ebur128_set_channel(this->_state, i, (i + 1)));
     }
+    #endif
     this->_maxShortTerm = -HUGE_VAL;
     this->_maxMomentary = -HUGE_VAL;
     this->_maxTruePeak = -HUGE_VAL;
@@ -100,81 +110,108 @@ void Analyzer::clear()
     this->_stateInitialized = true;
 }
 
+#ifdef EBUR128_H_
 ebur128_state* Analyzer::get_state()
 {
     return this->_state;
 }
+#endif
 
 void Analyzer::add_frames(std::vector<int16_t>* interleaved)
 {
+    #ifdef EBUR128_H_
     _check_err(ebur128_add_frames_short(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
         ));
+    #endif
 }
 
 void Analyzer::add_frames(std::vector<int>* interleaved)
 {
+    #ifdef EBUR128_H_
     _check_err(ebur128_add_frames_int(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
         ));
+    #endif
 }
 
 void Analyzer::add_frames(std::vector<float>* interleaved)
 {
+    #ifdef EBUR128_H_
     _check_err(ebur128_add_frames_float(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
         ));
+    #endif
 }
 
 void Analyzer::add_frames(std::vector<double>* interleaved)
 {
+    #ifdef EBUR128_H_
     _check_err(ebur128_add_frames_double(
             this->_state,
             &(interleaved->at(0)),
             interleaved->size()
         ));
+    #endif
 }
 
 double Analyzer::get_global()
 {
+    #ifdef EBUR128_H_
     double value;
     _check_err(ebur128_loudness_global(this->_state, &value));
     return value;
+    #else
+    return -HUGE_VAL;
+    #endif
 }
 
 double Analyzer::get_range()
 {
+    #ifdef EBUR128_H_
     double value;
     _check_err(ebur128_loudness_range(this->_state, &value));
     return value;
+    #else
+    return -HUGE_VAL;
+    #endif
 }
 
 double Analyzer::get_short_term()
 {
+    #ifdef EBUR128_H_
     double value;
     _check_err(ebur128_loudness_shortterm(this->_state, &value));
     this->_maxShortTerm = ((value > this->_maxShortTerm) ? value : this->_maxShortTerm);
     return value;
+    #else
+    return -HUGE_VAL;
+    #endif
 }
 
 double Analyzer::get_momentary()
 {
+    #ifdef EBUR128_H_
     double value;
     _check_err(ebur128_loudness_momentary(this->_state, &value));
     this->_maxMomentary = ((value > this->_maxMomentary) ? value : this->_maxMomentary);
     return value;
+    #else
+    return -HUGE_VAL;
+    #endif
 }
 
 double Analyzer::get_true_peak()
 {
     /* Stores max true peak of all channels as float
     but returns value in LUFS */
+    #ifdef EBUR128_H_
     double value;
     for (int i(0); i < this->numChannels; ++i)
     {
@@ -183,4 +220,7 @@ double Analyzer::get_true_peak()
     }
     this->_maxTruePeak = get_decibels(this->_maxTruePeakDecimal);
     return this->_maxTruePeak;
+    #else
+    return -HUGE_VAL;
+    #endif
 }

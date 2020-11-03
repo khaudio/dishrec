@@ -5,9 +5,9 @@ TODO:
             keep in mind sync point and track # limits
 
     change audio datatype to int unless 8-bit unsigned
-        check sizeof(int_fast16_t) and so on on MCU
-        8 bit low priority since PCM4220 is only 16-24b
-        pad data for selected bit depth and add padded flag for packing
+        pad all data to int_fast32_t for selected bit depth
+        add padded flag for packing
+        use PadMeta::AudioInt()
     add optional 32f conversion
 
     rec/stop

@@ -15,7 +15,6 @@
 #include "iXML.h"
 #include "AudioDataPad.h"
 #include "BWFHeader.h"
-#include "Loudness.h"
 #include "Timer.h"
 
 
@@ -41,6 +40,7 @@ int main()
     std::cout << "Working... " << ++i << std::endl;
 
     BWFHeader::BroadcastWav wav;
+
     BEXT::CodingHistoryRow row;
     row.set_pcm();
     row.set_sample_rate(48000);
@@ -48,6 +48,7 @@ int main()
     row.set_mono();
     row.set_text("hello world");
     wav.set_coding_history(row);
+
     const char* descrip = "an informational string";
     const char* orig = "dishrec";
     const char* origref = "some reference thing";
@@ -71,9 +72,9 @@ int main()
     
     std::cout << "Working... " << ++i << std::endl;
 
-    wav.set_format(params);
+    wav.set_format(params);    
     wav.set_data_size(0);
-    
+
     std::cout << "Working... " << ++i << std::endl;
     
     wav.set_framerate(23.98);
@@ -167,21 +168,21 @@ int main()
     asyncpoint = nullptr;
     wav.destroy_sync_point(asyncpoint);
 
-    const size_t length(384000);
-    std::vector<int16_t> samples;
-    std::vector<double> floatVals;
-    for (size_t i(0); i < length; ++i)
-    {
-        floatVals.emplace_back(0);
-        samples.emplace_back(0);
-    }
-    sine<double>(&floatVals, 1000, 48000, nullptr);
-    float_to_int<double, int16_t>(&samples, &floatVals);
-    int_to_float<int16_t, double>(&floatVals, &samples);
+    // const size_t length(384000);
+    // std::vector<int16_t> samples;
+    // std::vector<double> floatVals;
+    // for (size_t i(0); i < length; ++i)
+    // {
+    //     floatVals.emplace_back(0);
+    //     samples.emplace_back(0);
+    // }
+    // sine<double>(&floatVals, 1000, 48000, nullptr);
+    // float_to_int<double, int16_t>(&samples, &floatVals);
+    // int_to_float<int16_t, double>(&floatVals, &samples);
 
-    std::cout << "Adding frames to loudness analyzer" << std::endl;
+    // std::cout << "Adding frames to loudness analyzer" << std::endl;
 
-    wav.add_frames(&floatVals);
+    // wav.add_frames(&floatVals);
     
     std::cout << "Setting loudness" << std::endl;
 
@@ -212,11 +213,25 @@ int main()
     wav.set_circled(true);
     std::cout << wav.get_scene() << std::endl;
 
+    std::cout << "Getting header size" << std::endl;
+
     const size_t metaBuffSize = wav.total_size();
+    
+    std::cout << "Got header size... " << metaBuffSize << std::endl;
+
+    std::cout << "Creating uint8_t buffer for header..." << std::endl;
+
     uint8_t metaBuff[metaBuffSize];
+
+    std::cout << "Getting header..." << std::endl;
+
     wav.get(metaBuff);
+
+    std::cout << "Got header" << std::endl;
+    
     // print(metaBuff, metaBuffSize);
-    printf("\nBroadcastWav Size: %lu\n", wav.size());
+    printf("\nBroadcastWav header total size: %lu\n", wav.total_size());
 
     std::cout << std::endl << std::endl;
 }
+

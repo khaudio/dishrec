@@ -61,9 +61,11 @@ class Chunk
 public:
     char chunkID[4];
     uint32_t chunkSize;
+
     Chunk();
     Chunk(const char* chunkid);
     ~Chunk();
+    
     virtual void set_chunk_size(uint32_t chunksize);
 
     virtual uint32_t size();
@@ -104,8 +106,11 @@ public:
     uint8_t data[40], *extra;
     uint16_t *formatCode, *numChannels, *sampleWidth, *bitDepth;
     uint32_t *sampleRate, *byteRate, *extraSize;
+    
     FormatChunk();
+
     size_t get(uint8_t* buff) override;
+
     size_t set(const uint8_t* data) override;
 };
 

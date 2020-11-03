@@ -5,7 +5,7 @@ SRC = $(PWD)/src
 BUILD = $(PWD)/build
 OUT = $(PWD)/bin
 LIB = $(PWD)/lib
-INC := -I$(PWD)/include -I/usr/local/include
+INC := -I$(PWD)/include -I/usr/local/include -I$(LIB) -I$(LIB)/tinyxml2 -I$(LIB)/ebur128
 MKDIR = mkdir -p
 NAME = dishrec_dev_test
 
@@ -17,7 +17,7 @@ output: $(BUILD)/main_dev_test.o | $(OUT)
 $(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWFHeader.o $(BUILD)/Loudness.o $(BUILD)/Timer.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
-$(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/libebur128.so | $(BUILD)
+$(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/ebur128.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/Loudness.cpp -o $(BUILD)/Loudness.o $(LDFLAGS) -lebur128.so
 
 $(BUILD)/RingBuffer.o: $(BUILD)/RMS.so | $(BUILD)
@@ -42,10 +42,10 @@ $(BUILD)/BEXTChunk.o: $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/BEXTChunk.cpp -o $(BUILD)/BEXTChunk.o $(LDFLAGS)
 
 $(BUILD)/tinyxml2.so: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(LIB)/tinyxml2/tinyxml2.cpp -o $(BUILD)/tinyxml2.o $(LDFLAGS) -shared
+	$(CXX) -c $(CXXFLAGS) $(LIB)/tinyxml2/tinyxml2.cpp -o $(BUILD)/tinyxml2.so $(LDFLAGS) -shared
 
-$(BUILD)/libebur128.so: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(LIB)/ebur128/ebur128.c -o $(BUILD)/libebur128.so $(LDFLAGS) -shared
+$(BUILD)/ebur128.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(LIB)/ebur128/ebur128.c -o $(BUILD)/ebur128.so $(LDFLAGS) -shared
 
 $(BUILD)/RMS.so: $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/RMS.cpp -o $(BUILD)/RMS.so $(LDFLAGS) -shared

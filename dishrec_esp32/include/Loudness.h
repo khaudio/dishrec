@@ -2,7 +2,14 @@
 #ifndef EBUR128LOUDNESS_H
 #define EBUR128LOUDNESS_H
 
-#include "../lib/ebur128/ebur128.h"
+
+/* Library is too heavy for ESP32 */
+#ifndef EBUR128_H_
+#ifndef ESP32
+#include <ebur128.h>
+#endif
+#endif
+
 #include "WavHeader.h"
 #include "AudioUtils.h"
 
@@ -20,7 +27,11 @@ class Analyzer : virtual public WavMeta::WavFormat
 protected:
     int _ebur128Mode;
     bool _stateInitialized;
+    
+    #ifdef EBUR128_H_
     ebur128_state* _state;
+    #endif
+
     double
         _maxShortTerm,          //      LUFS        -inf - 0.0
         _maxMomentary,          //      LUFS        -inf - 0.0
@@ -42,7 +53,9 @@ public:
     void set_format_code(uint16_t formatcode) override;
     void clear();
 
+    #ifdef EBUR128_H_
     ebur128_state* get_state();
+    #endif
 
     void add_frames(std::vector<int16_t>* interleaved);
     void add_frames(std::vector<int>* interleaved);
