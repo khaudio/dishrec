@@ -50,9 +50,7 @@ protected:
 public:
     DS64Chunk();
     
-    virtual void set_table_size(uint32_t numBytes);
     virtual size_t get_table_size();
-
     virtual size_t get_table(uint8_t* buff);
 
     uint32_t size() override;

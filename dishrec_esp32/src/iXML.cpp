@@ -1513,22 +1513,38 @@ const char* IXML::_xml_c_str()
 
 size_t IXML::get(uint8_t* buff)
 {
+    #ifdef _DEBUG
     if (this->numTracks != get_channels()) throw TRACK_COUNT_MISMATCH;
+    #endif
+    
     const char* cstr = _xml_c_str();
     
     size_t xmlLength = std::strlen(cstr) + 1;
+    std::cout << "xmlLength: " << xmlLength << std::endl;
     this->_ixmlChunkSize = xmlLength + 40;
-
-    // Pad with NULL if size is odd number of bytes
-    if (this->_ixmlChunkSize % 2) buff[this->_ixmlChunkSize++ - 1] = '\0';
 
     size_t index(8);
     memcpy(buff, this->_ixmlChunkID, 4);
-    memcpy(buff + 4, &this->_ixmlChunkSize, 4);
-    // memcpy(buff + index, this->_xmlEncoding, 40);
+
+    /* Skip chunk size until the end
+    to account for bytes potentially added
+    to meet even byte boundary */
+
     memcpy(buff + index, XML_ENCODING_STR, 40);
     index += 40;
+
     memcpy(buff + index, cstr, xmlLength);
     index += xmlLength;
+
+    // Pad with NULL if size is odd number of bytes
+    if (index % 2)
+    {
+        ++this->_ixmlChunkSize;
+        buff[index++ - 1] = '\0';
+    }
+
+    // Write corrected chunk size
+    memcpy(buff + 4, &this->_ixmlChunkSize, 4);
+
     return index;
 }

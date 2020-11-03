@@ -161,7 +161,7 @@ void Analyzer::add_frames(std::vector<double>* interleaved)
     #endif
 }
 
-double Analyzer::get_global()
+double Analyzer::get_loudness_global()
 {
     #ifdef EBUR128_H_
     double value;
@@ -172,7 +172,7 @@ double Analyzer::get_global()
     #endif
 }
 
-double Analyzer::get_range()
+double Analyzer::get_loudness_range()
 {
     #ifdef EBUR128_H_
     double value;
@@ -183,7 +183,7 @@ double Analyzer::get_range()
     #endif
 }
 
-double Analyzer::get_short_term()
+double Analyzer::get_loudness_short_term()
 {
     #ifdef EBUR128_H_
     double value;
@@ -195,7 +195,7 @@ double Analyzer::get_short_term()
     #endif
 }
 
-double Analyzer::get_momentary()
+double Analyzer::get_loudness_momentary()
 {
     #ifdef EBUR128_H_
     double value;
@@ -207,7 +207,7 @@ double Analyzer::get_momentary()
     #endif
 }
 
-double Analyzer::get_true_peak()
+double Analyzer::get_loudness_true_peak()
 {
     /* Stores max true peak of all channels as float
     but returns value in LUFS */

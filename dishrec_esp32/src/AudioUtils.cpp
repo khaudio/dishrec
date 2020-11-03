@@ -112,7 +112,7 @@ inline T get_decibels(T floatValue)
 template <typename T>
 inline int sgn(T value)
 {
-    static constexpr T zero(0);
+    constexpr T zero(0);
     return ((std::signbit(value) * -1) + (value > zero));
 }
 

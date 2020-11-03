@@ -620,7 +620,7 @@ size_t BEXTChunk::get(uint8_t* buff)
     memcpy(buff + index, this->codingHistory.c_str(), this->codingHistory.size());
     index += this->codingHistory.size();
     // Make sure chunk ends on even-numbered byte
-    if (this->chunkSize % 2) buff[index++] = '\0'; // Pad with NULL
+    if (index % 2) buff[index++] = '\0'; // Pad with NULL
     return index;
 }
 

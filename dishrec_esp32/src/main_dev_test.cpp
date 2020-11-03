@@ -72,7 +72,7 @@ int main()
     
     std::cout << "Working... " << ++i << std::endl;
 
-    wav.set_format(params);    
+    wav.set_format(params);
     wav.set_data_size(0);
 
     std::cout << "Working... " << ++i << std::endl;
@@ -187,10 +187,10 @@ int main()
     #endif
     
     std::cout << "Setting loudness" << std::endl;
-
     wav.set_loudness();
-    
     std::cout << "Set loudness " << std::endl;
+    std::cout << "Getting loudness" << std::endl;
+    std::cout << "Got loudness: " << wav.get_loudness_global() << std::endl;
 
     wav.set_country_code("US");
     wav.set_org_code("DSR");
@@ -207,8 +207,7 @@ int main()
     wav.set_exterior();
 
     wav.set_sample_rate(48000);
-
-    std::cout << "is " << (wav.is_overcranked() ? "" : "not ") << "overcranked" << std::endl;
+    std::cout << "This file is " << (wav.is_overcranked() ? "" : "not ") << "overcranked" << std::endl;
 
     wav.set_circled(false);
     std::cout << wav.get_scene() << std::endl;
@@ -222,11 +221,11 @@ int main()
     uint8_t* metaBuff;
     metaBuff = new uint8_t[metaBuffSize];
     std::cout << "Getting header..." << std::endl;
-    wav.get(metaBuff);
+    size_t written = wav.get(metaBuff);
     std::cout << "Got header" << std::endl;
-    // print(metaBuff, metaBuffSize);
+    print(metaBuff, written);
+    std::cout << "metaBuffSize: " << metaBuffSize << "\twritten: " << written << std::endl;
     printf("\nBroadcastWav header total size: %lu\n", wav.total_size());
 
     std::cout << std::endl << std::endl;
 }
-

@@ -62,11 +62,11 @@ public:
     void add_frames(std::vector<float>* interleaved);
     void add_frames(std::vector<double>* interleaved);
 
-    double get_global();
-    double get_range();
-    double get_short_term();
-    double get_momentary();
-    double get_true_peak();
+    double get_loudness_global();
+    double get_loudness_range();
+    double get_loudness_short_term();
+    double get_loudness_momentary();
+    double get_loudness_true_peak();
     
 };
 

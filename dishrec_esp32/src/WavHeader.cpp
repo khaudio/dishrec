@@ -173,7 +173,7 @@ Chunk("fmt ")
     this->byteRate = reinterpret_cast<uint32_t*>(&this->data[8]);
     this->sampleWidth = reinterpret_cast<uint16_t*>(&this->data[12]);
     this->bitDepth = reinterpret_cast<uint16_t*>(&this->data[14]);
-    this->extraSize = reinterpret_cast<uint32_t*>(&this->data[16]);
+    this->extraSize = reinterpret_cast<uint16_t*>(&this->data[16]);
     this->extra = &this->data[18];
 
     set_chunk_size(40);
@@ -182,7 +182,7 @@ Chunk("fmt ")
     *this->extraSize = 22;
 
     // Zero extra data
-    memset(this->data + 18, 0, *reinterpret_cast<uint16_t*>(this->data + 16));
+    memset(this->extra, 0, *this->extraSize);
 }
 
 size_t FormatChunk::get(uint8_t* buff)
@@ -350,7 +350,7 @@ size_t WavHeader::get_file_size()
 
 size_t WavHeader::size()
 {
-    this->_headerSize = 4; // _riffType
+    this->_headerSize = 4; // riffType
     this->_headerSize += this->formatChunk.total_size();
     this->_headerSize += 8; // Data chunk ID and size
     this->riffChunk.chunkSize = this->_headerSize + this->dataChunk.chunkSize;

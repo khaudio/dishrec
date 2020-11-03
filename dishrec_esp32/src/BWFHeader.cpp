@@ -38,14 +38,10 @@ Chunk("JUNK")
     size();
 }
 
-void DS64Chunk::set_table_size(uint32_t numBytes)
-{
-    this->tableSize = numBytes;
-}
-
 size_t DS64Chunk::get_table_size()
 {
-    return this->chunkTable.size() * 12;
+    this->tableSize = this->chunkTable.size() * 12;
+    return this->tableSize;
 }
 
 size_t DS64Chunk::get_table(uint8_t* buff)
@@ -73,11 +69,17 @@ uint32_t DS64Chunk::size()
 
 size_t DS64Chunk::get(uint8_t* buff)
 {
+    constexpr double dummy(0);
+    uint32_t tableLength = this->chunkTable.size();
     size_t index(Chunk::get(buff));
     memcpy(buff + index, &this->bw64Size, 8);
     index += 8;
     memcpy(buff + index, &this->dataSize, 8);
     index += 8;
+    memcpy(buff + index, &dummy, 8);
+    index += 8;
+    memcpy(buff + index, &tableLength, 4);
+    index += 4;
     index += get_table(buff + index);
     return index;
 }
@@ -407,16 +409,20 @@ void BroadcastWav::set_loudness_max_true_peak(double value)
 void BroadcastWav::set_loudness()
 {
     double value, range;
-    value = Loudness::Analyzer::get_global();
-    range = Loudness::Analyzer::get_range();
-    Loudness::Analyzer::get_short_term();
-    Loudness::Analyzer::get_momentary();
-    Loudness::Analyzer::get_true_peak();
+    value = Loudness::Analyzer::get_loudness_global();
+    range = Loudness::Analyzer::get_loudness_range();
+    Loudness::Analyzer::get_loudness_short_term();
+    Loudness::Analyzer::get_loudness_momentary();
+    Loudness::Analyzer::get_loudness_true_peak();
+    #ifdef EBUR128_H_
     set_loudness_value(value);
     set_loudness_range(range);
     set_loudness_max_short_term(this->_maxShortTerm);
     set_loudness_max_momentary(this->_maxMomentary);
     set_loudness_max_true_peak(this->_maxTruePeak);
+    #else
+    clear_loudness();
+    #endif
 }
 
 void BroadcastWav::clear_loudness()
@@ -561,7 +567,7 @@ void BroadcastWav::set_audio_recorder_serial_number(const char* text)
 
 size_t BroadcastWav::size()
 {
-    // _riffType + Data chunk ID and size
+    // riffType + Data chunk ID and size
     this->_headerSize = 12;
     
     // ds64Chunk
@@ -592,6 +598,7 @@ size_t BroadcastWav::get(uint8_t* buff)
     size();
     size_t index(this->riffChunk.get(buff));
     index += this->ds64Chunk.get(buff + index);
+    size_t before = index;
     index += this->bextChunk.get(buff + index);
     index += iXML::IXML::get(buff + index);
     index += this->formatChunk.get(buff + index);

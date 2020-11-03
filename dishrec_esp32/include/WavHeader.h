@@ -104,8 +104,10 @@ class FormatChunk : public Chunk
 {
 public:
     uint8_t data[40], *extra;
-    uint16_t *formatCode, *numChannels, *sampleWidth, *bitDepth;
-    uint32_t *sampleRate, *byteRate, *extraSize;
+    uint16_t
+        *formatCode, *numChannels,
+        *sampleWidth, *bitDepth, *extraSize;
+    uint32_t *sampleRate, *byteRate;
     
     FormatChunk();
 
