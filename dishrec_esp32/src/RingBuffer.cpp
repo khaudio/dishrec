@@ -273,14 +273,14 @@ int RingBuffer<T>::write(uint8_t* data, size_t numBytes, bool force)
 }
 
 
-template class RingBuffer<float>;
-template class RingBuffer<double>;
-template class RingBuffer<long double>;
-template class RingBuffer<int8_t>;
-template class RingBuffer<uint8_t>;
-template class RingBuffer<int16_t>;
-template class RingBuffer<uint16_t>;
-template class RingBuffer<int32_t>;
-template class RingBuffer<uint32_t>;
-template class RingBuffer<int64_t>;
-template class RingBuffer<uint64_t>;
+template class Buffer::RingBuffer<float>;
+template class Buffer::RingBuffer<double>;
+template class Buffer::RingBuffer<long double>;
+template class Buffer::RingBuffer<int8_t>;
+template class Buffer::RingBuffer<uint8_t>;
+template class Buffer::RingBuffer<int16_t>;
+template class Buffer::RingBuffer<uint16_t>;
+template class Buffer::RingBuffer<int32_t>;
+template class Buffer::RingBuffer<uint32_t>;
+template class Buffer::RingBuffer<int64_t>;
+template class Buffer::RingBuffer<uint64_t>;

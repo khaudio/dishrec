@@ -106,23 +106,28 @@ public:
 /*                             Timecode                             */
 
 public:
-    void set_timecode(int hr, int min, int sec, int frm);
-    void set_timecode(std::array<int, 4> tc);
-    void set_timecode(int numFrames);
+    void set_timecode(int hr, int min, int sec, int frm) override;
+    void set_timecode(std::array<int, 4> tc) override;
+    void set_timecode(int numFrames) override;
     void set_timecode(TimecodeBase::Base& base) override;
     void set_timecode(TimecodeBase::Clock& clock) override;
-    void clear_timecode();
+    void clear_timecode() override;
     
     // Userbits
-    virtual void set_ubits(uint8_t first, uint8_t second, uint8_t third, uint8_t fourth);
-    virtual void set_ubits(const char* bits);
-    virtual uint8_t* get_ubits();
+    void set_ubits(
+            uint8_t first,
+            uint8_t second,
+            uint8_t third,
+            uint8_t fourth
+        ) override;
+    void set_ubits(const char* bits) override;
+    const uint8_t* get_ubits() const override;
 
 /*                               Data                               */
 
 public:
     void set_data_size(size_t numBytes) override;
-    size_t get_data_size();
+    size_t get_data_size() override;
 
 /*                            64-bit WAV                            */
 

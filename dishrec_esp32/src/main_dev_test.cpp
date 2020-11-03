@@ -168,21 +168,23 @@ int main()
     asyncpoint = nullptr;
     wav.destroy_sync_point(asyncpoint);
 
-    // const size_t length(384000);
-    // std::vector<int16_t> samples;
-    // std::vector<double> floatVals;
-    // for (size_t i(0); i < length; ++i)
-    // {
-    //     floatVals.emplace_back(0);
-    //     samples.emplace_back(0);
-    // }
-    // sine<double>(&floatVals, 1000, 48000, nullptr);
-    // float_to_int<double, int16_t>(&samples, &floatVals);
-    // int_to_float<int16_t, double>(&floatVals, &samples);
+    #ifdef EBUR128_H_
+    const size_t length(384000);
+    std::vector<int16_t> samples;
+    std::vector<double> floatVals;
+    for (size_t i(0); i < length; ++i)
+    {
+        floatVals.emplace_back(0);
+        samples.emplace_back(0);
+    }
+    sine<double>(&floatVals, 1000, 48000, nullptr);
+    float_to_int<double, int16_t>(&samples, &floatVals);
+    int_to_float<int16_t, double>(&floatVals, &samples);
 
-    // std::cout << "Adding frames to loudness analyzer" << std::endl;
+    std::cout << "Adding frames to loudness analyzer" << std::endl;
 
-    // wav.add_frames(&floatVals);
+    wav.add_frames(&floatVals);
+    #endif
     
     std::cout << "Setting loudness" << std::endl;
 
@@ -214,22 +216,14 @@ int main()
     std::cout << wav.get_scene() << std::endl;
 
     std::cout << "Getting header size" << std::endl;
-
     const size_t metaBuffSize = wav.total_size();
-    
     std::cout << "Got header size... " << metaBuffSize << std::endl;
-
     std::cout << "Creating uint8_t buffer for header..." << std::endl;
-
     uint8_t* metaBuff;
     metaBuff = new uint8_t[metaBuffSize];
-
     std::cout << "Getting header..." << std::endl;
-
     wav.get(metaBuff);
-
     std::cout << "Got header" << std::endl;
-    
     // print(metaBuff, metaBuffSize);
     printf("\nBroadcastWav header total size: %lu\n", wav.total_size());
 

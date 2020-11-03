@@ -542,7 +542,7 @@ void BroadcastWav::set_ubits(const char* bits)
     memcpy(this->userbits, bits, 4);
 }
 
-uint8_t* BroadcastWav::get_ubits()
+const uint8_t* BroadcastWav::get_ubits() const
 {
     return this->userbits;
 }
