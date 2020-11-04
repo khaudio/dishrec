@@ -9,6 +9,9 @@
 #include <memory>
 #include <cstring>
 
+#include <bitset>
+#include <iomanip>
+
 #ifndef M_PIl
 #define M_PIl \
 3.14159265358979323846\
@@ -58,6 +61,12 @@ template <typename F, typename I>
 std::vector<I> float_to_int(std::vector<F> values);
 
 template <typename T>
+T unpack_big_endian(uint8_t* data, int width);
+
+template <typename T>
+T unpack_little_endian(uint8_t* data, int width);
+
+template <typename T>
 T get_radians(T degrees = 0);
 
 template <typename T>
@@ -89,10 +98,25 @@ std::vector<T> sine(
     );
 
 template <typename T>
+T get_max(uint8_t* values, size_t length, int width);
+
+template <typename T>
+T get_min(uint8_t* values, size_t length, int width);
+
+template <typename T>
+void visualize(
+        uint8_t* values,
+        T numSamples,
+        T sampleWidth,
+        T lineWidth = 70,
+        bool fill = false
+    );
+
+template <typename T>
 void visualize(
         std::vector<T> values,
-        double width = 70,
         double length = 0,
+        double width = 70,
         bool fill = false
     );
 

@@ -168,21 +168,20 @@ int main()
     asyncpoint = nullptr;
     wav.destroy_sync_point(asyncpoint);
 
-    #ifdef EBUR128_H_
-    const size_t length(384000);
+    const size_t length(48);
     std::vector<int16_t> samples;
-    std::vector<double> floatVals;
+    std::vector<float> floatVals;
     for (size_t i(0); i < length; ++i)
     {
         floatVals.emplace_back(0);
         samples.emplace_back(0);
     }
-    sine<double>(&floatVals, 1000, 48000, nullptr);
-    float_to_int<double, int16_t>(&samples, &floatVals);
-    int_to_float<int16_t, double>(&floatVals, &samples);
+    sine<float>(&floatVals, 1000, 48000, nullptr);
+    float_to_int<float, int16_t>(&samples, &floatVals);
+    int_to_float<int16_t, float>(&floatVals, &samples);
 
+    #ifdef EBUR128_H_
     std::cout << "Adding frames to loudness analyzer" << std::endl;
-
     wav.add_frames(&floatVals);
     #endif
     
@@ -227,5 +226,28 @@ int main()
     std::cout << "metaBuffSize: " << metaBuffSize << "\twritten: " << written << std::endl;
     printf("\nBroadcastWav header total size: %lu\n", wav.total_size());
 
+    // Packing int for I/O
+    Packer packer;
+    packer.set_bit_depth(16);
+
+    std::vector<int_fast32_t> padded;
+    size_t numBytes = length * packer.get_usable_width();
+    uint8_t packedInt[numBytes];
+
+    for (size_t i(0); i < samples.size(); ++i) padded.emplace_back(samples[i]);
+
+    packer.unpack(&padded, (uint8_t*)&samples[0]);
+    packer.pack(packedInt, &padded);
+
+    std::vector<int_fast32_t> p;
+    p.reserve(numBytes);
+    for (size_t i(0); i < length; ++i) p.emplace_back(0);
+
+    std::memcpy(&p[0], packedInt, numBytes);
+    visualize(padded);
+
+    visualize<int_fast32_t>(packedInt, length, packer.get_usable_width());
+
     std::cout << std::endl << std::endl;
 }
+

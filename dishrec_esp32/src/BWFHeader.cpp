@@ -408,13 +408,13 @@ void BroadcastWav::set_loudness_max_true_peak(double value)
 
 void BroadcastWav::set_loudness()
 {
+    #ifdef EBUR128_H_
     double value, range;
     value = Loudness::Analyzer::get_loudness_global();
     range = Loudness::Analyzer::get_loudness_range();
     Loudness::Analyzer::get_loudness_short_term();
     Loudness::Analyzer::get_loudness_momentary();
     Loudness::Analyzer::get_loudness_true_peak();
-    #ifdef EBUR128_H_
     set_loudness_value(value);
     set_loudness_range(range);
     set_loudness_max_short_term(this->_maxShortTerm);
@@ -598,7 +598,6 @@ size_t BroadcastWav::get(uint8_t* buff)
     size();
     size_t index(this->riffChunk.get(buff));
     index += this->ds64Chunk.get(buff + index);
-    size_t before = index;
     index += this->bextChunk.get(buff + index);
     index += iXML::IXML::get(buff + index);
     index += this->formatChunk.get(buff + index);

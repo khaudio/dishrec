@@ -1520,7 +1520,6 @@ size_t IXML::get(uint8_t* buff)
     const char* cstr = _xml_c_str();
     
     size_t xmlLength = std::strlen(cstr) + 1;
-    std::cout << "xmlLength: " << xmlLength << std::endl;
     this->_ixmlChunkSize = xmlLength + 40;
 
     size_t index(8);

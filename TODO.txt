@@ -1,6 +1,8 @@
 TODO:
 
     bwf
+        should move BroadcastWav::set_circled(bool isCircled) to a higher level
+        change filename and not scene name
         reserve enough meta space to write when file is done
             keep in mind sync point and track # limits
 

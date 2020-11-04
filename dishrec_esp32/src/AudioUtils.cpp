@@ -4,8 +4,8 @@ template <typename T>
 inline void clip_float(T& value)
 {
     value = (
-            value > 1.0 ?
-            (value < -1.0 ? -1.0 : value)
+            value > 1.0
+            ? (value < -1.0 ? -1.0 : value)
             : value
         );
 }
@@ -16,16 +16,16 @@ inline F int_to_float(I value)
     F converted;
     if (std::is_signed<I>())
     {
-        converted = ((value >= 0) ?
-                (static_cast<F>(value) / std::numeric_limits<I>::max())
+        converted = ((value >= 0)
+                ? (static_cast<F>(value) / std::numeric_limits<I>::max())
                 : -(static_cast<F>(value) / std::numeric_limits<I>::min())
             );
     }
     else
     {
         I zero = static_cast<F>(get_zero<I>());
-        converted = ((value >= zero) ?
-                ((static_cast<F>(value) / zero) - zero)
+        converted = ((value >= zero)
+                ? ((static_cast<F>(value) / zero) - zero)
                 : ((static_cast<F>(value) - zero) / zero)
             );
     }
@@ -36,22 +36,27 @@ inline F int_to_float(I value)
 template <typename F, typename I>
 inline I float_to_int(F value)
 {
+    constexpr I minimum(std::numeric_limits<I>::min());
+    constexpr I maximum(std::numeric_limits<I>::max());
     if (std::is_signed<I>())
     {
-        return round(value * (
-                value >= 0 ? 
-                std::numeric_limits<I>::max()
-                : -std::numeric_limits<I>::min()
+        if (value == F(1.0)) return maximum;
+        else if (value == F(-1.0)) return minimum;
+        else return std::round(value * (
+                value >= 0
+                ? maximum
+                : -static_cast<F>(minimum)
             ));
     }
     else
     {
-        I zero = get_zero<I>();
-        return round(
-                value
-                * ((value >= 0) ? (zero - 1) : zero)
-                + (std::is_signed<I>() ? 0 : zero)
-            );
+        if (I(value) == I(1)) return maximum;
+        else if (value == -1) return minimum;
+        else
+        {
+            constexpr I zero = get_zero<I>();
+            return std::round(value * ((value >= 0) ? (zero - 1) : zero) + zero);
+        }
     }
 }
 
@@ -93,6 +98,42 @@ inline std::vector<I> float_to_int(std::vector<F> values)
     converted.reserve(length);
     float_to_int<F, I>(&converted, &values);
     return converted;
+}
+
+template <typename T>
+T unpack_big_endian(uint8_t* data, int width)
+{
+    int bitshifter(((width - 1) * 8));
+    T output(data[0]);
+    for (int i(1); i < width; ++i)
+    {
+        output |= (data[i] << bitshifter);
+        bitshifter -= 8;
+    }
+    if (data[width - 1] & 0x80)
+    {
+        constexpr size_t remaining(sizeof(T) * 8);
+        for (int i(width * 8); i < remaining; ++i) output |= (1ULL << i);
+    }
+    return output;
+}
+
+template <typename T>
+T unpack_little_endian(uint8_t* data, int width)
+{
+    int bitshifter(((width - 1) * 8));
+    T output(data[0]);
+    for (int i(width - 1); i > 0; --i)
+    {
+        output |= (data[i] << bitshifter);
+        bitshifter -= 8;
+    }
+    if (data[width - 1] & 0x80)
+    {
+        constexpr size_t remaining(sizeof(T) * 8);
+        for (int i(width * 8); i < remaining; ++i) output |= (1ULL << i);
+    }
+    return output;
 }
 
 template <typename T>
@@ -168,26 +209,74 @@ std::vector<T> sine(
 }
 
 template <typename T>
+T get_max(uint8_t* values, size_t length, int width)
+{
+    size_t numBytes(length * width);
+    T maximum(std::numeric_limits<T>::min());
+    for (size_t i(0); i < numBytes; i += width)
+    {
+        T value(unpack_little_endian<T>(&values[i], width));
+        maximum = (value > maximum) ? value : maximum;
+    }
+    return maximum;
+}
+
+template <typename T>
+T get_min(uint8_t* values, size_t length, int width)
+{
+    size_t numBytes(length * width);
+    T minimum(std::numeric_limits<T>::max());
+    for (size_t i(0); i < numBytes; i += width)
+    {
+        T value(unpack_little_endian<T>(&values[i], width));
+        minimum = (value < minimum) ? value : minimum;
+    }
+    return minimum;
+}
+
+template <typename T>
 void visualize(
-        std::vector<T> values,
-        double width,
-        double length,
+        uint8_t* values,
+        T numSamples,
+        T sampleWidth,
+        T lineWidth,
         bool fill
     )
 {
-    uint64_t range = (
-            *std::max_element(values.begin(), values.end())
-            - *std::min_element(values.begin(), values.end())
-        );
-    double scale = width / range,
-    increment = (
-            static_cast<double>(values.size())
-            / (length > 0 ? length : values.size())
-        );
-    double difference = width - (*std::max_element(
-            values.begin(), values.end()) * scale
-        );
-    for (double i = 0; i < values.size(); i += increment)
+    double maximum(get_max<T>(values, numSamples, sampleWidth));
+    double minimum(get_min<T>(values, numSamples, sampleWidth));
+    double range = (maximum - minimum);
+    double scale = lineWidth / range;
+    double difference = lineWidth - (maximum * scale);
+    size_t length(numSamples * sampleWidth);
+    for (size_t i = 0; i < length; i += sampleWidth)
+    {
+        T unpacked(unpack_little_endian<T>(&values[i], sampleWidth));
+        int value = (unpacked * scale) + difference;
+        for (int j = 0; j < value; ++j)
+        {
+            std::cout << (fill ? "-" : " ");
+        }
+        std::cout << "\u2022" << " " << +unpacked << std::endl;
+    }
+}
+
+template <typename T>
+void visualize(
+        std::vector<T> values,
+        double length,
+        double width,
+        bool fill
+    )
+{
+    double maximum(*std::max_element(values.begin(), values.end()));
+    double minimum(*std::min_element(values.begin(), values.end()));
+    double range = (maximum - minimum);
+    double scale = width / range;
+    double numItems = static_cast<double>(values.size());
+    double increment = (numItems / (length > 0 ? length : numItems));
+    double difference = width - (maximum * scale);
+    for (double i = 0; i < numItems; i += increment)
     {
         T value = (values[std::round(i)] * scale) + difference;
         for (T j = 0; j < value; ++j)
@@ -380,6 +469,24 @@ template std::vector<uint32_t> float_to_int(std::vector<long double> values);
 template std::vector<int64_t> float_to_int(std::vector<long double> values);
 template std::vector<uint64_t> float_to_int(std::vector<long double> values);
 
+template int8_t unpack_big_endian<int8_t>(uint8_t* data, int width);
+template uint8_t unpack_big_endian<uint8_t>(uint8_t* data, int width);
+template int16_t unpack_big_endian<int16_t>(uint8_t* data, int width);
+template uint16_t unpack_big_endian<uint16_t>(uint8_t* data, int width);
+template int32_t unpack_big_endian<int32_t>(uint8_t* data, int width);
+template uint32_t unpack_big_endian<uint32_t>(uint8_t* data, int width);
+template int64_t unpack_big_endian<int64_t>(uint8_t* data, int width);
+template uint64_t unpack_big_endian<uint64_t>(uint8_t* data, int width);
+
+template int8_t unpack_little_endian<int8_t>(uint8_t* data, int width);
+template uint8_t unpack_little_endian<uint8_t>(uint8_t* data, int width);
+template int16_t unpack_little_endian<int16_t>(uint8_t* data, int width);
+template uint16_t unpack_little_endian<uint16_t>(uint8_t* data, int width);
+template int32_t unpack_little_endian<int32_t>(uint8_t* data, int width);
+template uint32_t unpack_little_endian<uint32_t>(uint8_t* data, int width);
+template int64_t unpack_little_endian<int64_t>(uint8_t* data, int width);
+template uint64_t unpack_little_endian<uint64_t>(uint8_t* data, int width);
+
 template int8_t get_radians<int8_t>(int8_t);
 template uint8_t get_radians<uint8_t>(uint8_t);
 template int16_t get_radians<int16_t>(int16_t);
@@ -413,6 +520,34 @@ template std::vector<int32_t> hann_window<std::vector<int32_t>>(std::vector<int3
 template std::vector<uint32_t> hann_window<std::vector<uint32_t>>(std::vector<uint32_t>, int);
 template std::vector<float> hann_window<std::vector<float>>(std::vector<float>, int);
 template std::vector<double> hann_window<std::vector<double>>(std::vector<double>, int);
+template std::vector<long double> hann_window<std::vector<long double>>(std::vector<long double>, int);
+
+template int8_t get_max<int8_t>(uint8_t*, size_t, int);
+template uint8_t get_max<uint8_t>(uint8_t*, size_t, int);
+template int16_t get_max<int16_t>(uint8_t*, size_t, int);
+template uint16_t get_max<uint16_t>(uint8_t*, size_t, int);
+template int32_t get_max<int32_t>(uint8_t*, size_t, int);
+template uint32_t get_max<uint32_t>(uint8_t*, size_t, int);
+template int64_t get_max<int64_t>(uint8_t*, size_t, int);
+template uint64_t get_max<uint64_t>(uint8_t*, size_t, int);
+
+template int8_t get_min<int8_t>(uint8_t*, size_t, int);
+template uint8_t get_min<uint8_t>(uint8_t*, size_t, int);
+template int16_t get_min<int16_t>(uint8_t*, size_t, int);
+template uint16_t get_min<uint16_t>(uint8_t*, size_t, int);
+template int32_t get_min<int32_t>(uint8_t*, size_t, int);
+template uint32_t get_min<uint32_t>(uint8_t*, size_t, int);
+template int64_t get_min<int64_t>(uint8_t*, size_t, int);
+template uint64_t get_min<uint64_t>(uint8_t*, size_t, int);
+
+template void visualize<int8_t>(uint8_t*, int8_t, int8_t, int8_t, bool);
+template void visualize<uint8_t>(uint8_t*, uint8_t, uint8_t, uint8_t, bool);
+template void visualize<int16_t>(uint8_t*, int16_t, int16_t, int16_t, bool);
+template void visualize<uint16_t>(uint8_t*, uint16_t, uint16_t, uint16_t, bool);
+template void visualize<int32_t>(uint8_t*, int32_t, int32_t, int32_t, bool);
+template void visualize<uint32_t>(uint8_t*, uint32_t, uint32_t, uint32_t, bool);
+template void visualize<int64_t>(uint8_t*, int64_t, int64_t, int64_t, bool);
+template void visualize<uint64_t>(uint8_t*, uint64_t, uint64_t, uint64_t, bool);
 
 template void visualize<int8_t>(std::vector<int8_t>, double, double, bool);
 template void visualize<uint8_t>(std::vector<uint8_t>, double, double, bool);
@@ -420,8 +555,12 @@ template void visualize<int16_t>(std::vector<int16_t>, double, double, bool);
 template void visualize<uint16_t>(std::vector<uint16_t>, double, double, bool);
 template void visualize<int32_t>(std::vector<int32_t>, double, double, bool);
 template void visualize<uint32_t>(std::vector<uint32_t>, double, double, bool);
+template void visualize<int64_t>(std::vector<int64_t>, double, double, bool);
+template void visualize<uint64_t>(std::vector<uint64_t>, double, double, bool);
+
 template void visualize<float>(std::vector<float>, double, double, bool);
 template void visualize<double>(std::vector<double>, double, double, bool);
+template void visualize<long double>(std::vector<long double>, double, double, bool);
 
 template void sine<float>(std::vector<float>*, float, unsigned int, float*);
 template void sine<double>(std::vector<double>*, double, unsigned int, double*);
