@@ -16,23 +16,10 @@
 #include "AudioDataPad.h"
 #include "BWFHeader.h"
 #include "Timer.h"
+#include "AudioDatatypes.h"
 
+#include <bitset>
 
-void print(const uint8_t* buff, size_t buffsize)
-{
-    for (size_t i(0); i < buffsize; ++i) std::cout << buff[i];
-    std::cout << std::endl;
-}
-
-void print_hex(const uint8_t* buff, size_t buffsize)
-{
-    for (size_t i(0); i < buffsize; ++i)
-    {
-        std::cout << std::setw(2) << std::setfill('0');
-        std::cout << std::hex << +buff[i] << " ";
-    }
-    std::cout << std::endl;
-}
 
 int main()
 {
@@ -171,14 +158,21 @@ int main()
     const size_t length(48);
     std::vector<int16_t> samples;
     std::vector<float> floatVals;
+    std::vector<int> scaled24;
+
     for (size_t i(0); i < length; ++i)
     {
         floatVals.emplace_back(0);
         samples.emplace_back(0);
+        scaled24.emplace_back(0);
     }
+
     sine<float>(&floatVals, 1000, 48000, nullptr);
     float_to_int<float, int16_t>(&samples, &floatVals);
     int_to_float<int16_t, float>(&floatVals, &samples);
+
+    float_to_int<float, int>(&scaled24, &floatVals, -8388608, 8388607);
+    // float_to_int<float, int_audio>(&scaled24, &floatVals);
 
     #ifdef EBUR128_H_
     std::cout << "Adding frames to loudness analyzer" << std::endl;
@@ -228,26 +222,46 @@ int main()
 
     // Packing int for I/O
     Packer packer;
-    packer.set_bit_depth(16);
+    packer.set_bit_depth(24);
 
-    std::vector<int_fast32_t> padded;
+    std::vector<int> padded;
     size_t numBytes = length * packer.get_usable_width();
     uint8_t packedInt[numBytes];
+    std::memset(packedInt, 0, numBytes);
 
-    for (size_t i(0); i < samples.size(); ++i) padded.emplace_back(samples[i]);
-
-    packer.unpack(&padded, (uint8_t*)&samples[0]);
-    packer.pack(packedInt, &padded);
-
-    std::vector<int_fast32_t> p;
-    p.reserve(numBytes);
+    std::vector<int> p;
+    p.reserve(length);
     for (size_t i(0); i < length; ++i) p.emplace_back(0);
 
-    std::memcpy(&p[0], packedInt, numBytes);
-    visualize(padded);
+    for (size_t i(0); i < scaled24.size(); ++i)
+    {
+        padded.emplace_back(scaled24[i]);
+    }
 
-    visualize<int_fast32_t>(packedInt, length, packer.get_usable_width());
+    packer.pack<int>(packedInt, &padded);
+    packer.unpack<int>(&p, packedInt);
+
+    int paddy(256);
+    int_audio packed = paddy;
+    std::cout << "Before: " << packed.data << std::endl;
+    packed *= .5f;
+    std::cout << "After: " << packed.data << std::endl << std::endl;
+    std::cout << +packed.data24 << " " << +packed.data16 << " " << +packed.data8 << std::endl;
+    std::cout << "Negative: " << -packed << std::endl;
+
+    constexpr int_audio zero(0);
+    std::cout << "zero: " << zero << std::endl;
+    
+    int_audio num(20);
+    double d(1.2);
+    double e = (num * d);
+    std::cout << "num: " << num << std::endl;
+    std::cout << "e: " << e << std::endl;
+
+    visualize(padded);
+    visualize(scaled24);
+    visualize<int>(packedInt, numBytes, packer.get_usable_width());
+    visualize(p);
 
     std::cout << std::endl << std::endl;
 }
-

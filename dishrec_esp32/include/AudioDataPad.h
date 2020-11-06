@@ -4,21 +4,21 @@
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
+#include "AudioUtils.h"
 
 #include <iostream>
-
+#include <iomanip>
+#include <bitset>
 
 class PadMeta
 {
 protected:
-    int _usableWidth, _absoluteWidth, _paddedWidth;
-    
+    int _usableWidth, _absoluteWidth;
+
     void _check_width();
 
 public:
     PadMeta();
-    PadMeta(uint16_t absolute, uint16_t usable);
-
     ~PadMeta();
     
     virtual void set_absolute_width(int width);
@@ -35,19 +35,21 @@ class Packer : public PadMeta
 {
 public:
     Packer();
-    Packer(uint16_t absolute, uint16_t usable);
-
     ~Packer();
 
-    void unpack(uint8_t* packed, int_fast32_t padded);
+    template <typename T>
+    void unpack(T* padded, uint8_t* packed);
     
-    void pack(uint8_t* pack, int_fast32_t padded);
+    template <typename T>
+    void pack(uint8_t* pack, T* padded);
 
-    // Unpack to ring buffer
-    void unpack(std::vector<int_fast32_t>* padded, uint8_t* packed);
+    template <typename T>
+    void unpack(std::vector<T>* padded, uint8_t* packed);
 
-    // Pack from ring buffer to file or output
-    void pack(uint8_t* packed, std::vector<int_fast32_t>* padded);
+    template <typename T>
+    void pack(uint8_t* packed, std::vector<T>* padded);
 };
 
 #endif
+
+

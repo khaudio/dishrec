@@ -8,8 +8,8 @@
 #include <iostream>
 #include <memory>
 #include <cstring>
+#include "AudioDatatypes.h"
 
-#include <bitset>
 #include <iomanip>
 
 #ifndef M_PIl
@@ -39,8 +39,14 @@ constexpr T get_zero()
         ) ? pow(2, (sizeof(T) * 8) - 1) - 1 : 0;
 }
 
+// template <>
+// constexpr int_audio get_zero()
+// {
+//     return int_audio();
+// }
+
 template <typename T>
-void clip_float(T& value);
+void clip_float(T* value);
 
 template <typename I, typename F>
 F int_to_float(I value);
@@ -48,23 +54,23 @@ F int_to_float(I value);
 template <typename F, typename I>
 I float_to_int(F value);
 
+template <typename F, typename I>
+I float_to_int(F value, I minimum, I maximum);
+
 template <typename I, typename F>
-void int_to_float(std::vector<F> *converted, std::vector<I>* values);
+void int_to_float(std::vector<F>* converted, std::vector<I>* values);
 
 template <typename F, typename I>
 void float_to_int(std::vector<I>* converted, std::vector<F>* values);
 
-template <typename I, typename F>
-std::vector<F> int_to_float(std::vector<I> values);
-
 template <typename F, typename I>
-std::vector<I> float_to_int(std::vector<F> values);
+void float_to_int(std::vector<I>* converted, std::vector<F>* values, I minimum, I maximum);
 
 template <typename T>
-T unpack_big_endian(uint8_t* data, int width);
+void pack_data(uint8_t* data, T* value, int width);
 
 template <typename T>
-T unpack_little_endian(uint8_t* data, int width);
+void unpack_data(T* value, uint8_t* data, int width);
 
 template <typename T>
 T get_radians(T degrees = 0);
@@ -74,6 +80,9 @@ T get_decibels(T floatValue);
 
 template <typename T = double>
 int sgn(T value);
+
+template <>
+int sgn(int_audio value);
 
 template <typename T = double>
 int16_t convert_loudness_to_int(T value);
@@ -97,35 +106,39 @@ std::vector<T> sine(
         T* rads = nullptr
     );
 
-template <typename T>
-T get_max(uint8_t* values, size_t length, int width);
-
-template <typename T>
-T get_min(uint8_t* values, size_t length, int width);
-
-template <typename T>
-void visualize(
-        uint8_t* values,
-        T numSamples,
-        T sampleWidth,
-        T lineWidth = 70,
-        bool fill = false
-    );
-
-template <typename T>
-void visualize(
-        std::vector<T> values,
-        double length = 0,
-        double width = 70,
-        bool fill = false
-    );
-
 void get_random_str(
         char* buff,
         size_t length,
         const char* validChars,
         unsigned int seed = 0
     );
+
+template <typename T>
+T get_max(uint8_t* values, size_t numBytes, int width);
+
+template <typename T>
+T get_min(uint8_t* values, size_t numBytes, int width);
+
+template <typename T>
+void visualize(
+        std::vector<T> values,
+        double length = 0,
+        double lineWidth = 70,
+        bool fill = false
+    );
+
+template <typename T>
+void visualize(
+        uint8_t* values,
+        size_t numBytes,
+        int sampleWidth,
+        int lineWidth = 70,
+        bool fill = false
+    );
+
+void print(const uint8_t* buff, size_t buffsize);
+
+void print_hex(const uint8_t* buff, size_t buffsize);
 
 template float get_zero<float>();
 template double get_zero<double>();
@@ -138,6 +151,7 @@ template int32_t get_zero<int32_t>();
 template uint32_t get_zero<uint32_t>();
 template int64_t get_zero<int64_t>();
 template uint64_t get_zero<uint64_t>();
+template int_audio get_zero<int_audio>();
 
 #endif
 

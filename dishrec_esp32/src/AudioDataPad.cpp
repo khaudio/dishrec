@@ -6,13 +6,6 @@ _absoluteWidth(0)
 {
 }
 
-PadMeta::PadMeta(uint16_t absolute, uint16_t usable) :
-_usableWidth(usable),
-_absoluteWidth(absolute)
-{
-    _check_width();
-}
-
 PadMeta::~PadMeta()
 {
 }
@@ -51,7 +44,7 @@ inline int PadMeta::get_absolute_width()
 
 inline int PadMeta::get_padded_width()
 {
-    return this->_paddedWidth;
+    return this->_absoluteWidth - this->_usableWidth;
 }
 
 inline bool PadMeta::is_padded()
@@ -61,9 +54,15 @@ inline bool PadMeta::is_padded()
 
 void PadMeta::set_bit_depth(uint16_t bitsPerSample)
 {
-    int numBytes(bitsPerSample / 8);
-    this->_usableWidth = numBytes;
-    this->_paddedWidth = this->_absoluteWidth - this->_usableWidth;
+    // Get width in bytes
+    this->_usableWidth = (bitsPerSample / 8);
+
+    // Expand to fit
+    if (this->_usableWidth > this->_absoluteWidth)
+    {
+        set_absolute_width(this->_usableWidth);
+    }
+    
     #ifdef _DEBUG
     _check_width();
     #endif
@@ -77,76 +76,88 @@ inline uint16_t PadMeta::get_bit_depth()
 Packer::Packer() :
 PadMeta()
 {
-    // Default to 32-bit int absolute width
-    set_absolute_width(sizeof(int_fast32_t));
-}
-
-Packer::Packer(uint16_t absolute, uint16_t usable) :
-PadMeta(absolute, usable)
-{
 }
 
 Packer::~Packer()
 {
 }
 
-void Packer::unpack(uint8_t* packed, int_fast32_t padded)
+template <typename T>
+inline void Packer::unpack(T* padded, uint8_t* packed)
 {
     #ifdef _DEBUG
     _check_width();
     #endif
-
-    padded = 0;
-    uint8_t* unpacked = reinterpret_cast<uint8_t*>(&padded);
-    for (int i(0); i < this->_usableWidth; ++i)
-    {
-        unpacked[i] = packed[i];
-    }
+    unpack_data<T>(padded, packed, this->_usableWidth);
 }
 
-void Packer::pack(uint8_t* packed, int_fast32_t padded)
+template <typename T>
+inline void Packer::pack(uint8_t* packed, T* padded)
 {
     #ifdef _DEBUG
     _check_width();
     #endif
-
-    uint8_t* unpacked = reinterpret_cast<uint8_t*>(&padded);
-    for (int i(0); i < this->_usableWidth; ++i)
-    {
-        packed[i] = unpacked[i];
-    }
+    pack_data<T>(packed, padded, this->_usableWidth);
 }
 
-void Packer::unpack(std::vector<int_fast32_t>* padded, uint8_t* packed)
+template <typename T>
+void Packer::unpack(std::vector<T>* padded, uint8_t* packed)
 {
-    #ifdef _DEBUG
-    _check_width();
-    #endif
-
     size_t length(padded->size()), packedIndex(0);
     for (size_t i(0); i < length; ++i)
     {
-        uint8_t* unpacked = reinterpret_cast<uint8_t*>(&padded->at(i));
-        for (int j(0); j < this->_usableWidth; ++j)
-        {
-            unpacked[j] = packed[packedIndex++];
-        }
+        unpack(&padded->at(i), &packed[packedIndex]);
+        packedIndex += this->_usableWidth;
     }
 }
 
-void Packer::pack(uint8_t* packed, std::vector<int_fast32_t>* padded)
+template <typename T>
+void Packer::pack(uint8_t* packed, std::vector<T>* padded)
 {
-    #ifdef _DEBUG
-    _check_width();
-    #endif
-
     size_t length(padded->size()), packedIndex(0);
     for (size_t i(0); i < length; ++i)
     {
-        uint8_t* unpacked = reinterpret_cast<uint8_t*>(&padded->at(i));
-        for (int j(0); j < this->_usableWidth; ++j)
-        {
-            packed[packedIndex++] = unpacked[j];
-        }
+        pack(&(packed[packedIndex]), &(padded->at(i)));
+        packedIndex += this->_usableWidth;
     }
 }
+
+template void Packer::pack<int8_t>(uint8_t*, int8_t*);
+template void Packer::pack<uint8_t>(uint8_t*, uint8_t*);
+template void Packer::pack<int16_t>(uint8_t*, int16_t*);
+template void Packer::pack<uint16_t>(uint8_t*, uint16_t*);
+template void Packer::pack<int32_t>(uint8_t*, int32_t*);
+template void Packer::pack<uint32_t>(uint8_t*, uint32_t*);
+template void Packer::pack<int64_t>(uint8_t*, int64_t*);
+template void Packer::pack<uint64_t>(uint8_t*, uint64_t*);
+template void Packer::pack<int_audio>(uint8_t*, int_audio*);
+
+template void Packer::unpack<int8_t>(int8_t*, uint8_t*);
+template void Packer::unpack<uint8_t>(uint8_t*, uint8_t*);
+template void Packer::unpack<int16_t>(int16_t*, uint8_t*);
+template void Packer::unpack<uint16_t>(uint16_t*, uint8_t*);
+template void Packer::unpack<int32_t>(int32_t*, uint8_t*);
+template void Packer::unpack<uint32_t>(uint32_t*, uint8_t*);
+template void Packer::unpack<int64_t>(int64_t*, uint8_t*);
+template void Packer::unpack<uint64_t>(uint64_t*, uint8_t*);
+template void Packer::unpack<int_audio>(int_audio*, uint8_t*);
+
+template void Packer::pack<int8_t>(uint8_t*, std::vector<int8_t>*);
+template void Packer::pack<uint8_t>(uint8_t*, std::vector<uint8_t>*);
+template void Packer::pack<int16_t>(uint8_t*, std::vector<int16_t>*);
+template void Packer::pack<uint16_t>(uint8_t*, std::vector<uint16_t>*);
+template void Packer::pack<int32_t>(uint8_t*, std::vector<int32_t>*);
+template void Packer::pack<uint32_t>(uint8_t*, std::vector<uint32_t>*);
+template void Packer::pack<int64_t>(uint8_t*, std::vector<int64_t>*);
+template void Packer::pack<uint64_t>(uint8_t*, std::vector<uint64_t>*);
+template void Packer::pack<int_audio>(uint8_t*, std::vector<int_audio>*);
+
+template void Packer::unpack<int8_t>(std::vector<int8_t>*, uint8_t*);
+template void Packer::unpack<uint8_t>(std::vector<uint8_t>*, uint8_t*);
+template void Packer::unpack<int16_t>(std::vector<int16_t>*, uint8_t*);
+template void Packer::unpack<uint16_t>(std::vector<uint16_t>*, uint8_t*);
+template void Packer::unpack<int32_t>(std::vector<int32_t>*, uint8_t*);
+template void Packer::unpack<uint32_t>(std::vector<uint32_t>*, uint8_t*);
+template void Packer::unpack<int64_t>(std::vector<int64_t>*, uint8_t*);
+template void Packer::unpack<uint64_t>(std::vector<uint64_t>*, uint8_t*);
+template void Packer::unpack<int_audio>(std::vector<int_audio>*, uint8_t*);
