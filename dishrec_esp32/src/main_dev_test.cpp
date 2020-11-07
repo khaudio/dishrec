@@ -18,8 +18,6 @@
 #include "Timer.h"
 #include "int_audio.h"
 
-#include <bitset>
-
 
 int main()
 {
@@ -250,20 +248,14 @@ int main()
 
     constexpr int_audio zero(0);
     std::cout << "zero: " << zero << std::endl;
-    
-    int_audio num(20111);
-    double d(1.216513);
-    double e = (num * d);
-    std::cout << "num: " << num << std::endl;
-    std::cout << "e: " << e << std::endl;
 
     constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
     constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
 
-    visualize(padded);
-    visualize(scaled24);
-    visualize<int>(packedInt, numBytes, packer.get_usable_width());
-    visualize(p);
+    // visualize(padded);
+    // visualize(scaled24);
+    // visualize<int>(packedInt, numBytes, packer.get_usable_width());
+    // visualize(p);
 
     std::cout << std::endl << std::endl;
 }

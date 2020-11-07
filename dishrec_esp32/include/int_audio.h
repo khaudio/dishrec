@@ -14,6 +14,11 @@ union int_audio
     uint_fast8_t data8 : 8;
     uint8_t _data[3];
     
+    // int_audio(int value) :
+    // data(value)
+    // {
+    // }
+
     constexpr int_audio() :
     data(0)
     {
@@ -45,69 +50,67 @@ union int_audio
         return size() * 8;
     }
 
-    static const int_audio& max()
+    static constexpr const int_audio max()
     {
-        static constexpr int_audio maximum(8388607);
-        return maximum;
+        return int_audio(8388607);
     }
 
-    static const int_audio& min()
+    static constexpr const int_audio min()
     {
-        static constexpr int_audio minimum(-8388608);
-        return minimum;
+        return int_audio(-8388608);
     }
 
-    inline operator int8_t() const
+    explicit inline operator int8_t() const
     {
         return static_cast<int8_t>(this->data);
     }
 
-    inline operator uint8_t() const
+    explicit inline operator uint8_t() const
     {
         return static_cast<uint8_t>(this->data);
     }
 
-    inline operator int16_t() const
+    explicit inline operator int16_t() const
     {
         return static_cast<int16_t>(this->data);
     }
 
-    inline operator uint16_t() const
+    explicit inline operator uint16_t() const
     {
         return static_cast<uint16_t>(this->data);
     }
 
-    inline operator int32_t() const
+    explicit inline operator int32_t() const
     {
         return static_cast<int32_t>(this->data);
     }
 
-    inline operator uint32_t() const
+    explicit inline operator uint32_t() const
     {
         return static_cast<uint32_t>(this->data);
     }
 
-    inline operator int64_t() const
+    explicit inline operator int64_t() const
     {
         return static_cast<int64_t>(this->data);
     }
 
-    inline operator uint64_t() const
+    explicit inline operator uint64_t() const
     {
         return static_cast<uint64_t>(this->data);
     }
 
-    inline operator float() const
+    explicit inline operator float() const
     {
         return static_cast<float>(this->data);
     }
 
-    inline operator double() const
+    explicit inline operator double() const
     {
         return static_cast<double>(this->data);
     }
 
-    inline operator long double() const
+    explicit inline operator long double() const
     {
         return static_cast<long double>(this->data);
     }
@@ -634,18 +637,129 @@ class std::numeric_limits<int_audio>
 public:
     static constexpr int_audio max()
     {
-        return int_audio(8388607);
+        int_audio _obj;
+        return int_audio(_obj, 8388607);
     };
 
     static constexpr int_audio min()
     {
-        return int_audio(-8388608);
+        int_audio _obj;
+        return int_audio(_obj, -8388608);
     };
 
-    static constexpr int_audio is_integer()
+    static constexpr bool is_integer()
     {
         return true;
     };
 };
+
+int8_t operator+(const int8_t i, const int_audio& a);
+int8_t operator+(const int_audio& a, const int8_t i);
+uint8_t operator+(const uint8_t i, const int_audio& a);
+uint8_t operator+(const int_audio& a, const uint8_t i);
+int16_t operator+(const int16_t i, const int_audio& a);
+int16_t operator+(const int_audio& a, const int16_t i);
+uint16_t operator+(const uint16_t i, const int_audio& a);
+uint16_t operator+(const int_audio& a, const uint16_t i);
+int32_t operator+(const int32_t i, const int_audio& a);
+int32_t operator+(const int_audio& a, const int32_t i);
+uint32_t operator+(const uint32_t i, const int_audio& a);
+uint32_t operator+(const int_audio& a, const uint32_t i);
+int64_t operator+(const int64_t i, const int_audio& a);
+int64_t operator+(const int_audio& a, const int64_t i);
+uint64_t operator+(const uint64_t i, const int_audio& a);
+uint64_t operator+(const int_audio& a, const uint64_t i);
+float operator+(const float i, const int_audio& a);
+float operator+(const int_audio& a, const float i);
+double operator+(const double i, const int_audio& a);
+double operator+(const int_audio& a, const double i);
+long double operator+(const long double i, const int_audio& a);
+long double operator+(const int_audio& a, const long double i);
+
+int8_t operator-(const int8_t i, const int_audio& a);
+int8_t operator-(const int_audio& a, const int8_t i);
+uint8_t operator-(const uint8_t i, const int_audio& a);
+uint8_t operator-(const int_audio& a, const uint8_t i);
+int16_t operator-(const int16_t i, const int_audio& a);
+int16_t operator-(const int_audio& a, const int16_t i);
+uint16_t operator-(const uint16_t i, const int_audio& a);
+uint16_t operator-(const int_audio& a, const uint16_t i);
+int32_t operator-(const int32_t i, const int_audio& a);
+int32_t operator-(const int_audio& a, const int32_t i);
+uint32_t operator-(const uint32_t i, const int_audio& a);
+uint32_t operator-(const int_audio& a, const uint32_t i);
+int64_t operator-(const int64_t i, const int_audio& a);
+int64_t operator-(const int_audio& a, const int64_t i);
+uint64_t operator-(const uint64_t i, const int_audio& a);
+uint64_t operator-(const int_audio& a, const uint64_t i);
+float operator-(const float i, const int_audio& a);
+float operator-(const int_audio& a, const float i);
+double operator-(const double i, const int_audio& a);
+double operator-(const int_audio& a, const double i);
+long double operator-(const long double i, const int_audio& a);
+long double operator-(const int_audio& a, const long double i);
+
+int8_t operator*(const int8_t i, const int_audio& a);
+int8_t operator*(const int_audio& a, const int8_t i);
+uint8_t operator*(const uint8_t i, const int_audio& a);
+uint8_t operator*(const int_audio& a, const uint8_t i);
+int16_t operator*(const int16_t i, const int_audio& a);
+int16_t operator*(const int_audio& a, const int16_t i);
+uint16_t operator*(const uint16_t i, const int_audio& a);
+uint16_t operator*(const int_audio& a, const uint16_t i);
+int32_t operator*(const int32_t i, const int_audio& a);
+int32_t operator*(const int_audio& a, const int32_t i);
+uint32_t operator*(const uint32_t i, const int_audio& a);
+uint32_t operator*(const int_audio& a, const uint32_t i);
+int64_t operator*(const int64_t i, const int_audio& a);
+int64_t operator*(const int_audio& a, const int64_t i);
+uint64_t operator*(const uint64_t i, const int_audio& a);
+uint64_t operator*(const int_audio& a, const uint64_t i);
+float operator*(const float i, const int_audio& a);
+float operator*(const int_audio& a, const float i);
+double operator*(const double i, const int_audio& a);
+double operator*(const int_audio& a, const double i);
+long double operator*(const long double i, const int_audio& a);
+long double operator*(const int_audio& a, const long double i);
+
+int8_t operator/(const int8_t i, const int_audio& a);
+int8_t operator/(const int_audio& a, const int8_t i);
+uint8_t operator/(const uint8_t i, const int_audio& a);
+uint8_t operator/(const int_audio& a, const uint8_t i);
+int16_t operator/(const int16_t i, const int_audio& a);
+int16_t operator/(const int_audio& a, const int16_t i);
+uint16_t operator/(const uint16_t i, const int_audio& a);
+uint16_t operator/(const int_audio& a, const uint16_t i);
+int32_t operator/(const int32_t i, const int_audio& a);
+int32_t operator/(const int_audio& a, const int32_t i);
+uint32_t operator/(const uint32_t i, const int_audio& a);
+uint32_t operator/(const int_audio& a, const uint32_t i);
+int64_t operator/(const int64_t i, const int_audio& a);
+int64_t operator/(const int_audio& a, const int64_t i);
+uint64_t operator/(const uint64_t i, const int_audio& a);
+uint64_t operator/(const int_audio& a, const uint64_t i);
+float operator/(const float i, const int_audio& a);
+float operator/(const int_audio& a, const float i);
+double operator/(const double i, const int_audio& a);
+double operator/(const int_audio& a, const double i);
+long double operator/(const long double i, const int_audio& a);
+long double operator/(const int_audio& a, const long double i);
+
+int8_t operator%(const int8_t i, const int_audio& a);
+int8_t operator%(const int_audio& a, const int8_t i);
+uint8_t operator%(const uint8_t i, const int_audio& a);
+uint8_t operator%(const int_audio& a, const uint8_t i);
+int16_t operator%(const int16_t i, const int_audio& a);
+int16_t operator%(const int_audio& a, const int16_t i);
+uint16_t operator%(const uint16_t i, const int_audio& a);
+uint16_t operator%(const int_audio& a, const uint16_t i);
+int32_t operator%(const int32_t i, const int_audio& a);
+int32_t operator%(const int_audio& a, const int32_t i);
+uint32_t operator%(const uint32_t i, const int_audio& a);
+uint32_t operator%(const int_audio& a, const uint32_t i);
+int64_t operator%(const int64_t i, const int_audio& a);
+int64_t operator%(const int_audio& a, const int64_t i);
+uint64_t operator%(const uint64_t i, const int_audio& a);
+uint64_t operator%(const int_audio& a, const uint64_t i);
 
 #endif
