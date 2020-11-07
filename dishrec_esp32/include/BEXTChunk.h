@@ -15,23 +15,19 @@
 #ifndef BEXTCHUNK_H
 #define BEXTCHUNK_H
 
-#define BWFVERSION                  2
-
 /* Unique Source Identifier (USID) per EBU R99-1999 */
-#ifndef AUTO_ORIG_REF_USID
-#define AUTO_ORIG_REF_USID          false
-#endif
-
-#ifndef CODING_HISTORY_TEXT_MAX_LEN
-#define CODING_HISTORY_TEXT_MAX_LEN 1024
-#endif
-
-#ifndef USID_RAND_VALID_CHARS
-#define USID_RAND_VALID_CHARS       "0123456789"
+#ifndef AUTO_ORIGINATOR_REF_USID
+#define AUTO_ORIGINATOR_REF_USID    false
 #endif
 
 namespace BEXT
 {
+
+// Supported version of BWF spec
+constexpr uint16_t supportedBWFVersion = 2;
+
+// Allowed characters for random portion of USID
+constexpr const char* usidRandomValidChars = "0123456789";
 
 class CodingHistoryRow;
 class BEXTChunk;
@@ -47,6 +43,9 @@ enum bext_coding_history_err
 
 class CodingHistoryRow
 {
+public:
+    static constexpr int maxTextLength = 1024;
+
 private:
     bool
         _isMPEG, _algoSet, _samplerateSet, _bitDepthSet,
@@ -66,7 +65,6 @@ public:
     uint32_t size();
 
     void get(char* buff);
-    std::string str();
 
     void set_analogue();
     void set_pcm();

@@ -93,7 +93,7 @@ userbits{0, 0, 0, 0},
 _bw64(false),
 _circled(false)
 {
-    set_bwf_version(BWFVERSION);
+    set_bwf_version(BEXT::supportedBWFVersion);
     unset_wav_64();
 }
 

@@ -378,7 +378,7 @@ _digitizerSampleRate(sampleRate)
     this->root->InsertEndChild(this->sync_point_list._element);
     this->root->InsertEndChild(this->location._element);
     this->root->InsertEndChild(this->user._element);
-    set_ixml_version(IXML_VERSION_MAJOR, IXML_VERSION_MINOR);
+    set_ixml_version(supportedIXMLVersionMajor, supportedIXMLVersionMinor);
     clear();
     set_family_uid(); // Set random Family UID until overwritten
 }
@@ -407,8 +407,8 @@ void IXML::set_ixml_version(uint16_t major, uint16_t minor)
 std::pair<const uint16_t, const uint16_t> IXML::get_ixml_version()
 {
     return std::pair<const uint16_t, const uint16_t>(
-            IXML_VERSION_MAJOR,
-            IXML_VERSION_MINOR
+            supportedIXMLVersionMajor,
+            supportedIXMLVersionMinor
         );
 }
 
@@ -471,7 +471,7 @@ void IXML::set_file_uid()
     const char* sceneNameText = this->scene->GetText();
     while (sceneNameText[i] != '\0') sceneSum += static_cast<uint16_t>(sceneNameText[i++]);
     unsigned int seed = (get_frames() * 2) + 3483423 + sceneSum;
-    get_random_str(buff, 32, IXML_UID_VALID_CHARS, seed);
+    get_random_str(buff, 32, ixmlUIDValidChars, seed);
     this->_file_uid->SetValue(buff);
 }
 
@@ -494,7 +494,7 @@ void IXML::_assert_valid_ubits(const char* bits)
     {
         for (uint8_t j(0); j < 16; ++j)
         {
-            if (bits[i] == UBITS_VALID_CHARS[j])
+            if (bits[i] == TimecodeBase::ubitsValidChars[j])
             {
                 goto skip;
             }
@@ -870,7 +870,7 @@ void IXML::set_family_uid()
     const char* sceneName = this->scene->GetText();
     while (sceneName[i] != '\0') sceneSum += static_cast<uint16_t>(sceneName[i++]);
     unsigned int seed = (get_frames() / 2) - 1085976 + sceneSum;
-    get_random_str(buff, 32, IXML_UID_VALID_CHARS, seed);
+    get_random_str(buff, 32, ixmlUIDValidChars, seed);
     this->file_set._family_uid->SetValue(buff);
 }
 
@@ -1529,7 +1529,7 @@ size_t IXML::get(uint8_t* buff)
     to account for bytes potentially added
     to meet even byte boundary */
 
-    memcpy(buff + index, XML_ENCODING_STR, 40);
+    memcpy(buff + index, xmlEncodingStr, 40);
     index += 40;
 
     memcpy(buff + index, cstr, xmlLength);

@@ -166,6 +166,7 @@ ADC I/O: I/O */
 /* Pin selection macros for GPIO config */
 
 /* Common pins */
+
 #define PCM4220_GPIO_OUTPUT_PINS    ((1ULL << PCM422X_PCMEN) \
         | (1ULL << PCM422X_HPFDR)   \
         | (1ULL << PCM422X_HPFDL)   \

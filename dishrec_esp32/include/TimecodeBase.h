@@ -14,28 +14,28 @@
 #include "ErrorEnums.h"
 #include "WavHeader.h"
 
-#define FRAMERATE_2398              "24000/1001"
-#define FRAMERATE_24                "24/1"
-#define FRAMERATE_25                "25/1"
-#define FRAMERATE_2997              "30000/1001"
-#define FRAMERATE_30                "30/1"
-
-#define FRAMERATE_NUM_2398          23.98
-#define FRAMERATE_NUM_24            24
-#define FRAMERATE_NUM_25            25
-#define FRAMERATE_NUM_2997          29.97
-#define FRAMERATE_NUM_30            30
-
-#define OVERCRANK_MULTIPLIER        1.001f
-
-#define OVERCRANK_48000             48048
-#define OVERCRANK_96000             96096
-#define OVERCRANK_192000            192192
-
-#define UBITS_VALID_CHARS           "0123456789abcdef"
-
 namespace TimecodeBase
 {
+
+constexpr const char* framerate2398 = "24000/1001";
+constexpr const char* framerate24 = "24/1";
+constexpr const char* framerate25 = "25/1";
+constexpr const char* framerate2997 = "30000/1001";
+constexpr const char* framerate30 = "30/1";
+
+constexpr float framerateNum2398 = 23.98;
+constexpr int framerateNum24 = 24;
+constexpr int framerateNum25 = 25;
+constexpr float framerateNum2997 = 29.97;
+constexpr int framerateNum30 = 30;
+
+constexpr double overcrankMultiplier = 1.001;
+
+constexpr int overcrank48000 = 48048;
+constexpr int overcrank96000 = 96096;
+constexpr int overcrank192000 = 192192;
+
+constexpr const char* ubitsValidChars = "0123456789abcdef";
 
 class Timestamp;
 class Base;

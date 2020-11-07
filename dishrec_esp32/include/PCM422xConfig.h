@@ -5,7 +5,7 @@
 #include "PCM422xPins.h"
 #include "ErrorEnums.h"
 
-// Class to interface ESP32 with PCM422X
+/* Classes to interface ESP32 with PCM4220 and PCM4222 */
 
 enum pcm422x_channel
 {

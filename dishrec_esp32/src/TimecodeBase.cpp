@@ -18,11 +18,11 @@ const char* TimecodeBase::framerate_str(int fps)
     switch (fps)
     {
         case (24):
-            return FRAMERATE_24;
+            return framerate24;
         case (25):
-            return FRAMERATE_25;
+            return framerate25;
         case (30):
-            return FRAMERATE_30;
+            return framerate30;
         default:
             throw INVALID_FRAMERATE;
     }
@@ -30,18 +30,18 @@ const char* TimecodeBase::framerate_str(int fps)
 
 const char* TimecodeBase::framerate_str(double fps)
 {
-    if ((fps == 23.98) || (fps == 23.976)) return FRAMERATE_2398;
-    else if (fps == 29.97) return FRAMERATE_2997;
+    if ((fps == 23.98) || (fps == 23.976)) return framerate2398;
+    else if (fps == 29.97) return framerate2997;
     else throw INVALID_FRAMERATE;
 }
 
 double TimecodeBase::framerate_num(const char* framerateStr)
 {
-    if (!(strcmp(framerateStr, FRAMERATE_2398))) return FRAMERATE_NUM_2398;
-    else if (!(strcmp(framerateStr, FRAMERATE_24))) return FRAMERATE_NUM_24;
-    else if (!(strcmp(framerateStr, FRAMERATE_25))) return FRAMERATE_NUM_25;
-    else if (!(strcmp(framerateStr, FRAMERATE_2997))) return FRAMERATE_NUM_2997;
-    else if (!(strcmp(framerateStr, FRAMERATE_30))) return FRAMERATE_NUM_30;
+    if (!(strcmp(framerateStr, framerate2398))) return framerateNum2398;
+    else if (!(strcmp(framerateStr, framerate24))) return framerateNum24;
+    else if (!(strcmp(framerateStr, framerate25))) return framerateNum25;
+    else if (!(strcmp(framerateStr, framerate2997))) return framerateNum2997;
+    else if (!(strcmp(framerateStr, framerate30))) return framerateNum30;
     else throw INVALID_FRAMERATE;
 }
 
@@ -117,13 +117,13 @@ uint32_t TimecodeBase::get_overcrank_rate(uint32_t samplerate)
     switch (samplerate)
     {
         case (48000):
-            return OVERCRANK_48000;
+            return overcrank48000;
         case (96000):
-            return OVERCRANK_96000;
+            return overcrank96000;
         case (192000):
-            return OVERCRANK_192000;
+            return overcrank192000;
         default:
-            return std::round(samplerate * OVERCRANK_MULTIPLIER);
+            return std::round(samplerate * overcrankMultiplier);
     }
 }
 
@@ -133,11 +133,11 @@ uint32_t TimecodeBase::get_undercrank_rate(uint32_t samplerate)
     Explicitly calls std::floor to ensure truncation */
     switch (samplerate)
     {
-        case (OVERCRANK_48000):
+        case (overcrank48000):
             return 48000;
-        case (OVERCRANK_96000):
+        case (overcrank96000):
             return 96000;
-        case (OVERCRANK_192000):
+        case (overcrank192000):
             return 192000;
         default:
             return std::floor((samplerate * 1000) / 1001);
@@ -157,15 +157,15 @@ bool TimecodeBase::is_overcrank_rate(uint32_t samplerate)
 
 const char* TimecodeBase::get_overcrank_framerate(const char* framerateStr)
 {
-    if (!std::strcmp(framerateStr, FRAMERATE_2398)) return FRAMERATE_24;
-    else if (!std::strcmp(framerateStr, FRAMERATE_2997)) return FRAMERATE_30;
+    if (!std::strcmp(framerateStr, framerate2398)) return framerate24;
+    else if (!std::strcmp(framerateStr, framerate2997)) return framerate30;
     else throw INVALID_FRAMERATE;
 }
 
 const char* TimecodeBase::get_undercrank_framerate(const char* framerateStr)
 {
-    if (!std::strcmp(framerateStr, FRAMERATE_24)) return FRAMERATE_2398;
-    else if (!std::strcmp(framerateStr, FRAMERATE_30)) return FRAMERATE_2997;
+    if (!std::strcmp(framerateStr, framerate24)) return framerate2398;
+    else if (!std::strcmp(framerateStr, framerate30)) return framerate2997;
     else throw INVALID_FRAMERATE;
 }
 
@@ -283,12 +283,12 @@ void Base::set_framerate(double fps)
 {
     if ((fps == 23.98) || (fps == 23.976))
     {
-        strncpy(this->_framerate, FRAMERATE_2398, 11);
+        strncpy(this->_framerate, framerate2398, 11);
         this->_divisors[3] = 24;
     }
     else if (fps == 29.97)
     {
-        strncpy(this->_framerate, FRAMERATE_2997, 11);
+        strncpy(this->_framerate, framerate2997, 11);
         this->_divisors[3] = 30;
     }
     else
@@ -307,15 +307,15 @@ void Base::set_framerate(int fps)
     switch (fps)
     {
         case (24):
-            strncpy(this->_framerate, FRAMERATE_24, 5);
+            strncpy(this->_framerate, framerate24, 5);
             this->_divisors[3] = 24;
             break;
         case (25):
-            strncpy(this->_framerate, FRAMERATE_25, 5);
+            strncpy(this->_framerate, framerate25, 5);
             this->_divisors[3] = 25;
             break;
         case (30):
-            strncpy(this->_framerate, FRAMERATE_30, 5);
+            strncpy(this->_framerate, framerate30, 5);
             this->_divisors[3] = 30;
             break;
         default:

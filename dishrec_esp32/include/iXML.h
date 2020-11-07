@@ -12,23 +12,18 @@
 #include "ErrorEnums.h"
 #include "AudioUtils.h"
 
-#define IXML_VERSION_MAJOR          2
-#define IXML_VERSION_MINOR          10
-
-#ifndef MAX_TRACK_STR_LENGTH
-#define MAX_TRACK_STR_LENGTH        100
-#endif
-
-#ifndef XML_ENCODING_STR
-#define XML_ENCODING_STR            "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-#endif
-
-#define IXML_UID_VALID_CHARS        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
 using namespace tinyxml2;
 
 namespace iXML
 {
+
+// Supported IXML version
+constexpr uint16_t
+    supportedIXMLVersionMajor = 2,
+    supportedIXMLVersionMinor = 10;
+
+// Buffer size for track names
+constexpr int maxTrackStrLength = 100;
 
 class Base;
 class TakeType;
@@ -147,7 +142,7 @@ class Track : public Base
 protected:
     bool _active;
     uint16_t _index, _interleaveIndex;
-    char _name[MAX_TRACK_STR_LENGTH], _function[MAX_TRACK_STR_LENGTH];
+    char _name[maxTrackStrLength], _function[maxTrackStrLength];
 public:
     Track(XMLDocument* xmldoc);
     void set_channel_index(uint16_t channelIndex);
@@ -256,6 +251,9 @@ public:
 class IXML : virtual public TimecodeBase::Clock
 {
 public:
+    static constexpr const char* xmlEncodingStr = "\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    static constexpr const char* ixmlUIDValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
     XMLDocument ixml;
     XMLNode* root;
     XMLElement

@@ -1,6 +1,8 @@
 #ifndef ERRORENUMS_H
 #define ERRORENUMS_H
 
+/* Enums that should be replaced with std::exceptions */
+
 enum timecode_err
 {
     INVALID_FRAMERATE = 10,
