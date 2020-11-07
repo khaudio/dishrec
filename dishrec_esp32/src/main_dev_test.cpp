@@ -16,7 +16,7 @@
 #include "AudioDataPad.h"
 #include "BWFHeader.h"
 #include "Timer.h"
-#include "AudioDatatypes.h"
+#include "int_audio.h"
 
 #include <bitset>
 
@@ -158,7 +158,7 @@ int main()
     const size_t length(48);
     std::vector<int16_t> samples;
     std::vector<float> floatVals;
-    std::vector<int> scaled24;
+    std::vector<int_audio> scaled24;
 
     for (size_t i(0); i < length; ++i)
     {
@@ -171,8 +171,7 @@ int main()
     float_to_int<float, int16_t>(&samples, &floatVals);
     int_to_float<int16_t, float>(&floatVals, &samples);
 
-    float_to_int<float, int>(&scaled24, &floatVals, -8388608, 8388607);
-    // float_to_int<float, int_audio>(&scaled24, &floatVals);
+    float_to_int<float, int_audio>(&scaled24, &floatVals);
 
     #ifdef EBUR128_H_
     std::cout << "Adding frames to loudness analyzer" << std::endl;
@@ -224,12 +223,12 @@ int main()
     Packer packer;
     packer.set_bit_depth(24);
 
-    std::vector<int> padded;
+    std::vector<int_audio> padded;
     size_t numBytes = length * packer.get_usable_width();
     uint8_t packedInt[numBytes];
     std::memset(packedInt, 0, numBytes);
 
-    std::vector<int> p;
+    std::vector<int_audio> p;
     p.reserve(length);
     for (size_t i(0); i < length; ++i) p.emplace_back(0);
 
@@ -238,8 +237,8 @@ int main()
         padded.emplace_back(scaled24[i]);
     }
 
-    packer.pack<int>(packedInt, &padded);
-    packer.unpack<int>(&p, packedInt);
+    packer.pack<int_audio>(packedInt, &padded);
+    packer.unpack<int_audio>(&p, packedInt);
 
     int paddy(256);
     int_audio packed = paddy;
@@ -252,11 +251,14 @@ int main()
     constexpr int_audio zero(0);
     std::cout << "zero: " << zero << std::endl;
     
-    int_audio num(20);
-    double d(1.2);
+    int_audio num(20111);
+    double d(1.216513);
     double e = (num * d);
     std::cout << "num: " << num << std::endl;
     std::cout << "e: " << e << std::endl;
+
+    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
 
     visualize(padded);
     visualize(scaled24);

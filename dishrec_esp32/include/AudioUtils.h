@@ -8,7 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <cstring>
-#include "AudioDatatypes.h"
+#include "int_audio.h"
 
 #include <iomanip>
 
@@ -39,32 +39,38 @@ constexpr T get_zero()
         ) ? pow(2, (sizeof(T) * 8) - 1) - 1 : 0;
 }
 
-// template <>
-// constexpr int_audio get_zero()
-// {
-//     return int_audio();
-// }
-
 template <typename T>
 void clip_float(T* value);
 
 template <typename I, typename F>
-F int_to_float(I value);
+void int_to_float(F* converted, I* value);
+
+template <>
+void int_to_float(float* converted, int_audio* value);
+
+template <>
+void int_to_float(double* converted, int_audio* value);
+
+template <>
+void int_to_float(long double* converted, int_audio* value);
 
 template <typename F, typename I>
-I float_to_int(F value);
+void float_to_int(I* converted, F* value);
 
-template <typename F, typename I>
-I float_to_int(F value, I minimum, I maximum);
+template <>
+void float_to_int(int_audio* converted, float* value);
+
+template <>
+void float_to_int(int_audio* converted, double* value);
+
+template <>
+void float_to_int(int_audio* converted, long double* value);
 
 template <typename I, typename F>
 void int_to_float(std::vector<F>* converted, std::vector<I>* values);
 
 template <typename F, typename I>
 void float_to_int(std::vector<I>* converted, std::vector<F>* values);
-
-template <typename F, typename I>
-void float_to_int(std::vector<I>* converted, std::vector<F>* values, I minimum, I maximum);
 
 template <typename T>
 void pack_data(uint8_t* data, T* value, int width);

@@ -40,7 +40,8 @@ template <typename T>
 template <typename I>
 inline void RMS<T>::set(I sample)
 {
-    T converted = int_to_float<I, T>(sample);
+    T converted;
+    int_to_float<I, T>(&converted, &sample);
     set(converted);
 }
 

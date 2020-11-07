@@ -1,5 +1,5 @@
-#ifndef AUDIODATATYPES_H
-#define AUDIODATATYPES_H
+#ifndef INTAUDIO_H
+#define INTAUDIO_H
 
 #include <cstdint>
 #include <cstdlib>
@@ -30,7 +30,7 @@ union int_audio
     }
 
     // Copy constructor hack to allow optional constexpr constructor
-    constexpr int_audio(int value, int init = 0) :
+    constexpr int_audio(int value, int unused = 0) :
     int_audio(int_audio(), value)
     {
     }
@@ -59,22 +59,22 @@ union int_audio
 
     inline operator int8_t() const
     {
-        return static_cast<int8_t>(this->data8);
+        return static_cast<int8_t>(this->data);
     }
 
     inline operator uint8_t() const
     {
-        return static_cast<uint8_t>(this->data8);
+        return static_cast<uint8_t>(this->data);
     }
 
     inline operator int16_t() const
     {
-        return static_cast<int16_t>(this->data16);
+        return static_cast<int16_t>(this->data);
     }
 
     inline operator uint16_t() const
     {
-        return static_cast<uint16_t>(this->data16);
+        return static_cast<uint16_t>(this->data);
     }
 
     inline operator int32_t() const
@@ -120,318 +120,318 @@ union int_audio
 
     inline int_audio operator+(const int_audio& other) const
     {
-        return int_audio(this->data + other.data);
+        return this->data + other.data;
     }
 
     inline int_audio operator+(const int8_t& other) const
     {
-        return int_audio(this->data8 + other);
+        return this->data8 + other;
     }
 
     inline int_audio operator+(const uint8_t& other) const
     {
-        return int_audio(this->data8 + other);
+        return this->data8 + other;
     }
 
     inline int_audio operator+(const int16_t& other) const
     {
-        return int_audio(this->data16 + other);
+        return this->data16 + other;
     }
 
     inline int_audio operator+(const uint16_t& other) const
     {
-        return int_audio(this->data16 + other);
+        return this->data16 + other;
     }
 
     inline int_audio operator+(const int32_t& other) const
     {
-        return int_audio(this->data + other);
+        return this->data + other;
     }
 
     inline int_audio operator+(const uint32_t& other) const
     {
-        return int_audio(this->data + other);
+        return this->data + other;
     }
 
     inline int_audio operator+(const int64_t& other) const
     {
-        return int_audio(static_cast<int64_t>(this->data) + other);
+        return static_cast<int64_t>(this->data) + other;
     }
 
     inline int_audio operator+(const uint64_t& other) const
     {
-        return int_audio(static_cast<uint64_t>(this->data) + other);
+        return static_cast<uint64_t>(this->data) + other;
     }
 
     inline int_audio operator+(const float& other) const
     {
         /* Cast to float and truncate result */
-        return int_audio(static_cast<float>(this->data) + other);
+        return static_cast<float>(this->data) + other;
     }
 
     inline int_audio operator+(const double& other) const
     {
         /* Cast to double and truncate result */
-        return int_audio(static_cast<double>(this->data) + other);
+        return static_cast<double>(this->data) + other;
     }
         inline int_audio operator+(const long double& other) const
     {
         /* Cast to long double and truncate result */
-        return int_audio(static_cast<long double>(this->data) + other);
+        return static_cast<long double>(this->data) + other;
     }
 
     inline int_audio operator-(const int_audio& other) const
     {
-        return int_audio(this->data - other.data);
+        return this->data - other.data;
     }
 
     inline int_audio operator-(const int8_t& other) const
     {
-        return int_audio(this->data8 - other);
+        return this->data8 - other;
     }
 
     inline int_audio operator-(const uint8_t& other) const
     {
-        return int_audio(this->data8 - other);
+        return this->data8 - other;
     }
 
     inline int_audio operator-(const int16_t& other) const
     {
-        return int_audio(this->data16 - other);
+        return this->data16 - other;
     }
 
     inline int_audio operator-(const uint16_t& other) const
     {
-        return int_audio(this->data16 - other);
+        return this->data16 - other;
     }
 
     inline int_audio operator-(const int32_t& other) const
     {
-        return int_audio(this->data - other);
+        return this->data - other;
     }
 
     inline int_audio operator-(const uint32_t& other) const
     {
-        return int_audio(this->data - other);
+        return this->data - other;
     }
 
     inline int_audio operator-(const int64_t& other) const
     {
-        return int_audio(static_cast<int64_t>(this->data) - other);
+        return static_cast<int64_t>(this->data) - other;
     }
 
     inline int_audio operator-(const uint64_t& other) const
     {
-        return int_audio(static_cast<uint64_t>(this->data) - other);
+        return static_cast<uint64_t>(this->data) - other;
     }
 
     inline int_audio operator-(const float& other) const
     {
         /* Cast to float and truncate result */
-        return int_audio(static_cast<float>(this->data) - other);
+        return static_cast<float>(this->data) - other;
     }
 
     inline int_audio operator-(const double& other) const
     {
         /* Cast to double and truncate result */
-        return int_audio(static_cast<double>(this->data) - other);
+        return static_cast<double>(this->data) - other;
     }
 
     inline int_audio operator-(const long double& other) const
     {
         /* Cast to long double and truncate result */
-        return int_audio(static_cast<long double>(this->data) - other);
+        return static_cast<long double>(this->data) - other;
     }
 
     inline int_audio operator*(const int_audio& other) const
     {
-        return int_audio(this->data * other.data);
+        return this->data * other.data;
     }
 
     inline int_audio operator*(const int8_t& other) const
     {
-        return int_audio(this->data8 * other);
+        return this->data * other;
     }
 
     inline int_audio operator*(const uint8_t& other) const
     {
-        return int_audio(this->data8 * other);
+        return this->data * other;
     }
 
     inline int_audio operator*(const int16_t& other) const
     {
-        return int_audio(this->data16 * other);
+        return this->data * other;
     }
 
     inline int_audio operator*(const uint16_t& other) const
     {
-        return int_audio(this->data16 * other);
+        return this->data * other;
     }
 
     inline int_audio operator*(const int32_t& other) const
     {
-        return int_audio(this->data * other);
+        return this->data * other;
     }
 
     inline int_audio operator*(const uint32_t& other) const
     {
-        return int_audio(this->data * other);
+        return this->data * other;
     }
 
     inline int_audio operator*(const int64_t& other) const
     {
-        return int_audio(static_cast<int64_t>(this->data) * other);
+        return static_cast<int64_t>(this->data) * other;
     }
 
     inline int_audio operator*(const uint64_t& other) const
     {
-        return int_audio(static_cast<uint64_t>(this->data) * other);
+        return static_cast<uint64_t>(this->data) * other;
     }
 
     inline int_audio operator*(const float& value) const
     {
         /* Cast to float and truncate result */
-        return int_audio(static_cast<float>(this->data) * value);
+        return static_cast<float>(this->data) * value;
     }
 
     inline int_audio operator*(const double& value) const
     {
         /* Cast to double and truncate result */
-        return int_audio(static_cast<double>(this->data) * value);
+        return static_cast<double>(this->data) * value;
     }
 
     inline int_audio operator*(const long double& value) const
     {
         /* Cast to long double and truncate result */
-        return int_audio(static_cast<long double>(this->data) * value);
+        return static_cast<long double>(this->data) * value;
     }
 
     inline int_audio operator/(const int_audio& other) const
     {
-        return int_audio(this->data / other.data);
+        return this->data / other.data;
     }
 
     inline int_audio operator/(const int8_t& other) const
     {
-        return int_audio(this->data8 / other);
+        return this->data / other;
     }
 
     inline int_audio operator/(const uint8_t& other) const
     {
-        return int_audio(this->data8 / other);
+        return this->data / other;
     }
 
     inline int_audio operator/(const int16_t& other) const
     {
-        return int_audio(this->data16 / other);
+        return this->data / other;
     }
 
     inline int_audio operator/(const uint16_t& other) const
     {
-        return int_audio(this->data16 / other);
+        return this->data / other;
     }
 
     inline int_audio operator/(const int32_t& other) const
     {
-        return int_audio(this->data / other);
+        return this->data / other;
     }
 
     inline int_audio operator/(const uint32_t& other) const
     {
-        return int_audio(this->data / other);
+        return this->data / other;
     }
 
     inline int_audio operator/(const int64_t& other) const
     {
-        return int_audio(static_cast<int64_t>(this->data) / other);
+        return static_cast<int64_t>(this->data) / other;
     }
 
     inline int_audio operator/(const uint64_t& other) const
     {
-        return int_audio(static_cast<uint64_t>(this->data) / other);
+        return static_cast<uint64_t>(this->data) / other;
     }
 
     inline int_audio operator/(const float& value) const
     {
         /* Cast to float and truncate result */
-        return int_audio(static_cast<float>(this->data) / value);
+        return static_cast<float>(this->data) / value;
     }
 
     inline int_audio operator/(const double& value) const
     {
         /* Cast to double and truncate result */
-        return int_audio(static_cast<double>(this->data) / value);
+        return static_cast<double>(this->data) / value;
     }
 
     inline int_audio operator/(const long double& value) const
     {
         /* Cast to long double and truncate result */
-        return int_audio(static_cast<long double>(this->data) / value);
+        return static_cast<long double>(this->data) / value;
     }
 
     inline int_audio operator%(const int_audio& value) const
     {
-        return int_audio(this->data % value.data);
+        return this->data % value.data;
     }
 
     inline int_audio operator%(const int8_t& value) const
     {
-        return int_audio(this->data8 % value);
+        return this->data % value;
     }
 
     inline int_audio operator%(const uint8_t& value) const
     {
-        return int_audio(this->data8 % value);
+        return this->data % value;
     }
 
     inline int_audio operator%(const int16_t& value) const
     {
-        return int_audio(this->data16 % value);
+        return this->data % value;
     }
 
     inline int_audio operator%(const uint16_t& value) const
     {
-        return int_audio(this->data16 % value);
+        return this->data % value;
     }
 
     inline int_audio operator%(const int32_t& value) const
     {
-        return int_audio(this->data % value);
+        return this->data % value;
     }
 
     inline int_audio operator%(const uint32_t& value) const
     {
-        return int_audio(this->data % value);
+        return this->data % value;
     }
 
     inline int_audio operator%(const int64_t& value) const
     {
-        return int_audio(static_cast<int64_t>(this->data) % value);
+        return static_cast<int64_t>(this->data) % value;
     }
 
     inline int_audio operator%(const uint64_t& value) const
     {
-        return int_audio(static_cast<uint64_t>(this->data) % value);
+        return static_cast<uint64_t>(this->data) % value;
     }
 
     inline int_audio operator&(const int_audio& value) const
     {
-        return int_audio(this->data & value.data);
+        return this->data & value.data;
     }
 
     inline int_audio operator|(const int_audio& value) const
     {
-        return int_audio(this->data | value.data);
+        return this->data | value.data;
     }
 
     inline int_audio operator^(const int_audio& value) const
     {
-        return int_audio(this->data ^ value.data);
+        return this->data ^ value.data;
     }
 
     inline int_audio operator~() const
     {
-        return int_audio(~(this->data));
+        return ~(this->data);
     }
 
     inline int_audio operator<<(const int num) const
@@ -466,7 +466,19 @@ union int_audio
         return *this;
     }
 
+    inline int_audio& operator*=(const float& value)
+    {
+        *this = (*this * value);
+        return *this;
+    }
+
     inline int_audio& operator*=(const double& value)
+    {
+        *this = (*this * value);
+        return *this;
+    }
+
+    inline int_audio& operator*=(const long double& value)
     {
         *this = (*this * value);
         return *this;
@@ -478,7 +490,19 @@ union int_audio
         return *this;
     }
 
+    inline int_audio& operator/=(const float& value)
+    {
+        *this = (*this / value);
+        return *this;
+    }
+
     inline int_audio& operator/=(const double& value)
+    {
+        *this = (*this / value);
+        return *this;
+    }
+
+    inline int_audio& operator/=(const long double& value)
     {
         *this = (*this / value);
         return *this;
@@ -558,8 +582,7 @@ union int_audio
 
     inline int_audio operator++(int)
     {
-        int_audio state;
-        state.data = this->data;
+        int_audio state(*this);
         ++this->data;
         return state;
     }
@@ -572,8 +595,7 @@ union int_audio
 
     inline int_audio operator--(int)
     {
-        int_audio state;
-        state.data = this->data;
+        int_audio state(*this);
         --this->data;
         return state;
     }
@@ -600,10 +622,30 @@ inline std::ostream& operator<<(std::ostream& stream, const int_audio& value)
     return stream;
 }
 
-// inline std::istream& operator>>(const int_audio& value, std::istream& stream)
-// {
-//     value.data >> stream;
-//     return stream;
-// }
+inline std::istream& operator>>(const int_audio& value, std::istream& stream)
+{
+    value.data >> stream;
+    return stream;
+}
+
+template <>
+class std::numeric_limits<int_audio>
+{
+public:
+    static constexpr int_audio max()
+    {
+        return int_audio(8388607);
+    };
+
+    static constexpr int_audio min()
+    {
+        return int_audio(-8388608);
+    };
+
+    static constexpr int_audio is_integer()
+    {
+        return true;
+    };
+};
 
 #endif

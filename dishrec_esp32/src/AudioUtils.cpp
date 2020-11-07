@@ -11,77 +11,158 @@ inline void clip_float(T* value)
 }
 
 template <typename I, typename F>
-inline F int_to_float(I value)
-{
-    F converted;
-    if (std::is_signed<I>())
-    {
-        converted = ((value >= 0)
-                ? (static_cast<F>(value) / std::numeric_limits<I>::max())
-                : -(static_cast<F>(value) / std::numeric_limits<I>::min())
-            );
-    }
-    else
-    {
-        I zero = static_cast<F>(get_zero<I>());
-        converted = ((value >= zero)
-                ? ((static_cast<F>(value) / zero) - zero)
-                : ((static_cast<F>(value) - zero) / zero)
-            );
-    }
-    clip_float(&converted);
-    return converted;
-}
-
-template <typename F, typename I>
-inline I float_to_int(F value)
+inline void int_to_float(F* converted, I* value)
 {
     constexpr I minimum(std::numeric_limits<I>::min());
     constexpr I maximum(std::numeric_limits<I>::max());
-    if (std::is_signed<I>())
+    if (*value == maximum) *converted = 1.0;
+    else if (*value == minimum) *converted = -1.0;
+    else if (std::is_signed<I>())
     {
-        if (value == F(1.0)) return maximum;
-        else if (value == F(-1.0)) return minimum;
-        else return std::round(value * (
-                value >= 0
-                ? maximum
-                : -static_cast<F>(minimum)
-            ));
+        *converted = ((*value >= I(0))
+                ? (static_cast<F>(*value) / static_cast<F>(maximum))
+                : -(static_cast<F>(*value) / static_cast<F>(minimum))
+            );
     }
     else
     {
-        if (I(value) == I(1)) return maximum;
-        else if (value == -1) return minimum;
-        else
-        {
-            constexpr I zero = get_zero<I>();
-            return std::round(value * ((value >= 0) ? (zero - 1) : zero) + zero);
-        }
+        constexpr I zero = get_zero<I>();
+        *converted = static_cast<F>((*value >= zero)
+                ? ((*value / zero) - zero)
+                : ((*value - zero) / zero)
+            );
     }
+    clip_float(converted);
+}
+
+template <>
+inline void int_to_float(float* converted, int_audio* value)
+{
+    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
+    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    if (*value == maximum) *converted = 1.0;
+    else if (*value == minimum) *converted = -1.0;
+    else
+    {
+        *converted = ((*value >= int_audio(0))
+                ? (static_cast<float>(*value) / static_cast<float>(maximum))
+                : -(static_cast<float>(*value) / static_cast<float>(minimum))
+            );
+    }
+    clip_float(converted);
+}
+
+template <>
+inline void int_to_float(double* converted, int_audio* value)
+{
+    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
+    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    if (*value == maximum) *converted = 1.0;
+    else if (*value == minimum) *converted = -1.0;
+    else
+    {
+        *converted = ((*value >= int_audio(0))
+                ? (static_cast<double>(*value) / static_cast<double>(maximum))
+                : -(static_cast<double>(*value) / static_cast<double>(minimum))
+            );
+    }
+    clip_float(converted);
+}
+
+template <>
+inline void int_to_float(long double* converted, int_audio* value)
+{
+    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
+    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    if (*value == maximum) *converted = 1.0;
+    else if (*value == minimum) *converted = -1.0;
+    else
+    {
+        *converted = ((*value >= int_audio(0))
+                ? (static_cast<long double>(*value) / static_cast<long double>(maximum))
+                : -(static_cast<long double>(*value) / static_cast<long double>(minimum))
+            );
+    }
+    clip_float(converted);
 }
 
 template <typename F, typename I>
-inline I float_to_int(F value, I minimum, I maximum)
+inline void float_to_int(I* converted, F* value)
 {
-    if (std::is_signed<I>())
+    constexpr I minimum(std::numeric_limits<I>::min());
+    constexpr I maximum(std::numeric_limits<I>::max());
+    if (*value == F(1.0)) *converted = maximum;
+    else if (*value == F(-1.0)) *converted = minimum;
+    else if (std::is_signed<I>())
     {
-        if (value == F(1.0)) return maximum;
-        else if (value == F(-1.0)) return minimum;
-        else return std::round(value * (
-                value >= 0
-                ? maximum
-                : -static_cast<F>(minimum)
-            ));
+        *converted = std::round(*value * (
+            *value >= F(0)
+            ? static_cast<F>(maximum)
+            : -static_cast<F>(minimum)
+        ));
     }
     else
     {
-        if (I(value) == I(1)) return maximum;
-        else if (value == -1) return minimum;
-        else
-        {
-            constexpr I zero = get_zero<I>();
-            return std::round(value * ((value >= 0) ? (zero - 1) : zero) + zero);
-        }
+        constexpr I zero = get_zero<I>();
+        *converted = std::round((
+                static_cast<F>(*value)
+                * static_cast<F>(((*value >= 0) ? (zero - 1) : zero))
+            ) + static_cast<F>(zero));
+    }
+}
+
+template <>
+inline void float_to_int(int_audio* converted, float* value)
+{
+    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
+    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    if (*value == float(1.0)) *converted = maximum;
+    else if (*value == float(-1.0)) *converted = minimum;
+    else
+    {
+        *converted = std::round(*value * (
+            *value >= float(0)
+            ? static_cast<float>(maximum)
+            : -static_cast<float>(minimum)
+        ));
+    }
+}
+
+
+template <>
+inline void float_to_int(int_audio* converted, double* value)
+{
+    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
+    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    if (*value == double(1.0)) *converted = maximum;
+    else if (*value == double(-1.0)) *converted = minimum;
+    else
+    {
+        *converted = std::round(*value * (
+            *value >= double(0)
+            ? static_cast<double>(maximum)
+            : -static_cast<double>(minimum)
+        ));
+    }
+}
+
+template <>
+inline void float_to_int(int_audio* converted, long double* value)
+{
+    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
+    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr long double positiveOne(1.0);
+    constexpr long double negativeOne(-1.0);
+    constexpr long double zero(0);
+    if (*value == positiveOne) *converted = maximum;
+    else if (*value == negativeOne) *converted = minimum;
+    else
+    {
+        *converted = std::round(*value * (
+            *value >= zero
+            ? static_cast<long double>(maximum)
+            : -static_cast<long double>(minimum)
+        ));
     }
 }
 
@@ -91,7 +172,7 @@ inline void int_to_float(std::vector<F>* converted, std::vector<I>* values)
     size_t length = converted->size();
     for (size_t i(0); i < length; ++i)
     {
-        converted->at(i) = int_to_float<I, F>(values->at(i));
+        int_to_float<I, F>(&converted->at(i), &values->at(i));
     }
 }
 
@@ -101,17 +182,7 @@ inline void float_to_int(std::vector<I>* converted, std::vector<F>* values)
     size_t length = converted->size();
     for (size_t i(0); i < length; ++i)
     {
-        converted->at(i) = float_to_int<F, I>(values->at(i));
-    }
-}
-
-template <typename F, typename I>
-inline void float_to_int(std::vector<I>* converted, std::vector<F>* values, I minimum, I maximum)
-{
-    size_t length = converted->size();
-    for (size_t i(0); i < length; ++i)
-    {
-        converted->at(i) = float_to_int<F, I>(values->at(i), minimum, maximum);
+        float_to_int<F, I>(&converted->at(i), &values->at(i));
     }
 }
 
@@ -371,95 +442,62 @@ template void clip_float(float*);
 template void clip_float(double*);
 template void clip_float(long double*);
 
-template float int_to_float(int8_t);
-template float int_to_float(uint8_t);
-template float int_to_float(int16_t);
-template float int_to_float(uint16_t);
-template float int_to_float(int32_t);
-template float int_to_float(uint32_t);
-template float int_to_float(int64_t);
-template float int_to_float(uint64_t);
-// template float int_to_float(int_audio);
+template void int_to_float(float*, int8_t*);
+template void int_to_float(float*, uint8_t*);
+template void int_to_float(float*, int16_t*);
+template void int_to_float(float*, uint16_t*);
+template void int_to_float(float*, int32_t*);
+template void int_to_float(float*, uint32_t*);
+template void int_to_float(float*, int64_t*);
+template void int_to_float(float*, uint64_t*);
 
-template double int_to_float(int8_t);
-template double int_to_float(uint8_t);
-template double int_to_float(int16_t);
-template double int_to_float(uint16_t);
-template double int_to_float(int32_t);
-template double int_to_float(uint32_t);
-template double int_to_float(int64_t);
-template double int_to_float(uint64_t);
-// template double int_to_float(int_audio);
+template void int_to_float(double*, int8_t*);
+template void int_to_float(double*, uint8_t*);
+template void int_to_float(double*, int16_t*);
+template void int_to_float(double*, uint16_t*);
+template void int_to_float(double*, int32_t*);
+template void int_to_float(double*, uint32_t*);
+template void int_to_float(double*, int64_t*);
+template void int_to_float(double*, uint64_t*);
 
-template long double int_to_float(int8_t);
-template long double int_to_float(uint8_t);
-template long double int_to_float(int16_t);
-template long double int_to_float(uint16_t);
-template long double int_to_float(int32_t);
-template long double int_to_float(uint32_t);
-template long double int_to_float(int64_t);
-template long double int_to_float(uint64_t);
-// template long double int_to_float(int_audio);
+template void int_to_float(long double*, int8_t*);
+template void int_to_float(long double*, uint8_t*);
+template void int_to_float(long double*, int16_t*);
+template void int_to_float(long double*, uint16_t*);
+template void int_to_float(long double*, int32_t*);
+template void int_to_float(long double*, uint32_t*);
+template void int_to_float(long double*, int64_t*);
+template void int_to_float(long double*, uint64_t*);
 
-template int8_t float_to_int(float);
-template uint8_t float_to_int(float);
-template int16_t float_to_int(float);
-template uint16_t float_to_int(float);
-template int32_t float_to_int(float);
-template uint32_t float_to_int(float);
-template int64_t float_to_int(float);
-template uint64_t float_to_int(float);
-// template int_audio float_to_int(float);
+template void float_to_int(int8_t*, float*);
+template void float_to_int(uint8_t*, float*);
+template void float_to_int(int16_t*, float*);
+template void float_to_int(uint16_t*, float*);
+template void float_to_int(int32_t*, float*);
+template void float_to_int(uint32_t*, float*);
+template void float_to_int(int64_t*, float*);
+template void float_to_int(uint64_t*, float*);
+template void float_to_int(int_audio*, float*);
 
-template int8_t float_to_int(double);
-template uint8_t float_to_int(double);
-template int16_t float_to_int(double);
-template uint16_t float_to_int(double);
-template int32_t float_to_int(double);
-template uint32_t float_to_int(double);
-template int64_t float_to_int(double);
-template uint64_t float_to_int(double);
-// template int_audio float_to_int(double);
+template void float_to_int(int8_t*, double*);
+template void float_to_int(uint8_t*, double*);
+template void float_to_int(int16_t*, double*);
+template void float_to_int(uint16_t*, double*);
+template void float_to_int(int32_t*, double*);
+template void float_to_int(uint32_t*, double*);
+template void float_to_int(int64_t*, double*);
+template void float_to_int(uint64_t*, double*);
+template void float_to_int(int_audio*, double*);
 
-template int8_t float_to_int(long double);
-template uint8_t float_to_int(long double);
-template int16_t float_to_int(long double);
-template uint16_t float_to_int(long double);
-template int32_t float_to_int(long double);
-template uint32_t float_to_int(long double);
-template int64_t float_to_int(long double);
-template uint64_t float_to_int(long double);
-// template int_audio float_to_int(long double);
-
-template int8_t float_to_int(float, int8_t, int8_t);
-template uint8_t float_to_int(float, uint8_t, uint8_t);
-template int16_t float_to_int(float, int16_t, int16_t);
-template uint16_t float_to_int(float, uint16_t, uint16_t);
-template int32_t float_to_int(float, int32_t, int32_t);
-template uint32_t float_to_int(float, uint32_t, uint32_t);
-template int64_t float_to_int(float, int64_t, int64_t);
-template uint64_t float_to_int(float, uint64_t, uint64_t);
-// template int_audio float_to_int(float, int_audio, int_audio);
-
-template int8_t float_to_int(double, int8_t, int8_t);
-template uint8_t float_to_int(double, uint8_t, uint8_t);
-template int16_t float_to_int(double, int16_t, int16_t);
-template uint16_t float_to_int(double, uint16_t, uint16_t);
-template int32_t float_to_int(double, int32_t, int32_t);
-template uint32_t float_to_int(double, uint32_t, uint32_t);
-template int64_t float_to_int(double, int64_t, int64_t);
-template uint64_t float_to_int(double, uint64_t, uint64_t);
-// template int_audio float_to_int(double, int_audio, int_audio);
-
-template int8_t float_to_int(long double, int8_t, int8_t);
-template uint8_t float_to_int(long double, uint8_t, uint8_t);
-template int16_t float_to_int(long double, int16_t, int16_t);
-template uint16_t float_to_int(long double, uint16_t, uint16_t);
-template int32_t float_to_int(long double, int32_t, int32_t);
-template uint32_t float_to_int(long double, uint32_t, uint32_t);
-template int64_t float_to_int(long double, int64_t, int64_t);
-template uint64_t float_to_int(long double, uint64_t, uint64_t);
-// template int_audio float_to_int(long double, int_audio, int_audio);
+template void float_to_int(int8_t*, long double*);
+template void float_to_int(uint8_t*, long double*);
+template void float_to_int(int16_t*, long double*);
+template void float_to_int(uint16_t*, long double*);
+template void float_to_int(int32_t*, long double*);
+template void float_to_int(uint32_t*, long double*);
+template void float_to_int(int64_t*, long double*);
+template void float_to_int(uint64_t*, long double*);
+template void float_to_int(int_audio*, long double*);
 
 template void int_to_float(std::vector<float>*, std::vector<int8_t>*);
 template void int_to_float(std::vector<float>*, std::vector<uint8_t>*);
@@ -469,7 +507,7 @@ template void int_to_float(std::vector<float>*, std::vector<int32_t>*);
 template void int_to_float(std::vector<float>*, std::vector<uint32_t>*);
 template void int_to_float(std::vector<float>*, std::vector<int64_t>*);
 template void int_to_float(std::vector<float>*, std::vector<uint64_t>*);
-// template void int_to_float(std::vector<float>*, std::vector<int_audio>*);
+template void int_to_float(std::vector<float>*, std::vector<int_audio>*);
 
 template void int_to_float(std::vector<double>*, std::vector<int8_t>*);
 template void int_to_float(std::vector<double>*, std::vector<uint8_t>*);
@@ -479,7 +517,7 @@ template void int_to_float(std::vector<double>*, std::vector<int32_t>*);
 template void int_to_float(std::vector<double>*, std::vector<uint32_t>*);
 template void int_to_float(std::vector<double>*, std::vector<int64_t>*);
 template void int_to_float(std::vector<double>*, std::vector<uint64_t>*);
-// template void int_to_float(std::vector<double>*, std::vector<int_audio>*);
+template void int_to_float(std::vector<double>*, std::vector<int_audio>*);
 
 template void int_to_float(std::vector<long double>*, std::vector<int8_t>*);
 template void int_to_float(std::vector<long double>*, std::vector<uint8_t>*);
@@ -489,7 +527,7 @@ template void int_to_float(std::vector<long double>*, std::vector<int32_t>*);
 template void int_to_float(std::vector<long double>*, std::vector<uint32_t>*);
 template void int_to_float(std::vector<long double>*, std::vector<int64_t>*);
 template void int_to_float(std::vector<long double>*, std::vector<uint64_t>*);
-// template void int_to_float(std::vector<long double>*, std::vector<int_audio>*);
+template void int_to_float(std::vector<long double>*, std::vector<int_audio>*);
 
 template void float_to_int(std::vector<int8_t>*, std::vector<float>*);
 template void float_to_int(std::vector<uint8_t>*, std::vector<float>*);
@@ -499,7 +537,7 @@ template void float_to_int(std::vector<int32_t>*, std::vector<float>*);
 template void float_to_int(std::vector<uint32_t>*, std::vector<float>*);
 template void float_to_int(std::vector<int64_t>*, std::vector<float>*);
 template void float_to_int(std::vector<uint64_t>*, std::vector<float>*);
-// template void float_to_int(std::vector<int_audio>*, std::vector<float>*);
+template void float_to_int(std::vector<int_audio>*, std::vector<float>*);
 
 template void float_to_int(std::vector<int8_t>*, std::vector<double>*);
 template void float_to_int(std::vector<uint8_t>*, std::vector<double>*);
@@ -509,7 +547,7 @@ template void float_to_int(std::vector<int32_t>*, std::vector<double>*);
 template void float_to_int(std::vector<uint32_t>*, std::vector<double>*);
 template void float_to_int(std::vector<int64_t>*, std::vector<double>*);
 template void float_to_int(std::vector<uint64_t>*, std::vector<double>*);
-// template void float_to_int(std::vector<int_audio>*, std::vector<double>*);
+template void float_to_int(std::vector<int_audio>*, std::vector<double>*);
 
 template void float_to_int(std::vector<int8_t>*, std::vector<long double>*);
 template void float_to_int(std::vector<uint8_t>*, std::vector<long double>*);
@@ -519,37 +557,7 @@ template void float_to_int(std::vector<int32_t>*, std::vector<long double>*);
 template void float_to_int(std::vector<uint32_t>*, std::vector<long double>*);
 template void float_to_int(std::vector<int64_t>*, std::vector<long double>*);
 template void float_to_int(std::vector<uint64_t>*, std::vector<long double>*);
-// template void float_to_int(std::vector<int_audio>*, std::vector<long double>*);
-
-template void float_to_int(std::vector<int8_t>*, std::vector<float>*, int8_t, int8_t);
-template void float_to_int(std::vector<uint8_t>*, std::vector<float>*, uint8_t, uint8_t);
-template void float_to_int(std::vector<int16_t>*, std::vector<float>*, int16_t, int16_t);
-template void float_to_int(std::vector<uint16_t>*, std::vector<float>*, uint16_t, uint16_t);
-template void float_to_int(std::vector<int32_t>*, std::vector<float>*, int32_t, int32_t);
-template void float_to_int(std::vector<uint32_t>*, std::vector<float>*, uint32_t, uint32_t);
-template void float_to_int(std::vector<int64_t>*, std::vector<float>*, int64_t, int64_t);
-template void float_to_int(std::vector<uint64_t>*, std::vector<float>*, uint64_t, uint64_t);
-// template void float_to_int(std::vector<int_audio>*, std::vector<float>*, int_audio, int_audio);
-
-template void float_to_int(std::vector<int8_t>*, std::vector<double>*, int8_t, int8_t);
-template void float_to_int(std::vector<uint8_t>*, std::vector<double>*, uint8_t, uint8_t);
-template void float_to_int(std::vector<int16_t>*, std::vector<double>*, int16_t, int16_t);
-template void float_to_int(std::vector<uint16_t>*, std::vector<double>*, uint16_t, uint16_t);
-template void float_to_int(std::vector<int32_t>*, std::vector<double>*, int32_t, int32_t);
-template void float_to_int(std::vector<uint32_t>*, std::vector<double>*, uint32_t, uint32_t);
-template void float_to_int(std::vector<int64_t>*, std::vector<double>*, int64_t, int64_t);
-template void float_to_int(std::vector<uint64_t>*, std::vector<double>*, uint64_t, uint64_t);
-// template void float_to_int(std::vector<int_audio>*, std::vector<double>*, int_audio, int_audio);
-
-template void float_to_int(std::vector<int8_t>*, std::vector<long double>*, int8_t, int8_t);
-template void float_to_int(std::vector<uint8_t>*, std::vector<long double>*, uint8_t, uint8_t);
-template void float_to_int(std::vector<int16_t>*, std::vector<long double>*, int16_t, int16_t);
-template void float_to_int(std::vector<uint16_t>*, std::vector<long double>*, uint16_t, uint16_t);
-template void float_to_int(std::vector<int32_t>*, std::vector<long double>*, int32_t, int32_t);
-template void float_to_int(std::vector<uint32_t>*, std::vector<long double>*, uint32_t, uint32_t);
-template void float_to_int(std::vector<int64_t>*, std::vector<long double>*, int64_t, int64_t);
-template void float_to_int(std::vector<uint64_t>*, std::vector<long double>*, uint64_t, uint64_t);
-// template void float_to_int(std::vector<int_audio>*, std::vector<long double>*, int_audio, int_audio);
+template void float_to_int(std::vector<int_audio>*, std::vector<long double>*);
 
 template void pack_data<int8_t>(uint8_t*, int8_t*, int);
 template void pack_data<uint8_t>(uint8_t*, uint8_t*, int);
@@ -580,7 +588,7 @@ template uint32_t get_radians<uint32_t>(uint32_t);
 template float get_radians<float>(float);
 template double get_radians<double>(double);
 template long double get_radians<long double>(long double);
-// template int_audio get_radians<int_audio>(int_audio);
+template int_audio get_radians<int_audio>(int_audio);
 
 template float get_decibels<float>(float);
 template double get_decibels<double>(double);
@@ -608,7 +616,7 @@ template std::vector<uint32_t> hann_window<std::vector<uint32_t>>(std::vector<ui
 template std::vector<float> hann_window<std::vector<float>>(std::vector<float>, int);
 template std::vector<double> hann_window<std::vector<double>>(std::vector<double>, int);
 template std::vector<long double> hann_window<std::vector<long double>>(std::vector<long double>, int);
-// template std::vector<int_audio> hann_window<std::vector<int_audio>>(std::vector<int_audio>, int);
+template std::vector<int_audio> hann_window<std::vector<int_audio>>(std::vector<int_audio>, int);
 
 template int8_t get_max<int8_t>(uint8_t*, size_t, int);
 template uint8_t get_max<uint8_t>(uint8_t*, size_t, int);
@@ -618,7 +626,7 @@ template int32_t get_max<int32_t>(uint8_t*, size_t, int);
 template uint32_t get_max<uint32_t>(uint8_t*, size_t, int);
 template int64_t get_max<int64_t>(uint8_t*, size_t, int);
 template uint64_t get_max<uint64_t>(uint8_t*, size_t, int);
-// template int_audio get_max<int_audio>(uint8_t*, size_t, int);
+template int_audio get_max<int_audio>(uint8_t*, size_t, int);
 
 template int8_t get_min<int8_t>(uint8_t*, size_t, int);
 template uint8_t get_min<uint8_t>(uint8_t*, size_t, int);
@@ -628,7 +636,7 @@ template int32_t get_min<int32_t>(uint8_t*, size_t, int);
 template uint32_t get_min<uint32_t>(uint8_t*, size_t, int);
 template int64_t get_min<int64_t>(uint8_t*, size_t, int);
 template uint64_t get_min<uint64_t>(uint8_t*, size_t, int);
-// template int_audio get_min<int_audio>(uint8_t*, size_t, int);
+template int_audio get_min<int_audio>(uint8_t*, size_t, int);
 
 template void visualize<int8_t>(uint8_t*, size_t, int, int, bool);
 template void visualize<uint8_t>(uint8_t*, size_t, int, int, bool);
@@ -641,7 +649,7 @@ template void visualize<uint64_t>(uint8_t*, size_t, int, int, bool);
 template void visualize<float>(uint8_t*, size_t, int, int, bool);
 template void visualize<double>(uint8_t*, size_t, int, int, bool);
 template void visualize<long double>(uint8_t*, size_t, int, int, bool);
-// template void visualize<int_audio>(uint8_t*, size_t, int, int, bool);
+template void visualize<int_audio>(uint8_t*, size_t, int, int, bool);
 
 template void visualize<int8_t>(std::vector<int8_t>, double, double, bool);
 template void visualize<uint8_t>(std::vector<uint8_t>, double, double, bool);
@@ -654,7 +662,7 @@ template void visualize<uint64_t>(std::vector<uint64_t>, double, double, bool);
 template void visualize<float>(std::vector<float>, double, double, bool);
 template void visualize<double>(std::vector<double>, double, double, bool);
 template void visualize<long double>(std::vector<long double>, double, double, bool);
-// template void visualize<int_audio>(std::vector<int_audio>, double, double, bool);
+template void visualize<int_audio>(std::vector<int_audio>, double, double, bool);
 
 template void sine<float>(std::vector<float>*, float, unsigned int, float*);
 template void sine<double>(std::vector<double>*, double, unsigned int, double*);
