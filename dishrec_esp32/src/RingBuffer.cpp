@@ -2,6 +2,9 @@
 
 using namespace Buffer;
 
+template <typename T>
+constexpr T RingBuffer<T>::_zero = get_zero<T>();
+
 Ring::Ring() :
 ringLength(0)
 {

@@ -32,7 +32,8 @@ template <typename T>
 class RingBuffer : virtual public Ring
 {
 public:
-    static constexpr T _zero = get_zero<T>();
+    // constexpr static T _zero = get_zero<T>();
+    const static T _zero;
 
 protected:
     bool _sizeIsSet;

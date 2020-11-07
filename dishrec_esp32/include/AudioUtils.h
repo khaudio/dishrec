@@ -42,7 +42,7 @@ constexpr T get_zero()
 template <>
 constexpr int_audio get_zero()
 {
-    return 0;
+    return int_audio(0);
 }
 
 template <typename T>
