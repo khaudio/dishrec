@@ -17,6 +17,7 @@
 #include "BWFHeader.h"
 #include "Timer.h"
 #include "int_audio.h"
+#include "RingBuffer.h"
 
 
 int main()
@@ -252,10 +253,20 @@ int main()
     constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
     constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
 
-    // visualize(padded);
-    // visualize(scaled24);
-    // visualize<int>(packedInt, numBytes, packer.get_usable_width());
-    // visualize(p);
+    Buffer::RingBuffer<int_audio> ringbuff(48, 4);
+    ringbuff.write(padded, true);
+    ringbuff.write(padded, true);
+    ringbuff.write(padded, true);
+    ringbuff.write(padded, true);
+
+    visualize(ringbuff.read());
+    visualize(ringbuff.read());
+    visualize(ringbuff.read());
+    visualize(ringbuff.read());
+    visualize(ringbuff.read());
+    visualize(ringbuff.read());
+    visualize(ringbuff.read());
+    visualize(ringbuff.read());
 
     std::cout << std::endl << std::endl;
 }

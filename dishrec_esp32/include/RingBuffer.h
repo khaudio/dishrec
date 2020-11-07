@@ -11,6 +11,11 @@
 
 #include "AudioUtils.h"
 
+enum ringbuffer_err
+{
+    BUFFER_NOT_INITIALIZED = 150,
+};
+
 namespace Buffer
 {
 
@@ -26,54 +31,53 @@ public:
 template <typename T = double>
 class RingBuffer : virtual public Ring
 {
+public:
+    static constexpr T _zero = get_zero<T>();
+
 protected:
+    bool _sizeIsSet;
     int
         _totalWritableLength, _buffered,
         _samplesWritten, _samplesRemaining;
-    T _zero;
 
 public:
     uint32_t bufferLength, totalRingSampleLength, bytesPerBuffer;
     uint8_t readIndex, writeIndex;
     std::vector<std::vector<T>> ring;
 
-    RingBuffer(int bufferSize = 1024, uint8_t ringSize = 8);
+    RingBuffer();
+    RingBuffer(int bufferSize, uint8_t ringSize);
     ~RingBuffer();
 
-    int sub_buffers_full();
-    int buffered();
-    int samples_buffered();
-    int available();
+    virtual size_t size();
 
-    void fill(T filler = 0, bool force = false);
-    void zero(uint8_t bufferIndex);
+    virtual void set_size(int bufferSize, uint8_t ringSize);
 
-    void rotate_read_buffer();
-    void rotate_write_buffer();
-    void force_rotate_write_buffer();
+    virtual int buffered();
+    virtual int available();
+    virtual int sub_buffers_full();
+    virtual bool is_writable();
 
-    bool writable();
+    virtual void rotate_read_buffer();
+    virtual void rotate_write_buffer();
+    virtual void force_rotate_write_buffer();
 
-protected:
-    std::vector<T> _read();
+    virtual uint8_t* get_read_ptr();
+    virtual uint8_t* get_write_ptr();
 
-public:
-    std::vector<T> read();
-
-    uint8_t* get_read_ptr();
-    uint8_t* get_write_ptr();
-    void* get_read_void_ptr();
-    void* get_write_void_ptr();
+/*                               Read                               */
 
 protected:
-    int _write(std::vector<T> data, bool force = false);
-    int _write(T data, bool force = false);
-    int _write_trim(std::vector<T>& data, bool force = false);
-    
+    virtual const std::vector<T> _read() const;
+
 public:
-    int write(T data, bool force = false);
-    int write(std::vector<T> data, bool force = false);
-    int write(uint8_t* data, size_t numBytes, bool force = false);
+    virtual const std::vector<T> read();
+
+/*                               Write                              */
+
+    virtual int write(T data, bool force = false);
+    virtual int write(std::vector<T> data, bool force = false);
+    virtual int write(uint8_t* data, size_t numBytes, bool force = false);
 };
 
 };

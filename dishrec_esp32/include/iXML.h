@@ -488,12 +488,10 @@ public:
     virtual void clear_description();
 
     // Origination Date
-    // virtual void set_date(int16_t year, uint8_t month, uint8_t day);
     virtual void set_date_str(const char* date);
     virtual void clear_date();
 
     // Origination Time
-    // virtual void set_time(uint8_t hour, uint8_t minute, uint8_t second);
     virtual void set_time_str(const char* time);
     virtual void clear_time();
 
