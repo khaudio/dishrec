@@ -38,8 +38,8 @@ inline void int_to_float(F* converted, I* value)
 template <>
 inline void int_to_float(float* converted, int_audio* value)
 {
-    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
-    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr int_audio minimum(int_audio::min());
+    constexpr int_audio maximum(int_audio::max());
     if (*value == maximum) *converted = 1.0;
     else if (*value == minimum) *converted = -1.0;
     else
@@ -55,8 +55,8 @@ inline void int_to_float(float* converted, int_audio* value)
 template <>
 inline void int_to_float(double* converted, int_audio* value)
 {
-    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
-    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr int_audio minimum(int_audio::min());
+    constexpr int_audio maximum(int_audio::max());
     if (*value == maximum) *converted = 1.0;
     else if (*value == minimum) *converted = -1.0;
     else
@@ -72,8 +72,8 @@ inline void int_to_float(double* converted, int_audio* value)
 template <>
 inline void int_to_float(long double* converted, int_audio* value)
 {
-    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
-    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr int_audio minimum(int_audio::min());
+    constexpr int_audio maximum(int_audio::max());
     if (*value == maximum) *converted = 1.0;
     else if (*value == minimum) *converted = -1.0;
     else
@@ -114,8 +114,8 @@ inline void float_to_int(I* converted, F* value)
 template <>
 inline void float_to_int(int_audio* converted, float* value)
 {
-    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
-    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr int_audio minimum(int_audio::min());
+    constexpr int_audio maximum(int_audio::max());
     if (*value == float(1.0)) *converted = maximum;
     else if (*value == float(-1.0)) *converted = minimum;
     else
@@ -132,8 +132,8 @@ inline void float_to_int(int_audio* converted, float* value)
 template <>
 inline void float_to_int(int_audio* converted, double* value)
 {
-    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
-    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr int_audio minimum(int_audio::min());
+    constexpr int_audio maximum(int_audio::max());
     if (*value == double(1.0)) *converted = maximum;
     else if (*value == double(-1.0)) *converted = minimum;
     else
@@ -149,8 +149,8 @@ inline void float_to_int(int_audio* converted, double* value)
 template <>
 inline void float_to_int(int_audio* converted, long double* value)
 {
-    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
-    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
+    constexpr int_audio minimum(int_audio::min());
+    constexpr int_audio maximum(int_audio::max());
     constexpr long double positiveOne(1.0);
     constexpr long double negativeOne(-1.0);
     constexpr long double zero(0);
@@ -331,8 +331,7 @@ T get_max(uint8_t* values, size_t numBytes, int width)
 template <>
 int_audio get_max(uint8_t* values, size_t numBytes, int width)
 {
-    int_audio maximum;
-    maximum = int_audio::min();
+    int_audio maximum(int_audio::min());
     for (size_t i(0); i < numBytes; i += width)
     {
         int_audio unpacked(0);
@@ -358,8 +357,7 @@ T get_min(uint8_t* values, size_t numBytes, int width)
 template <>
 int_audio get_min(uint8_t* values, size_t numBytes, int width)
 {
-    int_audio minimum;
-    minimum = int_audio::max();
+    int_audio minimum(int_audio::max());
     for (size_t i(0); i < numBytes; i += width)
     {
         int_audio unpacked(0);

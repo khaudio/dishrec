@@ -28,7 +28,7 @@ public:
     ~Ring();
 };
 
-template <typename T = double>
+template <typename T>
 class RingBuffer : virtual public Ring
 {
 public:

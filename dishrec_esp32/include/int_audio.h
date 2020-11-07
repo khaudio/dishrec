@@ -13,11 +13,6 @@ union int_audio
     int_fast32_t data16 : 16;
     uint_fast8_t data8 : 8;
     uint8_t _data[3];
-    
-    // int_audio(int value) :
-    // data(value)
-    // {
-    // }
 
     constexpr int_audio() :
     data(0)
@@ -631,6 +626,7 @@ inline std::istream& operator>>(const int_audio& value, std::istream& stream)
     return stream;
 }
 
+#ifndef ESP32
 template <>
 class std::numeric_limits<int_audio>
 {
@@ -652,6 +648,7 @@ public:
         return true;
     };
 };
+#endif
 
 int8_t operator+(const int8_t i, const int_audio& a);
 int8_t operator+(const int_audio& a, const int8_t i);

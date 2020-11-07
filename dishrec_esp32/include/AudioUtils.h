@@ -39,6 +39,12 @@ constexpr T get_zero()
         ) ? pow(2, (sizeof(T) * 8) - 1) - 1 : 0;
 }
 
+template <>
+constexpr int_audio get_zero()
+{
+    return 0;
+}
+
 template <typename T>
 void clip_float(T* value);
 
