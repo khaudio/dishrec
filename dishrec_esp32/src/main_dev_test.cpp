@@ -18,6 +18,7 @@
 #include "Timer.h"
 #include "int_audio.h"
 #include "RingBuffer.h"
+#include "WavWriter.h"
 
 
 int main()
@@ -205,19 +206,6 @@ int main()
     wav.set_circled(true);
     std::cout << wav.get_scene() << std::endl;
 
-    std::cout << "Getting header size" << std::endl;
-    const size_t metaBuffSize = wav.total_size();
-    std::cout << "Got header size... " << metaBuffSize << std::endl;
-    std::cout << "Creating uint8_t buffer for header..." << std::endl;
-    uint8_t* metaBuff;
-    metaBuff = new uint8_t[metaBuffSize];
-    std::cout << "Getting header..." << std::endl;
-    size_t written = wav.get(metaBuff);
-    std::cout << "Got header" << std::endl;
-    print(metaBuff, written);
-    std::cout << "metaBuffSize: " << metaBuffSize << "\twritten: " << written << std::endl;
-    printf("\nBroadcastWav header total size: %lu\n", wav.total_size());
-
     // Packing int for I/O
     Packer packer;
     packer.set_bit_depth(24);
@@ -259,14 +247,59 @@ int main()
     ringbuff.write(padded, true);
     ringbuff.write(padded, true);
 
-    visualize(ringbuff.read());
-    visualize(ringbuff.read());
-    visualize(ringbuff.read());
-    visualize(ringbuff.read());
-    visualize(ringbuff.read());
-    visualize(ringbuff.read());
-    visualize(ringbuff.read());
-    visualize(ringbuff.read());
+    WavFile::WavWriter writefile;
+
+    writefile._set_filename("currentwavfile");
+    writefile._new_file();
+
+    uint8_t* readptr = ringbuff.get_read_ptr();
+
+    wav.set_sample_rate(48000);
+    wav.set_bit_depth(24);
+
+    std::vector<int_audio> gotten;
+
+    std::cout << "RingBuffer<int_audio>::bytesPerBuffer: " << ringbuff.bytesPerBuffer << std::endl;
+
+    size_t packedBuffSize = ringbuff.bufferLength * 3;
+    uint8_t packedBuff[packedBuffSize]; // Sample width at 24-bit == 3
+
+    for (int i(0); i < 1000; ++i)
+    {
+        writefile._write_to_file(packedInt, numBytes);
+        wav.set_data_size(wav.get_data_size() + numBytes);
+
+        // gotten = ringbuff.read();
+        // packer.pack<int_audio>(packedBuff, &gotten); // this might be messed up
+        // visualize<int_audio>(&packedBuff[0], packedBuffSize, 3);
+        // writefile._write_to_file(packedBuff, packedBuffSize);
+        // wav.set_data_size(wav.get_data_size() + ringbuff.bytesPerBuffer);
+    }
+
+    std::cout << "Getting header size" << std::endl;
+    size_t metaBuffSize = wav.total_size();
+    std::cout << "Got unpadded header size... " << metaBuffSize << std::endl;
+    std::cout << "Getting number of pad bytes needed" << std::endl;
+    int numPadBytes = WavFile::numBytesReservedForWavHeader - metaBuffSize;
+    std::cout << "Number of pad bytes needed... " << numPadBytes << std::endl;
+    std::cout << "Setting pad bytes" << std::endl;
+    wav.set_pad_size(numPadBytes);
+    metaBuffSize = wav.total_size();
+    std::cout << "Got new header size... " << metaBuffSize << std::endl;
+    std::cout << "Creating uint8_t buffer for header..." << std::endl;
+    uint8_t* metaBuff;
+    metaBuff = new uint8_t[metaBuffSize];
+    std::cout << "Getting header..." << std::endl;
+    size_t written = wav.get(metaBuff);
+    std::cout << "Got header" << std::endl;
+    // print(metaBuff, written);
+    std::cout << "metaBuffSize: " << metaBuffSize << "\twritten: " << written << std::endl;
+    printf("\nBroadcastWav header total size: %lu\n", wav.total_size());
+
+    
+
+    writefile._write_header(metaBuff, metaBuffSize);
+    writefile._close_file();
 
     std::cout << std::endl << std::endl;
 }

@@ -275,7 +275,7 @@ public:
 
 protected:
     char _ixmlChunkID[4];
-    size_t _ixmlChunkSize;
+    size_t _ixmlChunkSize, _padBytes;
     std::map<const uint16_t, std::shared_ptr<Track>> tracks;
     std::vector<std::shared_ptr<SyncPoint>> syncPoints;
     std::vector<XMLElement*> _trackElements;
@@ -285,6 +285,9 @@ public:
     ~IXML();
     
     virtual void clear();
+
+    // Number of bytes to pad chunk with
+    void set_pad_size(uint32_t numBytes);
 
     // Size of iXML chunk
     virtual size_t size();

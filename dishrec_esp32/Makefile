@@ -14,32 +14,35 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.o $(BUILD)/BWFHeader.o $(BUILD)/Loudness.o $(BUILD)/Timer.so | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.so $(BUILD)/WavWriter.so $(BUILD)/AudioDataPad.o $(BUILD)/RMS.so $(BUILD)/Timer.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
-$(BUILD)/Loudness.o: $(BUILD)/WavHeader.o $(BUILD)/ebur128.so | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/Loudness.cpp -o $(BUILD)/Loudness.o $(LDFLAGS) -lebur128.so
+$(BUILD)/RingBuffer.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.so $(LDFLAGS) -shared
 
-$(BUILD)/RingBuffer.o: $(BUILD)/RMS.so | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/RingBuffer.cpp -o $(BUILD)/RingBuffer.o $(LDFLAGS)
+$(BUILD)/WavWriter.so: $(BUILD)/BWFHeader.so | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/WavWriter.cpp -o $(BUILD)/WavWriter.so $(LDFLAGS) -shared
 
-$(BUILD)/BWFHeader.o: $(BUILD)/WavHeader.o $(BUILD)/AudioDataPad.o $(BUILD)/iXML.o | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/BWFHeader.cpp -o $(BUILD)/BWFHeader.o $(LDFLAGS)
+$(BUILD)/BWFHeader.so: $(BUILD)/BEXTChunk.so $(BUILD)/WavHeader.so $(BUILD)/Loudness.so $(BUILD)/iXML.o | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/BWFHeader.cpp -o $(BUILD)/BWFHeader.so $(LDFLAGS) -shared
 
-$(BUILD)/WavHeader.o: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/WavHeader.cpp -o $(BUILD)/WavHeader.o $(LDFLAGS)
+$(BUILD)/Loudness.so: $(BUILD)/WavHeader.so $(BUILD)/ebur128.so | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/Loudness.cpp -o $(BUILD)/Loudness.so $(LDFLAGS) -lebur128.so
+
+$(BUILD)/WavHeader.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/WavHeader.cpp -o $(BUILD)/WavHeader.so $(LDFLAGS) -shared
 
 $(BUILD)/AudioDataPad.o: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioDataPad.cpp -o $(BUILD)/AudioDataPad.o $(LDFLAGS)
 
-$(BUILD)/iXML.o: $(BUILD)/tinyxml2.so $(BUILD)/BEXTChunk.o $(BUILD)/TimecodeBase.o $(BUILD)/AudioUtils.so | $(BUILD)
+$(BUILD)/iXML.o: $(BUILD)/tinyxml2.so $(BUILD)/TimecodeBase.so $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/iXML.cpp -o $(BUILD)/iXML.o $(LDFLAGS)
 
-$(BUILD)/TimecodeBase.o: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/TimecodeBase.cpp -o $(BUILD)/TimecodeBase.o $(LDFLAGS)
+$(BUILD)/TimecodeBase.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/TimecodeBase.cpp -o $(BUILD)/TimecodeBase.so $(LDFLAGS)
 
-$(BUILD)/BEXTChunk.o: $(BUILD)/AudioUtils.so | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/BEXTChunk.cpp -o $(BUILD)/BEXTChunk.o $(LDFLAGS)
+$(BUILD)/BEXTChunk.so: $(BUILD)/AudioUtils.so | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/BEXTChunk.cpp -o $(BUILD)/BEXTChunk.so $(LDFLAGS) -shared
 
 $(BUILD)/tinyxml2.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(LIB)/tinyxml2/tinyxml2.cpp -o $(BUILD)/tinyxml2.so $(LDFLAGS) -shared
