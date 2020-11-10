@@ -88,6 +88,7 @@ BroadcastWav::BroadcastWav() :
 WavMeta::WavHeader(),
 iXML::IXML(),
 Loudness::Analyzer(),
+_padBytes(0),
 takeNumber(0),
 userbits{0, 0, 0, 0},
 _bw64(false),
