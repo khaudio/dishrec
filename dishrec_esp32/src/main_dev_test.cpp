@@ -31,29 +31,30 @@ int main()
     BEXT::CodingHistoryRow row;
     row.set_pcm();
     row.set_sample_rate(48000);
-    row.set_bit_depth(16);
+    row.set_bit_depth(24);
     row.set_mono();
     row.set_text("hello world");
+    row.set_text("1ch");
     wav.set_coding_history(row);
 
     const char* descrip = "an informational string";
     const char* orig = "dishrec";
-    const char* origref = "some reference thing";
+    // const char* origref = "some reference thing";
     wav.set_description(descrip);
     wav.set_originator(orig);
-    wav.set_originator_reference(origref);
+    // wav.set_originator_reference(origref);
     
     std::cout << "Working... " << ++i << std::endl;
 
     wav.set_date(2020, 9, 30);
     wav.set_time(20, 49, 9);
-    wav.set_umid((uint8_t*)"01234567890123456789012345678901");
+    // wav.set_umid((uint8_t*)"01234567890123456789012345678901");
     
     std::cout << "Working... " << ++i << std::endl;
 
     WavMeta::WavFormat params;
     params.set_sample_rate(48000);
-    params.set_bit_depth(16);
+    params.set_bit_depth(24);
     params.set_format_code(WavMeta::FORMAT_PCM);
     params.set_channels(1);
     
@@ -65,13 +66,13 @@ int main()
     std::cout << "Working... " << ++i << std::endl;
     
     wav.set_framerate(23.98);
-    std::cout << "Setting " << "dropframe" << std::endl;
+    std::cout << "Setting dropframe" << std::endl;
     wav.set_dropframe(false);
-    std::cout << "Setting " << "sample rate" << std::endl;
+    std::cout << "Setting sample rate" << std::endl;
     wav.set_sample_rate(48000);
-    std::cout << "Setting " << "bit depth" << std::endl;
-    wav.set_bit_depth(16);
-    std::cout << "Setting " << "timecode" << std::endl;
+    std::cout << "Setting bit depth" << std::endl;
+    wav.set_bit_depth(24);
+    std::cout << "Setting timecode" << std::endl;
     wav.set_timecode(16, 14, 34, 0);
     
     std::cout << "ssm: " << wav.samplesSinceMidnight << std::endl;
@@ -141,16 +142,9 @@ int main()
     wav.set_file_uid();
     wav.set_file_set_index("A");
     wav.set_parent_uid("thiscanbethefileuidforthefilethisfilewasderivedfromoranythingelse_YYYYMMDD_00123423");
-    
-    std::cout << "Working... " << ++i << std::endl;
-
     wav.create_sync_point(1001);
     std::shared_ptr<iXML::SyncPoint> asyncpoint = wav.create_sync_point(77);
-    wav.create_sync_point(6546351);
     wav.create_sync_point(0);
-    
-    std::cout << "Working... " << ++i << std::endl;
-
     wav.destroy_sync_point(asyncpoint);
     asyncpoint = nullptr;
     wav.destroy_sync_point(asyncpoint);
@@ -172,17 +166,6 @@ int main()
     int_to_float<int16_t, float>(&floatVals, &samples);
 
     float_to_int<float, int_audio>(&scaled24, &floatVals);
-
-    #ifdef EBUR128_H_
-    std::cout << "Adding frames to loudness analyzer" << std::endl;
-    wav.add_frames(&floatVals);
-    #endif
-    
-    std::cout << "Setting loudness" << std::endl;
-    wav.set_loudness();
-    std::cout << "Set loudness " << std::endl;
-    std::cout << "Getting loudness" << std::endl;
-    std::cout << "Got loudness: " << wav.get_loudness_global() << std::endl;
 
     wav.set_country_code("US");
     wav.set_org_code("DSR");
@@ -268,12 +251,6 @@ int main()
     {
         writefile._write_to_file(packedInt, numBytes);
         wav.set_data_size(wav.get_data_size() + numBytes);
-
-        // gotten = ringbuff.read();
-        // packer.pack<int_audio>(packedBuff, &gotten); // this might be messed up
-        // visualize<int_audio>(&packedBuff[0], packedBuffSize, 3);
-        // writefile._write_to_file(packedBuff, packedBuffSize);
-        // wav.set_data_size(wav.get_data_size() + ringbuff.bytesPerBuffer);
     }
 
     std::cout << "Getting header size" << std::endl;

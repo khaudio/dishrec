@@ -266,8 +266,8 @@ void WavHeader::set_byte_rate(uint32_t rate)
 {
     this->byteRate = rate;
     *this->formatChunk.byteRate = this->byteRate;
-}
 
+}
 void WavHeader::set_format(WavFormat params)
 {
     set_sample_rate(params.sampleRate);

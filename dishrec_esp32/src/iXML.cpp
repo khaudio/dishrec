@@ -344,7 +344,6 @@ user(&ixml),
 numTracks(0),
 numSyncPoints(0),
 _ixmlChunkSize(0),
-_padBytes(0),
 _digitizerSampleRate(sampleRate)
 {
     memcpy(this->_ixmlChunkID, "iXML", 4);
@@ -1492,14 +1491,6 @@ const char* IXML::get_audio_recorder_firmware()
     return this->user.audio_recorder_firmware->GetText();
 }
 
-void IXML::set_pad_size(uint32_t numBytes)
-{
-    #ifdef _DEBUG
-    assert(!(numBytes % 2));
-    #endif
-    this->_padBytes = numBytes;
-}
-
 size_t IXML::size()
 {
     // Add NULL term + XML version/encoding + LF
@@ -1507,7 +1498,6 @@ size_t IXML::size()
             reinterpret_cast<const char*>(_xml_c_str())
         ) + 41;
     this->_ixmlChunkSize += (this->_ixmlChunkSize % 2);
-    this->_ixmlChunkSize += this->_padBytes;
     return this->_ixmlChunkSize;
 }
 
@@ -1545,14 +1535,6 @@ size_t IXML::get(uint8_t* buff)
 
     memcpy(buff + index, cstr, xmlLength);
     index += xmlLength;
-
-    // Optionally pad with blank data
-    this->_ixmlChunkSize += this->_padBytes;
-    if (this->_padBytes)
-    {
-        memset(buff + index, '\0', this->_padBytes);
-        index += this->_padBytes;
-    }
 
     // Pad with NULL if size is odd number of bytes
     if (index % 2)

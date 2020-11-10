@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <deque>
 #include <numeric>
 #include <iostream>
 #include <memory>
@@ -81,13 +82,19 @@ void float_to_int(std::vector<I>* converted, std::vector<F>* values);
 template <typename T>
 void pack_data(uint8_t* data, T* value, int width);
 
+template <>
+void pack_data(uint8_t* data, int_audio* value, int width);
+
 template <typename T>
 void unpack_data(T* value, uint8_t* data, int width);
 
-template <typename T>
+template <>
+void unpack_data(int_audio* value, uint8_t* data, int width);
+
+template <typename T = double>
 T get_radians(T degrees = 0);
 
-template <typename T>
+template <typename T = double>
 T get_decibels(T floatValue);
 
 template <typename T = double>
@@ -100,7 +107,7 @@ template <typename T = double>
 int16_t convert_loudness_to_int(T value);
 
 template <typename T>
-T hann_window(T values, int length);
+void hann_window(T* converted, T* values, int length);
 
 template <typename T>
 void sine(

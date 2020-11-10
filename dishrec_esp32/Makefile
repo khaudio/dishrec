@@ -14,7 +14,7 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.so $(BUILD)/WavWriter.so $(BUILD)/AudioDataPad.o $(BUILD)/RMS.so $(BUILD)/Timer.so | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.so $(BUILD)/WavWriter.so $(BUILD)/AudioDataPad.so $(BUILD)/RMS.so $(BUILD)/Timer.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
 $(BUILD)/RingBuffer.so: | $(BUILD)
@@ -32,8 +32,8 @@ $(BUILD)/Loudness.so: $(BUILD)/WavHeader.so $(BUILD)/ebur128.so | $(BUILD)
 $(BUILD)/WavHeader.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/WavHeader.cpp -o $(BUILD)/WavHeader.so $(LDFLAGS) -shared
 
-$(BUILD)/AudioDataPad.o: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioDataPad.cpp -o $(BUILD)/AudioDataPad.o $(LDFLAGS)
+$(BUILD)/AudioDataPad.so: $(BUILD)/AudioUtils.so | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioDataPad.cpp -o $(BUILD)/AudioDataPad.so $(LDFLAGS)
 
 $(BUILD)/iXML.o: $(BUILD)/tinyxml2.so $(BUILD)/TimecodeBase.so $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/iXML.cpp -o $(BUILD)/iXML.o $(LDFLAGS)

@@ -419,20 +419,20 @@ void BEXTChunk::set_bwf_version(uint16_t versionNumber)
 bool BEXTChunk::loudness_is_set()
 {
     return (
-            this->loudnessValue
-            && this->loudnessRange
-            && this->maxTruePeakLevel
-            && this->maxMomentaryLoudness
-            && this->maxShortTermLoudness
+            (this->loudnessValue != 0x7FFF)
+            && (this->loudnessRange != 0x7FFF)
+            && (this->maxTruePeakLevel != 0x7FFF)
+            && (this->maxMomentaryLoudness != 0x7FFF)
+            && (this->maxShortTermLoudness != 0x7FFF)
         );
 }
 
 void BEXTChunk::_autoset_bwf_version()
 {
     bool loudnessSet = loudness_is_set();
-    if (loudnessSet && this->_umidSet) set_bwf_version(2);
-    else if (!loudnessSet && this->_umidSet) set_bwf_version(1);
-    else if (this->bwfVersion) set_bwf_version(0);
+    if (loudnessSet && this->_umidSet) set_bwf_version(0x0002);
+    else if (!loudnessSet && this->_umidSet) set_bwf_version(0x0001);
+    else if (this->bwfVersion) set_bwf_version(0x0000);
 }
 
 void BEXTChunk::set_umid(const uint8_t* newUmid)
@@ -576,6 +576,7 @@ size_t BEXTChunk::total_size()
 
 size_t BEXTChunk::get(uint8_t* buff)
 {
+    _autoset_bwf_version();
     size();
     size_t index(8);
     memcpy(buff, this->chunkID, 4);

@@ -565,11 +565,22 @@ void BroadcastWav::set_audio_recorder_serial_number(const char* text)
     iXML::IXML::set_audio_recorder_serial_number(text);
 }
 
+void BroadcastWav::set_pad_size(uint32_t numBytes)
+{
+    #ifdef _DEBUG
+    assert(!(numBytes % 2));
+    #endif
+    this->_padBytes = numBytes;
+}
+
 size_t BroadcastWav::size()
 {
-    // riffType + Data chunk ID and size
+    // RIFF type + data chunk ID and size
     this->_headerSize = 12;
     
+    // Format chunk
+    this->_headerSize += this->formatChunk.total_size();
+
     // ds64Chunk
     this->_headerSize += this->ds64Chunk.total_size();
     
@@ -579,9 +590,8 @@ size_t BroadcastWav::size()
     /* Add iXML chunk ID and size
     since IXML is inherited, not child chunk */
     this->_headerSize += iXML::IXML::size() + 8;
-    
-    // Format chunk
-    this->_headerSize += this->formatChunk.total_size();
+    this->_ixmlChunkSize += this->_padBytes;
+    this->_headerSize += this->_padBytes;
     
     /* Returns size of header only;
     does not include size of actual audio data */
@@ -595,13 +605,50 @@ size_t BroadcastWav::total_size()
 
 size_t BroadcastWav::get(uint8_t* buff)
 {
+    /* Exports header
+    Adds data pad to ixml chunk */
+
+    // Get size of header
     size();
+
+    // Set size of file contents
+    this->riffChunk.set_chunk_size(
+            this->_headerSize + this->dataChunk.size()
+        );
+
+    // Write RIFF chunk ID, file size, and RIFF type
     size_t index(this->riffChunk.get(buff));
-    index += this->ds64Chunk.get(buff + index);
-    index += this->bextChunk.get(buff + index);
-    index += iXML::IXML::get(buff + index);
+
+    // Write format chunk
     index += this->formatChunk.get(buff + index);
+
+    // Write DS64/JUNK chunk
+    index += this->ds64Chunk.get(buff + index);
+
+    // Write BEXT chunk
+    index += this->bextChunk.get(buff + index);
+
+    // Save index of ixml chunk size location
+    size_t ixmlChunkSizeIndex = index + 4;
+
+    // Write IXML
+    index += iXML::IXML::get(buff + index);
+
+    // Add pad to ixml chunk size
+    this->_ixmlChunkSize += this->_padBytes;
+
+    // Write pad
+    memset(buff + index, '\0', this->_padBytes);
+
+    // Re-write corrected ixml chunk size
+    memcpy(buff + ixmlChunkSizeIndex, &this->_ixmlChunkSize, 4);
+
+    // Add pad to index
+    index += this->_padBytes;
+
+    // Write data chunk ID and size
     index += this->dataChunk.get(buff + index);
+
+    // Return number of bytes written
     return index;
 }
-

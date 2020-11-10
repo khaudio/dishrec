@@ -70,6 +70,9 @@ virtual public WavMeta::WavHeader,
 virtual public iXML::IXML,
 virtual public Loudness::Analyzer
 {
+protected:
+    size_t _padBytes;
+
 public:
     int takeNumber;
     uint8_t userbits[4];
@@ -78,6 +81,9 @@ public:
     ~BroadcastWav();
 
     void clear() override;
+
+    // Number of bytes to pad chunk with
+    void set_pad_size(uint32_t numBytes);
 
     // File size (Header + Data)
     void set_file_size(size_t numBytes) override;

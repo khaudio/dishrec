@@ -202,6 +202,21 @@ inline void pack_data(uint8_t* packed, T* padded, int width)
     for (int i(0); i < width; ++i) packed[i] |= sample._data[i];
 }
 
+template <>
+void pack_data(uint8_t* packed, int_audio* padded, int width)
+{
+    #ifdef _DEBUG
+    constexpr int maxsize(sizeof(int_fast32_t));
+    if (!width || (width > maxsize))
+    {
+        char message[128];
+        sprintf(message, "Width must be 0 < width < %d", maxsize);
+    }
+    #endif
+
+    for (int i(0); i < width; ++i) packed[i] |= padded->_data[i];
+}
+
 template <typename T>
 inline void unpack_data(T* padded, uint8_t* packed, int width)
 {
@@ -217,6 +232,21 @@ inline void unpack_data(T* padded, uint8_t* packed, int width)
     int_audio sample(0);
     for (int i(0); i < width; ++i) sample._data[i] |= packed[i];
     *padded = sample.data;
+}
+
+template <>
+void unpack_data(int_audio* padded, uint8_t* packed, int width)
+{
+    #ifdef _DEBUG
+    constexpr int maxsize(sizeof(int_fast32_t));
+    if (!width || (width > maxsize))
+    {
+        char message[128];
+        sprintf(message, "Width must be 0 < width < %d", maxsize);
+    }
+    #endif
+
+    for (int i(0); i < width; ++i) padded->_data[i] |= packed[i];
 }
 
 template <typename T>
@@ -255,14 +285,13 @@ inline int16_t convert_loudness_to_int(T value)
 }
 
 template <typename T>
-inline T hann_window(T values, int length)
+inline void hann_window(T* converted, T* values, int length)
 {
     double divisor(length - 1);
     for (int i(0); i < length; ++i)
     {
-        values[i] *= (1 - cos(TAU * i / divisor)) / 2;
+        converted->at(i) = values->at(i) * ((1 - cos(TAU * i / divisor)) / 2);
     }
-    return values;
 }
 
 template <typename T>
@@ -475,7 +504,6 @@ template void float_to_int(int32_t*, float*);
 template void float_to_int(uint32_t*, float*);
 template void float_to_int(int64_t*, float*);
 template void float_to_int(uint64_t*, float*);
-template void float_to_int(int_audio*, float*);
 
 template void float_to_int(int8_t*, double*);
 template void float_to_int(uint8_t*, double*);
@@ -485,7 +513,6 @@ template void float_to_int(int32_t*, double*);
 template void float_to_int(uint32_t*, double*);
 template void float_to_int(int64_t*, double*);
 template void float_to_int(uint64_t*, double*);
-template void float_to_int(int_audio*, double*);
 
 template void float_to_int(int8_t*, long double*);
 template void float_to_int(uint8_t*, long double*);
@@ -495,7 +522,6 @@ template void float_to_int(int32_t*, long double*);
 template void float_to_int(uint32_t*, long double*);
 template void float_to_int(int64_t*, long double*);
 template void float_to_int(uint64_t*, long double*);
-template void float_to_int(int_audio*, long double*);
 
 template void int_to_float(std::vector<float>*, std::vector<int8_t>*);
 template void int_to_float(std::vector<float>*, std::vector<uint8_t>*);
@@ -577,16 +603,9 @@ template void unpack_data<int64_t>(int64_t*, uint8_t*, int);
 template void unpack_data<uint64_t>(uint64_t*, uint8_t*, int);
 template void unpack_data<int_audio>(int_audio*, uint8_t*, int);
 
-template int8_t get_radians<int8_t>(int8_t);
-template uint8_t get_radians<uint8_t>(uint8_t);
-template int16_t get_radians<int16_t>(int16_t);
-template uint16_t get_radians<uint16_t>(uint16_t);
-template int32_t get_radians<int32_t>(int32_t);
-template uint32_t get_radians<uint32_t>(uint32_t);
 template float get_radians<float>(float);
 template double get_radians<double>(double);
 template long double get_radians<long double>(long double);
-template int_audio get_radians<int_audio>(int_audio);
 
 template float get_decibels<float>(float);
 template double get_decibels<double>(double);
@@ -605,16 +624,27 @@ template int16_t convert_loudness_to_int(float);
 template int16_t convert_loudness_to_int(double);
 template int16_t convert_loudness_to_int(long double);
 
-template std::vector<int8_t> hann_window<std::vector<int8_t>>(std::vector<int8_t>, int);
-template std::vector<uint8_t> hann_window<std::vector<uint8_t>>(std::vector<uint8_t>, int);
-template std::vector<int16_t> hann_window<std::vector<int16_t>>(std::vector<int16_t>, int);
-template std::vector<uint16_t> hann_window<std::vector<uint16_t>>(std::vector<uint16_t>, int);
-template std::vector<int32_t> hann_window<std::vector<int32_t>>(std::vector<int32_t>, int);
-template std::vector<uint32_t> hann_window<std::vector<uint32_t>>(std::vector<uint32_t>, int);
-template std::vector<float> hann_window<std::vector<float>>(std::vector<float>, int);
-template std::vector<double> hann_window<std::vector<double>>(std::vector<double>, int);
-template std::vector<long double> hann_window<std::vector<long double>>(std::vector<long double>, int);
-template std::vector<int_audio> hann_window<std::vector<int_audio>>(std::vector<int_audio>, int);
+template void hann_window<std::vector<int8_t>>(std::vector<int8_t>*, std::vector<int8_t>*, int);
+template void hann_window<std::vector<uint8_t>>(std::vector<uint8_t>*, std::vector<uint8_t>*, int);
+template void hann_window<std::vector<int16_t>>(std::vector<int16_t>*, std::vector<int16_t>*, int);
+template void hann_window<std::vector<uint16_t>>(std::vector<uint16_t>*, std::vector<uint16_t>*, int);
+template void hann_window<std::vector<int32_t>>(std::vector<int32_t>*, std::vector<int32_t>*, int);
+template void hann_window<std::vector<uint32_t>>(std::vector<uint32_t>*, std::vector<uint32_t>*, int);
+template void hann_window<std::vector<int_audio>>(std::vector<int_audio>*, std::vector<int_audio>*, int);
+template void hann_window<std::vector<float>>(std::vector<float>*, std::vector<float>*, int);
+template void hann_window<std::vector<double>>(std::vector<double>*, std::vector<double>*, int);
+template void hann_window<std::vector<long double>>(std::vector<long double>*, std::vector<long double>*, int);
+
+template void hann_window<std::deque<int8_t>>(std::deque<int8_t>*, std::deque<int8_t>*, int);
+template void hann_window<std::deque<uint8_t>>(std::deque<uint8_t>*, std::deque<uint8_t>*, int);
+template void hann_window<std::deque<int16_t>>(std::deque<int16_t>*, std::deque<int16_t>*, int);
+template void hann_window<std::deque<uint16_t>>(std::deque<uint16_t>*, std::deque<uint16_t>*, int);
+template void hann_window<std::deque<int32_t>>(std::deque<int32_t>*, std::deque<int32_t>*, int);
+template void hann_window<std::deque<uint32_t>>(std::deque<uint32_t>*, std::deque<uint32_t>*, int);
+template void hann_window<std::deque<int_audio>>(std::deque<int_audio>*, std::deque<int_audio>*, int);
+template void hann_window<std::deque<float>>(std::deque<float>*, std::deque<float>*, int);
+template void hann_window<std::deque<double>>(std::deque<double>*, std::deque<double>*, int);
+template void hann_window<std::deque<long double>>(std::deque<long double>*, std::deque<long double>*, int);
 
 template int8_t get_max<int8_t>(uint8_t*, size_t, int);
 template uint8_t get_max<uint8_t>(uint8_t*, size_t, int);

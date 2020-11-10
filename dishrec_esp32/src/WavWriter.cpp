@@ -58,8 +58,6 @@ void WavWriter::_write_to_file(uint8_t* data, size_t numBytes)
 
 void WavWriter::_write_header(uint8_t* data, size_t numBytes)
 {
-    this->_padBytes = numBytesReservedForWavHeader - numBytes;
-    std::cout << "PAD BYTES: " << this->_padBytes;
     this->_filestream.seekp(0);
     _write_to_file(data, numBytes);
 }

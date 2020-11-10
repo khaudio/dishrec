@@ -18,15 +18,15 @@ namespace TimecodeBase
 {
 
 constexpr const char* framerate2398 = "24000/1001";
+constexpr const char* framerate2997 = "30000/1001";
 constexpr const char* framerate24 = "24/1";
 constexpr const char* framerate25 = "25/1";
-constexpr const char* framerate2997 = "30000/1001";
 constexpr const char* framerate30 = "30/1";
 
 constexpr float framerateNum2398 = 23.98;
+constexpr float framerateNum2997 = 29.97;
 constexpr int framerateNum24 = 24;
 constexpr int framerateNum25 = 25;
-constexpr float framerateNum2997 = 29.97;
 constexpr int framerateNum30 = 30;
 
 constexpr double overcrankMultiplier = 1.001;
