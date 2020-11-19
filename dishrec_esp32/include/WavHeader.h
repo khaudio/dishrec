@@ -36,12 +36,15 @@ enum wav_format_err
     DATA_SIZE_NOT_SET = 103
 };
 
-class WavFormat
+struct WavFormatData
 {
-public:
     uint32_t sampleRate;
     uint16_t bitDepth, numChannels, sampleWidth, formatCode;
-    
+};
+
+class WavFormat : virtual public WavFormatData
+{
+public:
     virtual void set_bit_depth(uint16_t bitsPerSample);
     virtual void set_sample_rate(uint32_t samplerate);
     virtual void set_channels(uint16_t channels);
@@ -164,7 +167,8 @@ public:
     virtual void set_byte_rate(uint32_t manualDataRate);
     virtual void set_extra_format_data(const uint8_t* data);
     virtual void set_extra_format_size(uint16_t length);
-    virtual void set_format(WavFormat params);
+    virtual void set_format(WavFormatData data);
+    virtual void set_format(WavFormat data);
 
     virtual size_t import_format_chunk(const uint8_t* data);
 

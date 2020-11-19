@@ -19,14 +19,32 @@
 #include "int_audio.h"
 #include "RingBuffer.h"
 #include "WavWriter.h"
+#include "EspSD.h"
+#include "Esp32Button.h"
 
+#ifdef ESP32
+#include "EspI2S.h"
+#include "WDT.h"
+#endif
 
-int main()
+int main_dev_test()
 {
     int i(0);
     std::cout << "Working... " << ++i << std::endl;
 
-    BWFHeader::BroadcastWav wav;
+    std::cout << "Mounting SD card" << std::endl;
+
+    EspSD::SDCard card;
+    WavFile::WavWriter wav;
+
+    std::cout << "Creating file" << std::endl;
+    wav.set_directory("");
+    wav.set_directory("/");
+    wav.set_directory("");
+    wav.open("wavfiletest");
+    wav.set_directory("/");
+    wav.set_directory("");
+    std::cout << "File created" << std::endl;
 
     BEXT::CodingHistoryRow row;
     row.set_pcm();
@@ -57,6 +75,8 @@ int main()
     params.set_bit_depth(24);
     params.set_format_code(WavMeta::FORMAT_PCM);
     params.set_channels(1);
+
+    wav.set_format(params);
     
     std::cout << "Working... " << ++i << std::endl;
 
@@ -68,10 +88,10 @@ int main()
     wav.set_framerate(23.98);
     std::cout << "Setting dropframe" << std::endl;
     wav.set_dropframe(false);
-    std::cout << "Setting sample rate" << std::endl;
-    wav.set_sample_rate(48000);
-    std::cout << "Setting bit depth" << std::endl;
-    wav.set_bit_depth(24);
+    // std::cout << "Setting sample rate" << std::endl;
+    // wav.set_sample_rate(48000);
+    // std::cout << "Setting bit depth" << std::endl;
+    // wav.set_bit_depth(24);
     std::cout << "Setting timecode" << std::endl;
     wav.set_timecode(16, 14, 34, 0);
     
@@ -150,22 +170,19 @@ int main()
     wav.destroy_sync_point(asyncpoint);
 
     const size_t length(48);
-    std::vector<int16_t> samples;
-    std::vector<float> floatVals;
-    std::vector<int_audio> scaled24;
+    std::vector<float>* floatVals = new std::vector<float>;
+    std::vector<int_audio>* scaled24 = new std::vector<int_audio>;
 
     for (size_t i(0); i < length; ++i)
     {
-        floatVals.emplace_back(0);
-        samples.emplace_back(0);
-        scaled24.emplace_back(0);
+        floatVals->emplace_back(0);
+        scaled24->emplace_back(0);
     }
 
-    sine<float>(&floatVals, 1000, 48000, nullptr);
-    float_to_int<float, int16_t>(&samples, &floatVals);
-    int_to_float<int16_t, float>(&floatVals, &samples);
+    sine<float>(floatVals, 1000, 48000, nullptr);
+    float_to_int<float, int_audio>(scaled24, floatVals);
 
-    float_to_int<float, int_audio>(&scaled24, &floatVals);
+    delete floatVals;
 
     wav.set_country_code("US");
     wav.set_org_code("DSR");
@@ -197,86 +214,68 @@ int main()
     size_t numBytes = length * packer.get_usable_width();
     uint8_t packedInt[numBytes];
     std::memset(packedInt, 0, numBytes);
-
-    std::vector<int_audio> p;
-    p.reserve(length);
-    for (size_t i(0); i < length; ++i) p.emplace_back(0);
-
-    for (size_t i(0); i < scaled24.size(); ++i)
+    for (size_t i(0); i < scaled24->size(); ++i)
     {
-        padded.emplace_back(scaled24[i]);
+        padded.emplace_back(scaled24->at(i));
     }
 
     packer.pack<int_audio>(packedInt, &padded);
-    packer.unpack<int_audio>(&p, packedInt);
 
-    int paddy(256);
-    int_audio packed = paddy;
-    std::cout << "Before: " << packed.data << std::endl;
-    packed *= .5f;
-    std::cout << "After: " << packed.data << std::endl << std::endl;
-    std::cout << +packed.data24 << " " << +packed.data16 << " " << +packed.data8 << std::endl;
-    std::cout << "Negative: " << -packed << std::endl;
-
-    constexpr int_audio zero(0);
-    std::cout << "zero: " << zero << std::endl;
-
-    constexpr int_audio maximum(std::numeric_limits<int_audio>::max());
-    constexpr int_audio minimum(std::numeric_limits<int_audio>::min());
-
-    Buffer::RingBuffer<int_audio> ringbuff(48, 4);
+    Buffer::RingBuffer<int_audio> ringbuff(48, 2);
     ringbuff.write(padded, true);
     ringbuff.write(padded, true);
-    ringbuff.write(padded, true);
-    ringbuff.write(padded, true);
-
-    WavFile::WavWriter writefile;
-
-    writefile._set_filename("currentwavfile");
-    writefile._new_file();
-
-    uint8_t* readptr = ringbuff.get_read_ptr();
 
     wav.set_sample_rate(48000);
     wav.set_bit_depth(24);
 
-    std::vector<int_audio> gotten;
-
-    std::cout << "RingBuffer<int_audio>::bytesPerBuffer: " << ringbuff.bytesPerBuffer << std::endl;
-
-    size_t packedBuffSize = ringbuff.bufferLength * 3;
-    uint8_t packedBuff[packedBuffSize]; // Sample width at 24-bit == 3
-
     for (int i(0); i < 1000; ++i)
     {
-        writefile._write_to_file(packedInt, numBytes);
-        wav.set_data_size(wav.get_data_size() + numBytes);
+        wav.write(packedInt, numBytes);
+        #ifdef ESP32
+        force_reset_wdt_1();
+        #endif
     }
 
-    std::cout << "Getting header size" << std::endl;
-    size_t metaBuffSize = wav.total_size();
-    std::cout << "Got unpadded header size... " << metaBuffSize << std::endl;
-    std::cout << "Getting number of pad bytes needed" << std::endl;
-    int numPadBytes = WavFile::numBytesReservedForWavHeader - metaBuffSize;
-    std::cout << "Number of pad bytes needed... " << numPadBytes << std::endl;
-    std::cout << "Setting pad bytes" << std::endl;
-    wav.set_pad_size(numPadBytes);
-    metaBuffSize = wav.total_size();
-    std::cout << "Got new header size... " << metaBuffSize << std::endl;
-    std::cout << "Creating uint8_t buffer for header..." << std::endl;
-    uint8_t* metaBuff;
-    metaBuff = new uint8_t[metaBuffSize];
-    std::cout << "Getting header..." << std::endl;
-    size_t written = wav.get(metaBuff);
-    std::cout << "Got header" << std::endl;
-    // print(metaBuff, written);
-    std::cout << "metaBuffSize: " << metaBuffSize << "\twritten: " << written << std::endl;
-    printf("\nBroadcastWav header total size: %lu\n", wav.total_size());
+    printf("\nBroadcastWav header total size: %u\n", wav.total_size());
 
-    
+    wav.close();
 
-    writefile._write_header(metaBuff, metaBuffSize);
-    writefile._close_file();
+    std::cout << "Creating button" << std::endl;
+
+    bool buttonTrigger(false);
+    Esp32Button::DualActionButton button(27);
+    button.set_trigger(&buttonTrigger);
+    buttonTrigger = !buttonTrigger;
+    std::cout << "Button is " << (button.read() ? "active" : "inactive") << std::endl;
+
+    #ifdef ESP32
+    std::cout << "Starting I2S" << std::endl;
+
+    I2SBus bus(0, true, true, true);
+    bus.set_sample_rate(48000);
+    bus.set_bit_depth(24);
+    bus.set_channels(1);
+    bus.set_buffer_size(128);
+    bus.set_pins(
+            GPIO_NUM_32, // Word (LR) Select
+            GPIO_NUM_33, // Serial (bit) clock
+            GPIO_NUM_39, // Data Input
+            GPIO_NUM_25  // Data Output
+        );
+    bus.config();
+    bus.start();
+
+    std::cout << "I2S Started" << std::endl;
+    #endif
+
+    #ifdef ESP32
+    bus.shutdown();
+    #endif
+
+    std::cout << "Done" << std::endl;
 
     std::cout << std::endl << std::endl;
+
+    return 0;
 }
+

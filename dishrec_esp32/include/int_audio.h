@@ -608,9 +608,14 @@ union int_audio
         return -(this->data);
     }
 
+    inline operator bool()
+    {
+        return this->data;
+    }
+
     inline bool operator!() const
     {
-        return bool(this->data);
+        return !this->data;
     }
 };
 

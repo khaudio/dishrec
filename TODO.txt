@@ -1,18 +1,27 @@
 TODO:
 
+    Timestamp doesn't stick on odd-numbered filenames
+    Apply metadata stuff at top level
+        filename to scene name
+
+    RingBuffer
+        get current buffer
+
+    Button
+        debounce in hardware
+            cap or rc
+
     bwf
         should move BroadcastWav::set_circled(bool isCircled) to a higher level
         change filename and not scene name
         reserve enough meta space to write when file is done
             keep in mind sync point and track # limits
-
-    change audio datatype to int unless 8-bit unsigned
-        pad all data to int_fast32_t for selected bit depth
-        add padded flag for packing
-        use PadMeta::AudioInt()
-    add optional 32f conversion
+    
+    optional 32f conversion
 
     rec/stop
+        bool armed;
+            wait for frame boundary and start recording when armed
         start recording on TC frame boundary or better, second boundary
             pre-roll in ring buffer?
             try sizing dynamically created ring buffer as size of one frame

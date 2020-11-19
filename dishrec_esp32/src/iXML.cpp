@@ -497,11 +497,11 @@ void IXML::_assert_valid_ubits(const char* bits)
         {
             if (bits[i] == TimecodeBase::ubitsValidChars[j])
             {
-                goto skip;
+                goto SKIP;
             }
         }
         throw INVALID_UBITS_CHARS;
-        skip: continue;
+        SKIP: continue;
     }
 }
 

@@ -268,12 +268,21 @@ void WavHeader::set_byte_rate(uint32_t rate)
     *this->formatChunk.byteRate = this->byteRate;
 
 }
-void WavHeader::set_format(WavFormat params)
+
+void WavHeader::set_format(WavFormatData data)
 {
-    set_sample_rate(params.sampleRate);
-    set_bit_depth(params.bitDepth);
-    set_channels(params.numChannels);
-    set_format_code(params.formatCode);
+    set_sample_rate(data.sampleRate);
+    set_bit_depth(data.bitDepth);
+    set_channels(data.numChannels);
+    set_format_code(data.formatCode);
+}
+
+void WavHeader::set_format(WavFormat data)
+{
+    set_sample_rate(data.sampleRate);
+    set_bit_depth(data.bitDepth);
+    set_channels(data.numChannels);
+    set_format_code(data.formatCode);
 }
 
 void WavHeader::_set_data_rates()

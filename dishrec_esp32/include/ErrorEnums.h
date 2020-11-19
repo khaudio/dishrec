@@ -22,13 +22,13 @@ enum format_err
     INVALID_BIT_DEPTH = 51,
 };
 
-enum file_err
-{
-    INAVLID_DIRECTORY = 70,
-    FILE_NOT_OPEN = 71,
-    FILENAME_NOT_SET = 72,
-    SEEK_ERROR = 73,
-    FILE_MODE_INCORRECT = 74,
-};
+// enum file_err
+// {
+//     INAVLID_DIRECTORY = 70,
+//     FILE_NOT_OPEN = 71,
+//     FILENAME_NOT_SET = 72,
+//     SEEK_ERROR = 73,
+//     FILE_MODE_INCORRECT = 74,
+// };
 
 #endif

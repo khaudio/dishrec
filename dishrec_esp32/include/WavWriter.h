@@ -3,14 +3,7 @@
 
 #include <iostream>
 #include "BWFHeader.h"
-
-// #ifdef ESP32
-// #include <SD.h>
-// #else
-// #include <fstream>
-// #endif
-
-#include <fstream>
+#include "EspSD.h"
 
 enum wavfile_err
 {
@@ -23,34 +16,67 @@ namespace WavFile
 /* Number of bytes to pad top of wav file with for header */
 constexpr size_t numBytesReservedForWavHeader(8192);
 
-/* Max string length for filename of current file,
-not including dot and extension */
-constexpr int filenameCharBufferLength(4096);
+/* Filepath separator */
+constexpr const char* seperator = "/";
 
-class WavWriter : public BWFHeader::BroadcastWav
+class FileMeta
 {
 protected:
-public:
-    char _filename[filenameCharBufferLength + 5];
-    std::fstream _filestream;
+    std::string _directory, _basename, _filename;
 
-    void _new_file();
-    void _close_file();
-    void _append_to_file(const char* filepath);
-    void _write_to_file(uint8_t* data, size_t numBytes);
-    void _write_header(uint8_t* data, size_t numBytes);
+    void _set_filename();
 
 public:
-    void _set_filename(const char* fname);
+    std::string extension;
+    
+    FileMeta();
+    ~FileMeta();
+
+    virtual void set_directory(const char* directoryName = "/");
+    virtual void set_directory(std::string directoryName = "/");
+
+    virtual void set_filename(const char* fname);
+    virtual void set_filename(std::string fname);
+
+    virtual const char* get_filename() const;
+};
+
+class WavWriter :
+public FileMeta,
+public EspSD::FileObj,
+public BWFHeader::BroadcastWav
+{
+protected:
+    bool _new_file();
+    void _write_header();
 
 public:
     WavWriter();
     ~WavWriter();
 
-    int write_to_file(uint8_t* data, size_t length);
-    template <typename T>
-    int write_to_file(std::vector<T> data);
+    void set_filename(const char* filename) override;
 
+    /* Open new file */
+    bool open();
+    bool open(const char* fname) override;
+
+    /* Open file as read-only */
+    bool open_read();
+    bool open_read(const char* fname) override;
+
+    /* Open and append to file */
+    bool open_append();
+    bool open_append(const char* fname) override;
+
+    void write(const char* data, size_t numBytes) override;
+    void write(uint8_t* data, size_t numBytes) override;
+
+    /* Write vector data and return number of bytes written */
+    template <typename T>
+    size_t write(std::vector<T>* data);
+
+    /* Write header and close file */
+    void close() override;
 };
 
 };

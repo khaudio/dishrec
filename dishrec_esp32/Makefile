@@ -14,7 +14,7 @@ NAME = dishrec_dev_test
 output: $(BUILD)/main_dev_test.o | $(OUT)
 	$(CXX) $(CXXFLAGS) $(BUILD)/* -o $(OUT)/$(NAME) $(LDFLAGS)
 
-$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.so $(BUILD)/WavWriter.so $(BUILD)/AudioDataPad.so $(BUILD)/RMS.so $(BUILD)/Timer.so | $(BUILD)
+$(BUILD)/main_dev_test.o: $(BUILD)/RingBuffer.so $(BUILD)/WavWriter.so $(BUILD)/AudioDataPad.so $(BUILD)/EspSD.so $(BUILD)/Esp32Button.so $(BUILD)/RMS.so $(BUILD)/Timer.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/main_dev_test.cpp -o $(BUILD)/main_dev_test.o $(LDFLAGS)
 
 $(BUILD)/RingBuffer.so: | $(BUILD)
@@ -47,17 +47,23 @@ $(BUILD)/BEXTChunk.so: $(BUILD)/AudioUtils.so | $(BUILD)
 $(BUILD)/tinyxml2.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(LIB)/tinyxml2/tinyxml2.cpp -o $(BUILD)/tinyxml2.so $(LDFLAGS) -shared
 
+$(BUILD)/EspSD.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/EspSD.cpp -o $(BUILD)/EspSD.so $(LDFLAGS) -shared
+
 $(BUILD)/ebur128.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(LIB)/ebur128/ebur128.c -o $(BUILD)/ebur128.so $(LDFLAGS) -shared
+
+$(BUILD)/Timer.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/Timer.cpp -o $(BUILD)/Timer.so $(LDFLAGS) -shared
 
 $(BUILD)/RMS.so: $(BUILD)/AudioUtils.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/RMS.cpp -o $(BUILD)/RMS.so $(LDFLAGS) -shared
 
+$(BUILD)/Esp32Button.so: | $(BUILD)
+	$(CXX) -c $(CXXFLAGS) $(SRC)/Esp32Button.cpp -o $(BUILD)/Esp32Button.so $(LDFLAGS) -shared
+
 $(BUILD)/AudioUtils.so: $(BUILD)/int_audio.so | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/AudioUtils.cpp -o $(BUILD)/AudioUtils.so $(LDFLAGS) -shared
-
-$(BUILD)/Timer.so: | $(BUILD)
-	$(CXX) -c $(CXXFLAGS) $(SRC)/Timer.cpp -o $(BUILD)/Timer.so $(LDFLAGS) -shared
 
 $(BUILD)/int_audio.so: | $(BUILD)
 	$(CXX) -c $(CXXFLAGS) $(SRC)/int_audio.cpp -o $(BUILD)/int_audio.so $(LDFLAGS) -shared
