@@ -123,6 +123,12 @@ const size_t bytesPerBuffer(inBuffer.bufferLength * wav.sampleWidth);
 
 Packer packer;
 
+// Prepare to record
+bool armed(false);
+
+// Save to storage when true
+bool recording(false);
+
 /*                            Prototypes                            */
 
 int main();
@@ -183,16 +189,16 @@ void loop()
 {
     static int takeNumber(0);
     static char filename[32];
-    static bool recording(false), armed(false);
+    // static bool recording(false), armed(false);
     
-    uint8_t packedFromI2S[bytesPerBuffer];
-    uint8_t packedToCard[bytesPerBuffer];
-    std::vector<int_audio>* inBufferReadPtr = &inBuffer.ring[inBuffer.readIndex];
-    std::vector<int_audio>* inBufferWritePtr = &inBuffer.ring[inBuffer.writeIndex];
+    // uint8_t packedFromI2S[bytesPerBuffer];
+    // uint8_t packedToCard[bytesPerBuffer];
+    // std::vector<int_audio>* inBufferReadPtr = &inBuffer.ring[inBuffer.readIndex];
+    // std::vector<int_audio>* inBufferWritePtr = &inBuffer.ring[inBuffer.writeIndex];
 
-    i2sIn.read(packedFromI2S, bytesPerBuffer);
-    packer.unpack<int_audio>(inBufferWritePtr, packedFromI2S);
-    inBuffer.force_rotate_write_buffer();
+    // i2sIn.read(packedFromI2S, bytesPerBuffer);
+    // packer.unpack<int_audio>(inBufferWritePtr, packedFromI2S);
+    // inBuffer.force_rotate_write_buffer();
 
     if (!recording && recStopButton)
     {
@@ -231,8 +237,45 @@ void loop()
 
     SKIP:
 
-    // Read and dobounce button if active
+    // Read and debounce button if active
     if (recStopButton.read()) std::this_thread::sleep_for(
             std::chrono::milliseconds(10)
         );
+}
+
+void i2s_to_buffer()
+{
+    uint8_t packedFromI2S[bytesPerBuffer];
+    std::vector<int_audio>* inBufferWritePtr = &inBuffer.ring[inBuffer.writeIndex];
+    while (true)
+    {
+        i2sIn.read(packedFromI2S, bytesPerBuffer);
+        packer.unpack<int_audio>(inBufferWritePtr, packedFromI2S);
+        inBuffer.force_rotate_write_buffer();
+    }
+}
+
+void buffer_to_storage()
+{
+    uint8_t packedToCard[bytesPerBuffer];
+    std::vector<int_audio>* inBufferReadPtr = &inBuffer.ring[inBuffer.readIndex];
+    while (true)
+    {
+        if (recording)
+        {
+            packer.pack<int_audio>(packedToCard, inBufferReadPtr);
+            wav.write(packedToCard, bytesPerBuffer);
+        }
+        inBuffer.rotate_read_buffer();
+    }
+}
+
+void check_rec_button()
+{
+    while (true)
+    {
+        if (recStopButton.read()) std::this_thread::sleep_for(
+                std::chrono::milliseconds(10)
+            );
+    }
 }
