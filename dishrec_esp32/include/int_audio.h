@@ -8,11 +8,11 @@
 
 union int_audio
 {
-    int_fast32_t data : 24;
+    int_fast32_t data;
     int_fast32_t data24 : 24;
     int_fast32_t data16 : 16;
     uint_fast8_t data8 : 8;
-    uint8_t _data[3];
+    uint8_t _data[sizeof(int_fast32_t)];
 
     constexpr int_audio() :
     data(0)
@@ -29,7 +29,7 @@ union int_audio
     {
     }
 
-    // Copy constructor hack to allow optional constexpr constructor
+    // Copy constructor to allow optional constexpr constructor
     constexpr int_audio(int value, int unused = 0) :
     int_audio(int_audio(), value)
     {

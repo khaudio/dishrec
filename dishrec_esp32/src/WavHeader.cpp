@@ -2,6 +2,28 @@
 
 using namespace WavMeta;
 
+WavFormat::WavFormat()
+{
+    this->sampleRate = 0;
+    this->bitDepth = 0;
+    this->numChannels = 0;
+    this->sampleWidth = 0;
+    this->formatCode = FORMAT_PCM;
+}
+
+WavFormat::~WavFormat()
+{
+}
+
+WavFormat::WavFormat(const WavFormat& format)
+{
+    this->sampleRate = format.sampleRate;
+    this->bitDepth = format.bitDepth;
+    this->numChannels = format.numChannels;
+    this->sampleWidth = format.sampleWidth;
+    this->formatCode = format.formatCode;
+}
+
 inline void WavFormat::set_bit_depth(uint16_t bitsPerSample)
 {
     this->bitDepth = bitsPerSample;
@@ -36,6 +58,14 @@ inline void WavFormat::set_format_code(uint16_t formatcode)
     }
 }
 
+inline void WavFormat::set_format(const WavFormatData& data)
+{
+    set_sample_rate(data.sampleRate);
+    set_bit_depth(data.bitDepth);
+    set_channels(data.numChannels);
+    set_format_code(data.formatCode);
+}
+
 inline void WavFormat::set_pcm()
 {
     this->formatCode = FORMAT_PCM;
@@ -51,17 +81,17 @@ inline void WavFormat::set_mpeg_1()
     this->formatCode = FORMAT_MPEG_1;
 }
 
-inline bool WavFormat::is_pcm()
+inline bool WavFormat::is_pcm() const
 {
     return (this->formatCode == FORMAT_PCM);
 }
 
-inline bool WavFormat::is_floating_point()
+inline bool WavFormat::is_floating_point() const
 {
     return (this->formatCode == FORMAT_FLOATING_POINT);
 }
 
-inline bool WavFormat::is_mpeg_1()
+inline bool WavFormat::is_mpeg_1() const
 {
     return (this->formatCode == FORMAT_MPEG_1);
 }
@@ -200,13 +230,14 @@ size_t FormatChunk::set(const uint8_t* data)
 }
 
 WavHeader::WavHeader() :
-_headerSize(60),
-_sampleRateSet(false),
-_bitDepthSet(false),
-_numChannelsSet(true)
+WavFormat(),
+_headerSize(60)
 {
-    this->numChannels = 1; // Default to 1 channel
-    set_pcm(); // Default to Linear PCM
+    // Default to 1 channel
+    this->numChannels = 1;
+    
+    // Default to Linear PCM
+    set_pcm();
 }
 
 WavHeader::~WavHeader()
@@ -217,7 +248,6 @@ void WavHeader::set_sample_rate(uint32_t samplerate)
 {
     WavFormat::set_sample_rate(samplerate);
     *this->formatChunk.sampleRate = this->sampleRate;
-    this->_sampleRateSet = true;
     _set_data_rates();
 }
 
@@ -226,7 +256,6 @@ void WavHeader::set_bit_depth(uint16_t bitsPerSample)
     WavFormat::set_bit_depth(bitsPerSample);
     *this->formatChunk.bitDepth = this->bitDepth;
     *this->formatChunk.sampleWidth = this->sampleWidth;
-    this->_bitDepthSet = true;
     _set_data_rates();
 }
 
@@ -234,7 +263,6 @@ void WavHeader::set_channels(uint16_t channels)
 {
     WavFormat::set_channels(channels);
     *this->formatChunk.numChannels = this->numChannels;
-    this->_numChannelsSet = true;
     _set_data_rates();
 }
 
@@ -269,26 +297,10 @@ void WavHeader::set_byte_rate(uint32_t rate)
 
 }
 
-void WavHeader::set_format(WavFormatData data)
-{
-    set_sample_rate(data.sampleRate);
-    set_bit_depth(data.bitDepth);
-    set_channels(data.numChannels);
-    set_format_code(data.formatCode);
-}
-
-void WavHeader::set_format(WavFormat data)
-{
-    set_sample_rate(data.sampleRate);
-    set_bit_depth(data.bitDepth);
-    set_channels(data.numChannels);
-    set_format_code(data.formatCode);
-}
-
 void WavHeader::_set_data_rates()
 {
     // Do not use is_set() here in case it is overriden
-    if (!this->_sampleRateSet || !this->_bitDepthSet || !this->_numChannelsSet) return;
+    if (!this->sampleRate || !this->bitDepth || !this->numChannels) return;
     set_byte_rate((this->sampleRate * this->bitDepth * this->numChannels) / 8);
     this->frameSize = this->sampleWidth * this->numChannels;
     this->samplesPerSecond = this->sampleRate * this->numChannels;
@@ -331,9 +343,9 @@ size_t WavHeader::import_format_chunk(const uint8_t* data)
 bool WavHeader::is_set()
 {
     return (
-            this->_sampleRateSet
-            && this->_bitDepthSet
-            && this->_numChannelsSet
+            this->sampleRate
+            && this->bitDepth
+            && this->numChannels
         );
 }
 

@@ -354,8 +354,6 @@ void Base::set_timecode(std::array<int, 4> tc)
 void Base::set_timecode(int numFrames)
 {
     set_timecode(0, 0, 0, numFrames);
-    // std::array<int, 4> tc = _from_frames(numFrames);
-    // set_timecode(tc[0], tc[1], tc[2], tc[3]);
 }
 
 void Base::set_timecode(const char* timecodeStr)
@@ -409,7 +407,6 @@ std::string Base::str()
     return tc_to_string(get_timecode(), this->_dropframe);
 }
 
-
 Base TimecodeBase::operator-(const Base& b)
 {
     Base output(b);
@@ -458,6 +455,7 @@ Base TimecodeBase::operator-(Base& b1, const std::array<int, 4>& tc)
 }
 
 Clock::Clock() :
+WavMeta::WavFormat(),
 Timestamp(),
 Base()
 {
@@ -501,12 +499,17 @@ inline void Clock::_set_samples_per_frame()
     this->_samplesPerFrame = this->sampleRate / this->_divisors[3];
 }
 
+void Clock::set_sample_rate(uint32_t samplerate)
+{
+    WavMeta::WavFormat::set_sample_rate(samplerate);
+    if (this->_initialized) _set_samples_per_frame();
+}
+
 void Clock::set_framerate(const char* fps)
 {
     Base::set_framerate(fps);
     if (this->sampleRate) _set_samples_per_frame();
 }
-
 
 void Clock::set_framerate(double fps)
 {
@@ -525,48 +528,46 @@ void Clock::set_dropframe(bool isDropframe)
     Base::set_dropframe(isDropframe);
 }
 
-void Clock::set_timecode(int hr, int min, int sec, int frm)
+inline void Clock::set_timecode(int hr, int min, int sec, int frm)
 {
     Base::set_timecode(hr, min, sec, frm);
     _set_timestamp();
 }
 
-void Clock::set_timecode(std::array<int, 4> tc)
+inline void Clock::set_timecode(std::array<int, 4> tc)
 {
     set_timecode(tc[0], tc[1], tc[2], tc[3]);
 }
 
-void Clock::set_timecode(int numFrames)
+inline void Clock::set_timecode(int numFrames)
 {
     Base::set_timecode(numFrames);
     this->samplesSinceMidnight = numFrames * this->_samplesPerFrame;
 }
 
-void Clock::set_timecode(const char* timecodeStr)
+inline void Clock::set_timecode(const char* timecodeStr)
 {
     Base::set_timecode(timecodeStr);
     _set_timestamp();
 }
 
-void Clock::set_timecode(Clock& clock)
+inline void Clock::set_timecode(Clock& clock)
 {
     this->sampleRate = clock.sampleRate;
     Base::set_timecode(clock);
 }
 
-uint64_t Clock::get_timestamp()
+uint32_t Clock::samples_per_frame() const
+{
+    return this->_samplesPerFrame;
+}
+
+uint64_t Clock::get_timestamp() const
 {
     return this->samplesSinceMidnight;
 }
 
-void Clock::tick()
+inline void Clock::tick()
 {
-    int numFrames = get_frames() + 1;
-    set_timecode(numFrames);
-}
-
-void Clock::set_sample_rate(uint32_t samplerate)
-{
-    WavMeta::WavFormat::set_sample_rate(samplerate);
-    if (this->_initialized) _set_samples_per_frame();
+    set_timecode(get_frames() + 1);
 }

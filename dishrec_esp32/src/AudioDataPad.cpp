@@ -1,5 +1,7 @@
 #include "AudioDataPad.h"
 
+using namespace DataPad;
+
 PadMeta::PadMeta() :
 _usableWidth(0),
 _absoluteWidth(0)

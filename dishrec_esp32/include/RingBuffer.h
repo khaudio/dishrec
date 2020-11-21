@@ -32,14 +32,14 @@ template <typename T>
 class RingBuffer : virtual public Ring
 {
 public:
-    // constexpr static T _zero = get_zero<T>();
     const static T _zero;
 
 protected:
-    bool _sizeIsSet;
     int
         _totalWritableLength, _buffered,
         _samplesWritten, _samplesRemaining;
+
+    bool _size_is_set();
 
 public:
     uint32_t bufferLength, totalRingSampleLength, bytesPerBuffer;
@@ -50,9 +50,9 @@ public:
     RingBuffer(int bufferSize, uint8_t ringSize);
     ~RingBuffer();
 
-    virtual size_t size();
-
     virtual void set_size(int bufferSize, uint8_t ringSize);
+    
+    virtual size_t size();
 
     virtual int buffered();
     virtual int available();
@@ -60,11 +60,13 @@ public:
     virtual bool is_writable();
 
     virtual void rotate_read_buffer();
-    virtual void rotate_write_buffer();
-    virtual void force_rotate_write_buffer();
+    virtual void rotate_write_buffer(bool force = false);
 
-    virtual uint8_t* get_read_ptr();
-    virtual uint8_t* get_write_ptr();
+    virtual std::vector<T>* get_read_buffer();
+    virtual std::vector<T>* get_write_buffer();
+
+    virtual uint8_t* get_read_byte();
+    virtual uint8_t* get_write_byte();
 
 /*                               Read                               */
 
@@ -76,6 +78,7 @@ public:
 
 /*                               Write                              */
 
+public:
     virtual int write(T data, bool force = false);
     virtual int write(std::vector<T> data, bool force = false);
     virtual int write(uint8_t* data, size_t numBytes, bool force = false);

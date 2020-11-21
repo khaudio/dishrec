@@ -140,9 +140,9 @@ public:
 };
 
 class Clock :
-public Base,
+virtual public WavMeta::WavFormat,
 virtual public Timestamp,
-virtual public WavMeta::WavFormat
+public Base
 {
 protected:
     uint32_t _samplesPerFrame;
@@ -158,7 +158,7 @@ public:
     Clock();
     ~Clock();
     
-    virtual void set_sample_rate(uint32_t samplerate);
+    void set_sample_rate(uint32_t samplerate) override;
 
     void set_framerate(const char* fps) override;
     void set_framerate(double fps) override;
@@ -173,7 +173,8 @@ public:
 
     virtual void set_timecode(Clock& clock);
 
-    virtual uint64_t get_timestamp();
+    virtual uint64_t get_timestamp() const;
+    virtual uint32_t samples_per_frame() const;
     virtual void tick();
 };
 

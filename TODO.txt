@@ -1,5 +1,25 @@
 TODO:
 
+    Debug thread wdt timeout while recording
+
+    Save/load wav writer instance to/from EEPROM
+        or at least filename and stuff
+
+    ixml
+        make iXML::IXML::size() not call _xml_c_str() every time it sets size
+            it's bugging out the write thread in main.cpp
+        check file_set_index setter
+
+    WavWriter
+        maybe set size when file is closed
+
+    TimecodeBase
+        Write TimecodeData struct with framerate str and dropframe flag
+        Add set_format method or something like it for higher-level classes
+            to autoset framerate and DF
+            similar to WavMeta::WavFormatData
+            maybe come up with some better class names
+
     Timestamp doesn't stick on odd-numbered filenames
     Apply metadata stuff at top level
         filename to scene name
@@ -29,8 +49,6 @@ TODO:
                 samples per buffer is not the same as frames per buffer
                     need to time to frames per buffer for channels > 1
 
-    ixml
-        check file_set_index setter
 
     EspSDWavFile
         fix EspSDWavFile::write_header() with new getter instead of old get_header()

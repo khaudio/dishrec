@@ -10,6 +10,9 @@
 #include <iomanip>
 #include <bitset>
 
+namespace DataPad
+{
+
 class PadMeta
 {
 protected:
@@ -48,6 +51,8 @@ public:
 
     template <typename T>
     void pack(uint8_t* packed, std::vector<T>* padded);
+};
+
 };
 
 #endif

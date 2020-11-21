@@ -17,14 +17,13 @@ Ring::~Ring()
 template <typename T>
 RingBuffer<T>::RingBuffer() :
 Ring(),
-_sizeIsSet(false)
+bufferLength(0)
 {
 }
 
 template <typename T>
 RingBuffer<T>::RingBuffer(int bufferSize, uint8_t ringSize) :
 Ring(),
-_sizeIsSet(true),
 _buffered(0),
 _samplesWritten(0),
 _samplesRemaining(bufferSize),
@@ -54,6 +53,12 @@ RingBuffer<T>::~RingBuffer()
 }
 
 template <typename T>
+bool RingBuffer<T>::_size_is_set()
+{
+    return (this->bufferLength && this->ringLength);
+}
+
+template <typename T>
 void RingBuffer<T>::set_size(int bufferSize, uint8_t ringSize)
 {
     this->bufferLength = bufferSize;
@@ -77,7 +82,6 @@ void RingBuffer<T>::set_size(int bufferSize, uint8_t ringSize)
     }
     this->readIndex = 0;
     this->writeIndex = 1;
-    this->_sizeIsSet = true;
 }
 
 template <typename T>
@@ -91,7 +95,7 @@ size_t RingBuffer<T>::size()
 template <typename T>
 int RingBuffer<T>::buffered()
 {
-    /* Total number of samples buffered but unread,
+    /* Total number of unread samples buffered,
     excluding the current write buffer */
     return (this->_buffered / this->bufferLength) * this->bufferLength;
 }
@@ -114,7 +118,7 @@ template <typename T>
 bool RingBuffer<T>::is_writable()
 {
     #ifdef _DEBUG
-    if (!this->_sizeIsSet) throw BUFFER_NOT_INITIALIZED;
+    if (!_size_is_set()) throw BUFFER_NOT_INITIALIZED;
     #endif
     
     return this->readIndex != this->writeIndex;
@@ -137,7 +141,7 @@ void RingBuffer<T>::rotate_read_buffer()
 }
 
 template <typename T>
-void RingBuffer<T>::rotate_write_buffer()
+void RingBuffer<T>::rotate_write_buffer(bool force)
 {
     if (++this->writeIndex >= this->ringLength)
     {
@@ -145,22 +149,27 @@ void RingBuffer<T>::rotate_write_buffer()
     }
     this->_samplesWritten = 0;
     this->_samplesRemaining = this->bufferLength;
-
     this->_buffered += this->bufferLength;
-}
-
-template <typename T>
-inline void RingBuffer<T>::force_rotate_write_buffer()
-{
-    rotate_write_buffer();
-    if (!is_writable())
+    if (force && !is_writable())
     {
         rotate_read_buffer();
     }
 }
 
 template <typename T>
-inline uint8_t* RingBuffer<T>::get_read_ptr()
+inline std::vector<T>* RingBuffer<T>::get_read_buffer()
+{
+    return &(this->ring[this->readIndex]);
+}
+
+template <typename T>
+inline std::vector<T>* RingBuffer<T>::get_write_buffer()
+{
+    return &(this->ring[this->writeIndex]);
+}
+
+template <typename T>
+inline uint8_t* RingBuffer<T>::get_read_byte()
 {
     /* Returns current read buffer */
     return reinterpret_cast<uint8_t*>(
@@ -169,7 +178,7 @@ inline uint8_t* RingBuffer<T>::get_read_ptr()
 }
 
 template <typename T>
-inline uint8_t* RingBuffer<T>::get_write_ptr()
+inline uint8_t* RingBuffer<T>::get_write_byte()
 {
     /* Returns current write buffer */
     return reinterpret_cast<uint8_t*>(
@@ -189,7 +198,7 @@ const std::vector<T> RingBuffer<T>::read()
 {
     /* Returns current read buffer and rotates */
     #ifdef _DEBUG
-    if (!this->_sizeIsSet) throw BUFFER_NOT_INITIALIZED;
+    if (!_size_is_set()) throw BUFFER_NOT_INITIALIZED;
     #endif
 
     std::vector<T> output(_read());
@@ -202,7 +211,7 @@ int RingBuffer<T>::write(T data, bool force)
 {
     /* Write a single sample */
     #ifdef _DEBUG
-    if (!this->_sizeIsSet) throw BUFFER_NOT_INITIALIZED;
+    if (!_size_is_set()) throw BUFFER_NOT_INITIALIZED;
     #endif
 
     if (!is_writable() && !force) return 0;

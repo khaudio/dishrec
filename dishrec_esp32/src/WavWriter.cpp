@@ -70,10 +70,12 @@ const char* FileMeta::get_filename() const
 bool WavWriter::_new_file()
 {
     const char* name = FileMeta::get_filename();
-    std::cout << "filename is " << name << std::endl;
+    std::cout << "Creating file " << name << "..." << std::endl;
     bool opened = EspSD::FileObj::open(name);
+    std::cout << "Writing header pad..." << std::endl;
     for (size_t i(0); i < numBytesReservedForWavHeader; ++i)
     {
+        std::cout << "Writing header pad... " << i << std::endl;
         // Pad header allocation with NULL
         EspSD::FileObj::write("\0", 1);
     }
@@ -116,6 +118,17 @@ void WavWriter::set_filename(const char* fname)
 {
     FileMeta::set_filename(fname);
     iXML::IXML::set_filename(fname);
+}
+
+void WavWriter::set_filename(std::string fname)
+{
+    FileMeta::set_filename(fname);
+    iXML::IXML::set_filename(fname.c_str());
+}
+
+size_t WavWriter::size()
+{
+    return numBytesReservedForWavHeader + get_data_size();
 }
 
 bool WavWriter::open()

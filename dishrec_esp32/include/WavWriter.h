@@ -55,6 +55,10 @@ public:
     ~WavWriter();
 
     void set_filename(const char* filename) override;
+    void set_filename(std::string filename) override;
+
+    // File size (excluding RIFF ID + Size)
+    size_t size() override;
 
     /* Open new file */
     bool open();

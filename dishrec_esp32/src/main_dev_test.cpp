@@ -24,7 +24,6 @@
 
 #ifdef ESP32
 #include "EspI2S.h"
-#include "WDT.h"
 #endif
 
 int main_dev_test()
@@ -75,8 +74,6 @@ int main_dev_test()
     params.set_bit_depth(24);
     params.set_format_code(WavMeta::FORMAT_PCM);
     params.set_channels(1);
-
-    wav.set_format(params);
     
     std::cout << "Working... " << ++i << std::endl;
 
@@ -207,7 +204,7 @@ int main_dev_test()
     std::cout << wav.get_scene() << std::endl;
 
     // Packing int for I/O
-    Packer packer;
+    DataPad::Packer packer;
     packer.set_bit_depth(24);
 
     std::vector<int_audio> padded;
@@ -231,9 +228,9 @@ int main_dev_test()
     for (int i(0); i < 1000; ++i)
     {
         wav.write(packedInt, numBytes);
-        #ifdef ESP32
-        force_reset_wdt_1();
-        #endif
+        // #ifdef ESP32
+        // force_reset_wdt_1();
+        // #endif
     }
 
     printf("\nBroadcastWav header total size: %u\n", wav.total_size());
@@ -251,7 +248,7 @@ int main_dev_test()
     #ifdef ESP32
     std::cout << "Starting I2S" << std::endl;
 
-    I2SBus bus(0, true, true, true);
+    I2S::Bus bus(0, true, true, true);
     bus.set_sample_rate(48000);
     bus.set_bit_depth(24);
     bus.set_channels(1);
@@ -269,7 +266,7 @@ int main_dev_test()
     #endif
 
     #ifdef ESP32
-    bus.shutdown();
+    bus.stop();
     #endif
 
     std::cout << "Done" << std::endl;

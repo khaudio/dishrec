@@ -45,18 +45,24 @@ struct WavFormatData
 class WavFormat : virtual public WavFormatData
 {
 public:
+    WavFormat();
+    ~WavFormat();
+    WavFormat(const WavFormat& format);
+
     virtual void set_bit_depth(uint16_t bitsPerSample);
     virtual void set_sample_rate(uint32_t samplerate);
     virtual void set_channels(uint16_t channels);
     virtual void set_format_code(uint16_t formatcode);
     
+    virtual void set_format(const WavFormatData& data);
+
     virtual void set_pcm();
     virtual void set_floating_point();
     virtual void set_mpeg_1();
 
-    virtual bool is_pcm();
-    virtual bool is_floating_point();
-    virtual bool is_mpeg_1();
+    virtual bool is_pcm() const;
+    virtual bool is_floating_point() const;
+    virtual bool is_mpeg_1() const;
 };
 
 class Chunk
@@ -167,8 +173,6 @@ public:
     virtual void set_byte_rate(uint32_t manualDataRate);
     virtual void set_extra_format_data(const uint8_t* data);
     virtual void set_extra_format_size(uint16_t length);
-    virtual void set_format(WavFormatData data);
-    virtual void set_format(WavFormat data);
 
     virtual size_t import_format_chunk(const uint8_t* data);
 

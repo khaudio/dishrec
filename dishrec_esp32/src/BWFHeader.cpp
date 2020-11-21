@@ -178,7 +178,7 @@ void BroadcastWav::clear_timecode()
     this->bextChunk.set_timestamp(*this->timeReferenceLow, *this->timeReferenceHigh);
 }
 
-void BroadcastWav::set_data_size(size_t numBytes)
+inline void BroadcastWav::set_data_size(size_t numBytes)
 {
     if (this->_bw64)
     {
@@ -191,7 +191,7 @@ void BroadcastWav::set_data_size(size_t numBytes)
     size();
 }
 
-size_t BroadcastWav::get_data_size()
+inline size_t BroadcastWav::get_data_size()
 {
     return (
             this->_bw64 ?

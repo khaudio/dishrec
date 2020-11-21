@@ -8,9 +8,14 @@
 #include "WavHeader.h"
 #include "int_audio.h"
 
-class I2SBus : virtual public WavMeta::WavFormat
+namespace I2S
+{
+
+class Bus : virtual public WavMeta::WavFormat
 {
 protected:
+    bool _running;
+
     // I2S port number (0 or 1; Internal DAC only supported on I2S_NUM_0)
     i2s_port_t _i2sNum;
     
@@ -30,11 +35,12 @@ protected:
     virtual i2s_bits_per_sample_t _get_i2s_bit_depth() const;
     virtual i2s_channel_fmt_t _get_i2s_channel_format() const;
     virtual void _check_format();
+    virtual void _stop();
 
 public:
-    I2SBus();
-    I2SBus(int i2sNum, bool isMaster, bool receives, bool transmits);
-    ~I2SBus();
+    Bus();
+    Bus(int i2sNum, bool isMaster, bool receives, bool transmits);
+    ~Bus();
 
     virtual void set_i2s_num(int i2sNum);
 
@@ -47,7 +53,7 @@ public:
     // DMA buffer length
     virtual void set_buffer_size(size_t bufferSizeInSamples);
 
-    // Physical ESP32 pins
+    // Physical pins
     virtual void set_pins(int wsPin, int bckPin, int dataInPin, int dataOutPin);
     virtual void set_shutdown_pin(int sdPin = (GPIO_NUM_21), bool activeHigh = true);
 
@@ -55,7 +61,8 @@ public:
 
     virtual void start();
     virtual void stop();
-    virtual void shutdown();
+    virtual void reload();
+    virtual bool is_running() const;
 
     virtual bool read(uint8_t* buff, size_t numBytes);
 
@@ -72,6 +79,8 @@ public:
 
     template <typename T>
     void operator>>(std::vector<T>* buff);
+};
+
 };
 
 #endif
