@@ -70,16 +70,18 @@ const char* FileMeta::get_filename() const
 bool WavWriter::_new_file()
 {
     const char* name = FileMeta::get_filename();
-    std::cout << "Creating file " << name << "..." << std::endl;
     bool opened = EspSD::FileObj::open(name);
-    std::cout << "Writing header pad..." << std::endl;
-    for (size_t i(0); i < numBytesReservedForWavHeader; ++i)
+    for (size_t i(0); i < this->_maxHeaderSize; ++i)
     {
-        std::cout << "Writing header pad... " << i << std::endl;
         // Pad header allocation with NULL
         EspSD::FileObj::write("\0", 1);
     }
     return opened;
+}
+
+size_t WavWriter::size()
+{
+    return this->_maxHeaderSize + get_data_size();
 }
 
 void WavWriter::_write_header()
@@ -89,23 +91,16 @@ void WavWriter::_write_header()
     /* Get current position */
     size_t position(get_position());
 
-    /* Calculate number of bytes to pad header with
-    to reach an even number */
-    BWFHeader::BroadcastWav::set_pad_size(
-            numBytesReservedForWavHeader
-            - BWFHeader::BroadcastWav::total_size()
-        );
-
     /* Get WAV header */
-    uint8_t* header = new uint8_t[numBytesReservedForWavHeader];
-    std::memset(header, '\0', numBytesReservedForWavHeader);
+    uint8_t* header = new uint8_t[this->_maxHeaderSize];
+    std::memset(header, '\0', this->_maxHeaderSize);
     BWFHeader::BroadcastWav::get(header);
     
     /* Return to file start */
     seek(0);
 
     /* Write header in pre-allocated space */
-    EspSD::FileObj::write(header, numBytesReservedForWavHeader);
+    EspSD::FileObj::write(header, this->_maxHeaderSize);
     delete header;
 
     /* Return to previous position.
@@ -124,11 +119,6 @@ void WavWriter::set_filename(std::string fname)
 {
     FileMeta::set_filename(fname);
     iXML::IXML::set_filename(fname.c_str());
-}
-
-size_t WavWriter::size()
-{
-    return numBytesReservedForWavHeader + get_data_size();
 }
 
 bool WavWriter::open()

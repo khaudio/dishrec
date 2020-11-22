@@ -61,7 +61,6 @@ bool FileObj::open(const char* fname)
     #ifdef ESP32
     this->_file.open(fname, O_RDWR | O_CREAT | O_TRUNC);
     #else
-    std::cout << "Opening " << fname << std::endl;
     this->_file.open(fname, (
         std::fstream::out | std::fstream::binary
     ));

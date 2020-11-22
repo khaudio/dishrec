@@ -88,7 +88,7 @@ BroadcastWav::BroadcastWav() :
 WavMeta::WavHeader(),
 iXML::IXML(),
 Loudness::Analyzer(),
-_padBytes(0),
+_maxHeaderSize(8192),
 takeNumber(0),
 userbits{0, 0, 0, 0},
 _bw64(false),
@@ -188,7 +188,6 @@ inline void BroadcastWav::set_data_size(size_t numBytes)
     {
         this->WavHeader::set_data_size(numBytes);
     }
-    size();
 }
 
 inline size_t BroadcastWav::get_data_size()
@@ -566,19 +565,11 @@ void BroadcastWav::set_audio_recorder_serial_number(const char* text)
     iXML::IXML::set_audio_recorder_serial_number(text);
 }
 
-void BroadcastWav::set_pad_size(uint32_t numBytes)
+size_t BroadcastWav::get_header_size()
 {
-    #ifdef _DEBUG
-    assert(!(numBytes % 2));
-    #endif
-    this->_padBytes = numBytes;
-}
+    // File RIFF ID, size, RIFF type, and data chunk ID and size
+    this->_headerSize = 20;
 
-size_t BroadcastWav::size()
-{
-    // RIFF type + data chunk ID and size
-    this->_headerSize = 12;
-    
     // Format chunk
     this->_headerSize += this->formatChunk.total_size();
 
@@ -591,17 +582,14 @@ size_t BroadcastWav::size()
     /* Add iXML chunk ID and size
     since IXML is inherited, not child chunk */
     this->_headerSize += iXML::IXML::size() + 8;
-    this->_ixmlChunkSize += this->_padBytes;
-    this->_headerSize += this->_padBytes;
+    
+    size_t padBytes = this->_maxHeaderSize - this->_headerSize;
+    this->_ixmlChunkSize += padBytes;
+    this->_headerSize += padBytes;
     
     /* Returns size of header only;
     does not include size of actual audio data */
     return this->_headerSize;
-}
-
-size_t BroadcastWav::total_size()
-{
-    return size() + 8;
 }
 
 size_t BroadcastWav::get(uint8_t* buff)
@@ -609,16 +597,7 @@ size_t BroadcastWav::get(uint8_t* buff)
     /* Exports header
     Adds data pad to ixml chunk */
 
-    // Get size of header
-    size();
-
-    // Set size of file contents
-    this->riffChunk.set_chunk_size(
-            this->_headerSize + this->dataChunk.size()
-        );
-
-    // Write RIFF chunk ID, file size, and RIFF type
-    size_t index(this->riffChunk.get(buff));
+    size_t index(12);
 
     // Write format chunk
     index += this->formatChunk.get(buff + index);
@@ -635,20 +614,47 @@ size_t BroadcastWav::get(uint8_t* buff)
     // Write IXML
     index += iXML::IXML::get(buff + index);
 
-    // Add pad to ixml chunk size
-    this->_ixmlChunkSize += this->_padBytes;
+    /* Get number of pad bytes needed
 
-    // Write pad
-    memset(buff + index, '\0', this->_padBytes);
+    Maximum allowed (_maxHeaderSize)
+    - current write position (index)
+    - data chunk ID and size (8) */
+    size_t padBytes = this->_maxHeaderSize - index - 8;
+
+    // Add pad to ixml chunk size
+    this->_ixmlChunkSize += padBytes;
 
     // Re-write corrected ixml chunk size
     memcpy(buff + ixmlChunkSizeIndex, &this->_ixmlChunkSize, 4);
 
-    // Add pad to index
-    index += this->_padBytes;
+    /* Add pad to index
+    Pad bytes are not set, and should
+    be zeroed before calling this funciton */
+    index += padBytes;
 
     // Write data chunk ID and size
     index += this->dataChunk.get(buff + index);
+
+    /* Throw an exception if the
+    reserved header size is not enough */
+    #ifdef _DEBUG
+    assert(index <= this->_maxHeaderSize);
+    #endif
+
+    // Set size of file contents
+    this->_headerSize = index;
+
+    /* Set RIFF chunk size
+
+    Total file size
+    - RIFF chunk ID (4)
+    - RIFF chunk size (4) */
+    this->set_file_size(
+            this->_headerSize - 8 + this->dataChunk.size()
+        );
+
+    // Write RIFF chunk ID, file size, and RIFF type
+    this->riffChunk.get(buff);
 
     // Return number of bytes written
     return index;

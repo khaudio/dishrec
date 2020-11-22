@@ -369,26 +369,35 @@ size_t WavHeader::get_file_size()
     return this->riffChunk.chunkSize;
 }
 
-size_t WavHeader::size()
+size_t WavHeader::get_header_size()
 {
     this->_headerSize = 4; // riffType
     this->_headerSize += this->formatChunk.total_size();
     this->_headerSize += 8; // Data chunk ID and size
     this->riffChunk.chunkSize = this->_headerSize + this->dataChunk.chunkSize;
-    return this->_headerSize;
+    return this->_headerSize + 8;
 }
 
-size_t WavHeader::total_size()
+size_t WavHeader::size()
 {
-    return size() + 8;
+    return get_header_size() + this->dataChunk.chunkSize;
 }
 
 size_t WavHeader::get(uint8_t* buff)
 {
-    size();
+    // riffType, Data chunk ID and size
+    this->_headerSize = 12;
+
+    this->_headerSize += this->formatChunk.total_size();
+
+    set_file_size(this->_headerSize + get_data_size());
+    
     size_t index(this->riffChunk.get(buff));
+    
     index += this->formatChunk.get(buff + index);
+    
     index += this->dataChunk.get(buff + index);
+    
     return index;
 }
 

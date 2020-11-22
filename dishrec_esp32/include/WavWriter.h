@@ -13,9 +13,6 @@ enum wavfile_err
 namespace WavFile
 {
 
-/* Number of bytes to pad top of wav file with for header */
-constexpr size_t numBytesReservedForWavHeader(8192);
-
 /* Filepath separator */
 constexpr const char* seperator = "/";
 
@@ -57,7 +54,7 @@ public:
     void set_filename(const char* filename) override;
     void set_filename(std::string filename) override;
 
-    // File size (excluding RIFF ID + Size)
+    /* Total file size (header + data) */
     size_t size() override;
 
     /* Open new file */

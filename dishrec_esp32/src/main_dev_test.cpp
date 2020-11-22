@@ -233,7 +233,8 @@ int main_dev_test()
         // #endif
     }
 
-    printf("\nBroadcastWav header total size: %u\n", wav.total_size());
+    printf("\nBroadcastWav header total size: %u\n", wav.get_header_size());
+    printf("\nBroadcastWav total file size: %u\n", wav.size());
 
     wav.close();
 

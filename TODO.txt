@@ -1,17 +1,15 @@
 TODO:
+    check connections to hardware
+        adc mclk setting + connection/bnc
 
-    Debug thread wdt timeout while recording
+    Gracefully fail if sd card removed while recording
 
     Save/load wav writer instance to/from EEPROM
         or at least filename and stuff
 
     ixml
         make iXML::IXML::size() not call _xml_c_str() every time it sets size
-            it's bugging out the write thread in main.cpp
         check file_set_index setter
-
-    WavWriter
-        maybe set size when file is closed
 
     TimecodeBase
         Write TimecodeData struct with framerate str and dropframe flag
@@ -24,31 +22,30 @@ TODO:
     Apply metadata stuff at top level
         filename to scene name
 
-    RingBuffer
-        get current buffer
-
     Button
         debounce in hardware
-            cap or rc
+            cap/rc
 
     bwf
         should move BroadcastWav::set_circled(bool isCircled) to a higher level
         change filename and not scene name
         reserve enough meta space to write when file is done
             keep in mind sync point and track # limits
-    
-    optional 32f conversion
 
     rec/stop
         bool armed;
             wait for frame boundary and start recording when armed
         start recording on TC frame boundary or better, second boundary
             pre-roll in ring buffer?
-            try sizing dynamically created ring buffer as size of one frame
-                time buffer cycle to frame tick
-                samples per buffer is not the same as frames per buffer
-                    need to time to frames per buffer for channels > 1
-
+    
+    DataIngestor
+        try sizing dynamically created ring buffer as size of one frame
+            max i2s buffer size == 1024
+                max i2s buffer fraction of ring buffer size if RB size is greater
+                    rewrite i2s i/o if so
+            time buffer cycle to frame tick
+            samples per buffer is not the same as frames per buffer
+                need to time to frames per buffer for channels > 1
 
     EspSDWavFile
         fix EspSDWavFile::write_header() with new getter instead of old get_header()

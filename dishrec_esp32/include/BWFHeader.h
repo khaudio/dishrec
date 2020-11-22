@@ -71,7 +71,8 @@ virtual public iXML::IXML,
 virtual public Loudness::Analyzer
 {
 protected:
-    size_t _padBytes;
+    // Number of bytes to reserve when writing header
+    size_t _maxHeaderSize;
 
 public:
     int takeNumber;
@@ -82,18 +83,12 @@ public:
 
     void clear() override;
 
-    // Number of bytes to pad chunk with
-    void set_pad_size(uint32_t numBytes);
-
     // File size (Header + Data)
     void set_file_size(size_t numBytes) override;
     size_t get_file_size() override;
 
-    // Header size (excluding RIFF ID + Size)
-    size_t size() override;
-    
-    // Total header size including RIFF header
-    size_t total_size() override;
+    // Header size
+    size_t get_header_size() override;
 
     size_t get(uint8_t* buff) override;
     // size_t set(const uint8_t* data) override;

@@ -131,15 +131,15 @@ public:
     WavHeader();
     ~WavHeader();
 
-    // File size (Header + Data)
+    // File size minus RIFF ID and size
     virtual void set_file_size(size_t numBytes);
     virtual size_t get_file_size();
 
-    // Wav header size (excluding RIFF ID + Size)
+    /* Total file size (header + data) */
     virtual size_t size();
-    
-    // Total header size including RIFF header
-    virtual size_t total_size();
+
+    // Wav header size
+    virtual size_t get_header_size();
 
     virtual size_t get(uint8_t* buff);
     

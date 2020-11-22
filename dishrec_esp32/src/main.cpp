@@ -263,7 +263,6 @@ void loop()
     {
         if (recording && ingestor.buffered() > 0)
         {
-            std::cout << "Writing data..." << std::endl;
             wav.write(ingestor.read(), ingestor.size());
         }
     }
