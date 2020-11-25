@@ -18,6 +18,7 @@ virtual public DataPad::Packer,
 virtual public I2S::Bus
 {
 protected:
+public:
     // Unpacked audio buffer
     Buffer::RingBuffer<int_audio> _buff;
     size_t _size;
@@ -27,6 +28,7 @@ protected:
     uint8_t* _packedOutput;
 
     virtual void _create_packed_buffers();
+    virtual uint8_t* _read_raw();
     virtual void _unpack_from_i2s();
 
 public:

@@ -4,7 +4,7 @@ using namespace I2S;
 
 Bus::Bus() :
 _running(false),
-_i2sNum(I2S_NUM_1),
+_i2sNum(I2S_NUM_0),
 _mode(I2S_MODE_MASTER | I2S_MODE_RX),
 _pinsSet(false),
 _shutdownPinSet(false),
@@ -89,11 +89,13 @@ void Bus::reset_mode()
 
 void Bus::set_master()
 {
+    this->_mode = (0ULL << I2S_MODE_SLAVE);
     this->_mode |= I2S_MODE_MASTER;
 }
 
 void Bus::set_slave()
 {
+    this->_mode = (0ULL << I2S_MODE_MASTER);
     this->_mode |= I2S_MODE_SLAVE;
 }
 
@@ -160,8 +162,11 @@ void Bus::start()
     i2s_set_pin(this->_i2sNum, &this->_pinConfig);
 
     // Enable MCK output
-    REG_WRITE(PIN_CTRL, 0xFF0); 
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
+    if (this->_mode & I2S_MODE_MASTER)
+    {
+        REG_WRITE(PIN_CTRL, 0xFF0);
+        PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
+    }
 
     this->_running = true;
 }
@@ -183,7 +188,7 @@ void Bus::stop()
                 this->_shutdownState
             );
     }
-    stop();
+    _stop();
     if (this->_shutdownPinSet)
     {
         gpio_set_level(

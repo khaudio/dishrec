@@ -77,13 +77,13 @@ Button
 /*                              Macros                              */
 
 /* Input word select */
-#define I2S_WS                      (GPIO_NUM_32)
+#define I2S_WS                      (GPIO_NUM_26)
 
 /* Input bit clock */
-#define I2S_BCK                     (GPIO_NUM_33)
+#define I2S_BCK                     (GPIO_NUM_14)
 
 /* Input data */
-#define I2S_DI                      (GPIO_NUM_39)
+#define I2S_DI                      (GPIO_NUM_35)
 
 /* Output data */
 #define I2S_DO                      (GPIO_NUM_25)
@@ -92,7 +92,6 @@ Button
 #define I2S_SHUTDOWN                (GPIO_NUM_21)
 
 #define REC_STOP_BUTTON             (GPIO_NUM_27)
-
 
 /*                          Global variables                        */
 
@@ -108,9 +107,9 @@ Esp32Button::DualActionButton recStopButton(REC_STOP_BUTTON, 0);
 /* Current format */
 WavMeta::WavFormatData currentFormat = {
     .sampleRate = 48000,
-    .bitDepth = 24,
-    .numChannels = 1,
-    .sampleWidth = 3,
+    .bitDepth = 16,
+    .numChannels = 2,
+    .sampleWidth = 2,
     .formatCode = WavMeta::FORMAT_PCM
 };
 
@@ -178,6 +177,7 @@ void setup()
 
     std::cout << "Setting ingestor..." << std::endl;
     ingestor.set_format(currentFormat);
+
     ingestor.set_shutdown_pin(I2S_SHUTDOWN);
     ingestor.set_pins(I2S_WS, I2S_BCK, I2S_DI, I2S_DO);
 
@@ -188,9 +188,13 @@ void setup()
 
     std::cout << "Setting buffer size..." << std::endl;
 
-    /* Set input ring buffer to 1/4 SMPTE frame length */
-    size_t length = wav.samples_per_frame() / 4;
-    ingestor.set_size(length, 8);
+    /* Set input ring buffer to 1/8 SMPTE frame length */
+    size_t length = wav.samples_per_frame() / 8;
+    std::cout << "Setting size to " << length << " samples..." << std::endl;
+    ingestor.set_size(length, 4);
+    std::cout << "Set size to " << ingestor.size() << " bytes" << std::endl;
+
+    std::cout << "Ingestor bit depth == " << ingestor.bitDepth << std::endl;
 
     std::cout << "Setting sample delay..." << std::endl;
 
@@ -253,18 +257,22 @@ void loop()
 
     {
         /* Blocks while waiting for I2S input buffer */
-        sampleIndex += ingestor.step();
+        // sampleIndex += ingestor.step();
 
         /* This check is not needed if externally connected
         timecode clock is keeping time (e.g. dish.tc) */
-        if (is_frame_boundary()) wav.tick();
+        // if (is_frame_boundary()) wav.tick();
     }
 
     {
-        if (recording && ingestor.buffered() > 0)
+        // if (recording && ingestor.buffered() > 0)
+        if (recording)
         {
-            wav.write(ingestor.read(), ingestor.size());
+            static const size_t ingestorSize(ingestor.size());
+            // wav.write(ingestor.read(), ingestorSize);
+            wav.write(ingestor._read_raw(), ingestorSize);
         }
+        // else if (recording) std::cerr << "Ring buffer is empty!" << std::endl;
     }
 
     {

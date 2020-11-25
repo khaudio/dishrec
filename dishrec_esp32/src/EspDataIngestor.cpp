@@ -133,11 +133,17 @@ void DataIngestor::reload()
     start();
 }
 
+inline uint8_t* DataIngestor::_read_raw()
+{
+    I2S::Bus::read(this->_packedInput, this->_size);
+    return this->_packedInput;
+}
+
 inline void DataIngestor::_unpack_from_i2s()
 {
     /* Read to ring buffer from I2S input */
-    I2S::Bus::read(_packedInput, this->_size);
-    unpack<int_audio>(this->_buff.get_write_buffer(), _packedInput);
+    I2S::Bus::read(this->_packedInput, this->_size);
+    unpack<int_audio>(this->_buff.get_write_buffer(), this->_packedInput);
     this->_buff.rotate_write_buffer(true);
 }
 
@@ -158,7 +164,7 @@ uint8_t* DataIngestor::read()
     /* Output buffered data */
     if (is_pcm())
     {
-        pack<int_audio>(_packedOutput, this->_buff.get_read_buffer());
+        pack<int_audio>(this->_packedOutput, this->_buff.get_read_buffer());
     }
     if (is_floating_point())
     {
@@ -174,4 +180,3 @@ uint8_t* DataIngestor::read()
     this->_buff.rotate_read_buffer();
     return this->_packedOutput;
 }
-
