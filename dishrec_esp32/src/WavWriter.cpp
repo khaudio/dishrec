@@ -121,6 +121,11 @@ void WavWriter::set_filename(std::string fname)
     iXML::IXML::set_filename(fname.c_str());
 }
 
+const char* WavWriter::get_filename() const
+{
+    return FileMeta::get_filename();
+}
+
 bool WavWriter::open()
 {
     return _new_file();

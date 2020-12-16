@@ -49,11 +49,20 @@ void SimpleButton::set_active_state(bool activeHigh)
     this->_activeState = activeHigh;
 }
 
+inline bool SimpleButton::_read_input()
+{
+    /* Return GPIO input */
+    #ifdef ESP32
+    return (this->_activeState == gpio_get_level(this->_pin));
+    #else
+    return this->_state;
+    #endif
+}
+
 inline bool SimpleButton::read()
 {
-    #ifdef ESP32
-    this->_state = this->_activeState == gpio_get_level(this->_pin);
-    #endif
+    /* Read and set state */
+    set(_read_input());
     return this->_state;
 }
 
@@ -71,7 +80,7 @@ inline void SimpleButton::toggle()
 {
     /* Manually toggle state,
     rather than reading input pin */
-    this->_state = !this->_state;
+    set(!this->_state);
 }
 
 SimpleButton::operator bool() const
@@ -82,6 +91,36 @@ SimpleButton::operator bool() const
 bool SimpleButton::operator!() const
 {
     return !(this->_state);
+}
+
+Debouncer::Debouncer() :
+_delay(5)
+{
+}
+
+Debouncer::~Debouncer()
+{
+}
+
+void Debouncer::set_debounce_duration_ms(int ms)
+{
+    this->_delay = std::chrono::milliseconds(ms);
+}
+
+bool Debouncer::_delay_met()
+{
+    static std::chrono::high_resolution_clock::time_point timeNow;
+    static std::chrono::high_resolution_clock::time_point stateLastSet = (
+            std::chrono::high_resolution_clock::now() - this->_delay
+        );
+    if (this->_delay <= std::chrono::milliseconds(0)) return true;
+    timeNow = std::chrono::high_resolution_clock::now();
+    if ((timeNow - stateLastSet) >= this->_delay)
+    {
+        stateLastSet = timeNow;
+        return true;
+    }
+    return false;
 }
 
 MomentaryButton::MomentaryButton() :
@@ -109,25 +148,19 @@ bool MomentaryButton::_hold_duration_met()
     /* Measure hold duration
     Returns true only when duration is met
     Continuing to hold will return false */
+    using namespace std::chrono;
     static bool reading(false);
-    static std::chrono::high_resolution_clock::time_point start;
-    if (!reading)
+    static high_resolution_clock::time_point start = high_resolution_clock::now();
+    static high_resolution_clock::time_point timeNow;
+    timeNow = high_resolution_clock::now();
+    if (reading && ((timeNow - start) >= this->_holdDurationRequired))
     {
-        start = std::chrono::high_resolution_clock::now();
-        reading = true;
+        this->toggle();
+        reading = false;
+        return true;
     }
-    else
-    {
-        if (
-                (std::chrono::high_resolution_clock::now() - start)
-                >= this->_holdDurationRequired
-            )
-        {
-            this->toggle();
-            reading = false;
-            return true;
-        }
-    }
+    start = timeNow;
+    reading = true;
     return false;
 }
 
@@ -135,15 +168,12 @@ bool MomentaryButton::read_hold()
 {
     /* Returns true when button has been
     held for specified duration */
-    static bool level(false);
-    #ifdef ESP32
-    level = gpio_get_level(this->_pin);
-    #endif
-    if (level != this->_activeState)
+    bool inputIsActive = _read_input();
+    if (!inputIsActive)
     {
-        this->_state = false;
+        set(false);
     }
-    else if (this->_state != level)
+    else if (!this->_state)
     {
         return this->_hold_duration_met();
     }
@@ -151,9 +181,13 @@ bool MomentaryButton::read_hold()
 }
 
 DualActionButton::DualActionButton() :
-MomentaryButton()
+MomentaryButton(),
+Debouncer()
 {
     this->_trigger = nullptr;
+    
+    /* Default to inactive soft debounce */
+    set_debounce_duration_ms(0);
 }
 
 DualActionButton::DualActionButton(int pinNum, bool activeHigh) :
@@ -184,13 +218,7 @@ inline bool DualActionButton::is_triggered()
 
 inline bool DualActionButton::read()
 {
-    SimpleButton::read();
-    return get();
-}
-
-inline bool DualActionButton::get()
-{
-    this->_state = (is_triggered() ? true : this->_state);
+    set(SimpleButton::_read_input() || is_triggered());
     return this->_state;
 }
 
@@ -199,17 +227,19 @@ bool DualActionButton::read_hold()
     /* Returns true when button has been
     either held or triggered externally
     for specified duration */
-    static bool level(false);
-    #ifdef ESP32
-    level = gpio_get_level(this->_pin);
-    #endif
-    if (level != this->_activeState)
+    bool inputIsActive = _read_input();
+    if (this->_state && !inputIsActive)
     {
-        this->_state = false;
+        set(false);
     }
-    else if ((this->_state != level) || is_triggered())
+    else if ((this->_state != inputIsActive) || is_triggered())
     {
         return MomentaryButton::_hold_duration_met();
     }
     return false;
+}
+
+inline void DualActionButton::set(bool state, bool force)
+{
+    if (Debouncer::_delay_met() || force) SimpleButton::set(state);
 }

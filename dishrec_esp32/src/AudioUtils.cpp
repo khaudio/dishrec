@@ -199,7 +199,7 @@ inline void pack_data(uint8_t* packed, T* padded, int width)
     #endif
 
     int_audio sample(*padded);
-    for (int i(0); i < width; ++i) packed[i] |= sample._data[i];
+    for (int i(0); i < width; ++i) packed[i] = sample._data[i];
 }
 
 template <>
@@ -210,11 +210,11 @@ void pack_data(uint8_t* packed, int_audio* padded, int width)
     if (!width || (width > maxsize))
     {
         char message[128];
-        sprintf(message, "Width must be 0 < width < %d", maxsize);
+        sprintf(message, "Width must be 0 < width <= %d", maxsize);
     }
     #endif
 
-    for (int i(0); i < width; ++i) packed[i] |= padded->_data[i];
+    for (int i(0); i < width; ++i) packed[i] = padded->_data[i];
 }
 
 template <typename T>
@@ -225,12 +225,12 @@ inline void unpack_data(T* padded, uint8_t* packed, int width)
     if (!width || (width > maxsize))
     {
         char message[128];
-        sprintf(message, "Width must be 0 < width < %d", maxsize);
+        sprintf(message, "Width must be 0 < width <= %d", maxsize);
     }
     #endif
     
     int_audio sample(0);
-    for (int i(0); i < width; ++i) sample._data[i] |= packed[i];
+    for (int i(0); i < width; ++i) sample._data[i] = packed[i];
     *padded = sample.data;
 }
 
@@ -246,7 +246,8 @@ void unpack_data(int_audio* padded, uint8_t* packed, int width)
     }
     #endif
 
-    for (int i(0); i < width; ++i) padded->_data[i] |= packed[i];
+    *padded = 0;
+    for (int i(0); i < width; ++i) padded->_data[i] = packed[i];
 }
 
 template <typename T>

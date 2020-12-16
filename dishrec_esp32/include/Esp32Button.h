@@ -9,14 +9,7 @@
 typedef int gpio_num_t;
 #endif
 
-/* Simple ESP32 input buttons
-
-Template parameters are pin number and
-active state (defaults to active when high)
-
-Explicit template instantiations
-extend up to GPIO46 to include ESP32-S2
-pin numbers */
+/* Simple ESP32 input buttons */
 
 namespace Esp32Button
 {
@@ -26,6 +19,8 @@ class SimpleButton
 protected:
     gpio_num_t _pin;
     bool _activeState, _state;
+
+    virtual bool _read_input();
 
 public:
     SimpleButton();
@@ -42,6 +37,21 @@ public:
 
     operator bool() const;
     bool operator!() const;
+};
+
+/* A soft, non-blocking debounce mechanism */
+
+class Debouncer
+{
+protected:
+    std::chrono::milliseconds _delay;
+    
+public:
+    Debouncer();
+    ~Debouncer();
+    
+    virtual void set_debounce_duration_ms(int ms);
+    virtual bool _delay_met();
 };
 
 /* A button that must be held momentarily to change state */
@@ -64,7 +74,9 @@ public:
 
 /* Momentary button with an external override trigger */
 
-class DualActionButton : public MomentaryButton
+class DualActionButton :
+public MomentaryButton,
+public Debouncer
 {
 protected:
     bool* _trigger;
@@ -77,9 +89,10 @@ public:
     
     virtual void set_trigger(bool* target);
     virtual bool is_triggered();
+    
     bool read() override;
-    virtual bool get();
     bool read_hold() override;
+    virtual void set(bool state, bool force = false);
 };
 
 };

@@ -86,7 +86,12 @@ Button
 #define I2S_DI                      (GPIO_NUM_35)
 
 /* Output data */
-#define I2S_DO                      (GPIO_NUM_25)
+// #define I2S_DO                      (GPIO_NUM_25)
+#define I2S_DO                      (GPIO_NUM_22)
+
+
+
+
 
 /* Shutdown signal output */
 #define I2S_SHUTDOWN                (GPIO_NUM_21)
@@ -101,33 +106,31 @@ EspSD::SDCard sdcard;
 /* File writer */
 WavFile::WavWriter wav;
 
-/* Record/Stop button */
-Esp32Button::DualActionButton recStopButton(REC_STOP_BUTTON, 0);
+/* Record/Stop button (active when high) */
+Esp32Button::DualActionButton recStopButton(REC_STOP_BUTTON, true);
 
-/* Current format */
+/* Default audio format */
 WavMeta::WavFormatData currentFormat = {
     .sampleRate = 48000,
-    .bitDepth = 16,
+    .bitDepth = 24,
     .numChannels = 2,
-    .sampleWidth = 2,
+    .sampleWidth = 3,
     .formatCode = WavMeta::FORMAT_PCM
 };
 
+/* Audio buffer and I2S ingestor */
 DataIngestor ingestor;
 
 /* Prepare to record */
 bool armed(false);
 
-/* Save to storage when true */
+/* Write buffer to storage when active */
 bool recording(false);
 
 /* Index to keep track of how many samples
-have been recorded; used to stop recording
-on a SMPTE TC frame boundary */
+have been recorded; used to start/stop recording
+on a SMPTE timecode frame boundary */
 static size_t sampleIndex(0);
-
-/* Thread container */
-std::vector<std::thread> threads;
 
 /*                            Prototypes                            */
 
@@ -142,17 +145,23 @@ void setup();
 /* Arduino loop */
 void loop();
 
-/* Set ring buffer size */
-void set_buffer_size();
-
 /* Thread loops */
-void read_from_i2s();
-void save_to_storage();
+void read_from_i2s(void*);
+void save_to_storage(void*);
+
+/* Arms and disarms for recording */
 void set_recording_flags();
-void check_rec_button();
 
 /* Checks for SMPTE timecode frame boundary */
 bool is_frame_boundary();
+
+
+
+void setup_i2s();
+void read_from_i2s_input(uint8_t* buff, size_t numBytes);
+void write_to_i2s_output(uint8_t* buff, size_t numBytes);
+
+
 
 /*                            Definitions                           */
 
@@ -177,8 +186,16 @@ void setup()
 
     std::cout << "Setting ingestor..." << std::endl;
     ingestor.set_format(currentFormat);
+    std::cout << "Ingestor sample rate set to " << ingestor.sampleRate << std::endl;
+    std::cout << "Ingestor bit depth set to " << ingestor.bitDepth << std::endl;
+    std::cout << "Ingestor sample width set to " << ingestor.sampleWidth << std::endl;
 
-    ingestor.set_shutdown_pin(I2S_SHUTDOWN);
+    ingestor.reset_mode();
+
+    ingestor.set_master();
+    ingestor.set_receive();
+    ingestor.set_transmit();
+
     ingestor.set_pins(I2S_WS, I2S_BCK, I2S_DI, I2S_DO);
 
     wav.set_format(currentFormat);
@@ -188,198 +205,285 @@ void setup()
 
     std::cout << "Setting buffer size..." << std::endl;
 
-    /* Set input ring buffer to 1/8 SMPTE frame length */
-    size_t length = wav.samples_per_frame() / 8;
+    // /* Set input ring buffer size to 1/4 SMPTE frame length; e.g.,
+    // at 48000 sample rate / 24fps == 2000 samples per frame,
+    // so length is (2000 / 4) == 500 samples.
+    // Maximum size is 1000 samples. */
+    size_t length = wav.samples_per_frame() / 4;
     std::cout << "Setting size to " << length << " samples..." << std::endl;
+    
     ingestor.set_size(length, 4);
-    std::cout << "Set size to " << ingestor.size() << " bytes" << std::endl;
 
+    std::cout << "Set size to " << ingestor.size() << " bytes" << std::endl;
     std::cout << "Ingestor bit depth == " << ingestor.bitDepth << std::endl;
 
     std::cout << "Setting sample delay..." << std::endl;
-
+    
     /* Timestamp compensation for ring buffer delay */
     size_t numSampleDelay = ingestor.delay_in_samples() / wav.samples_per_frame();
     wav.set_timecode(wav.get_frames() - numSampleDelay);
 
     std::cout << "Starting I2S..." << std::endl;
 
+    // setup_i2s();
+
     ingestor.start();
 
     std::cout << "Setting button..." << std::endl;
 
-    recStopButton.set_hold_duration_ms(10);
+    recStopButton.set_debounce_duration_ms(500);
 
-    // std::cout << "Starting threads..." << std::endl;
+    std::cout << "Starting threads..." << std::endl;
 
-    // threads.reserve(4);
-    // std::cout << "Starting I2S read thread..." << std::endl;
-    // threads.emplace_back(std::thread(&read_from_i2s));
-    // std::cout << "Starting SD write thread..." << std::endl;
-    // threads.emplace_back(std::thread(&save_to_storage));
-    // std::cout << "Starting recording flag setter thread..." << std::endl;
-    // threads.emplace_back(std::thread(&set_recording_flags));
-    // std::cout << "Starting rec/stop button watch thread..." << std::endl;
-    // threads.emplace_back(std::thread(&check_rec_button));
+    std::cout << "Starting I2S read thread..." << std::endl;
 
+    /* Pin time-critical data ingestion to ESP32 core 0 */
+    xTaskCreatePinnedToCore(
+            reinterpret_cast<TaskFunction_t>(read_from_i2s),
+            "i2sreader", 10000, NULL, 9, NULL, 0
+        );
+    
     std::cout << "Initialized" << std::endl;
 }
 
 void loop()
 {
-    static int takeNumber(0);
-    static char filename[32];
+    // static int takeNumber(1);
+    // static char filename[64], timecodeStr[9];
+    // static std::array<int, 4> timecodeValues;
 
-    if (!recording && recStopButton)
-    {
-        int i(0);
-        std::cout << "Mounting SD card..." << std::endl;
-        while (!sdcard && (i++ < 3)) sdcard.mount();
-        if (!sdcard)
-        {
-            std::cout << "Could not mount SD card" << std::endl;
-            goto SKIP;
-        }
-        sprintf(filename, "wavefile_%03d", takeNumber++);
+    // if (!recording && recStopButton)
+    // {
+    //     std::cout << "Mounting SD card..." << std::endl;
+        
+    //     /* Make up to three attempts to mount SD card */
+    //     int i(0);
+    //     while (!sdcard && (i++ < 3))
+    //     {
+    //         sdcard.mount();
+    //         std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    //     }
+    //     if (!sdcard)
+    //     {
+    //         std::cout << "Could not mount SD card" << std::endl;
+    //         goto SKIP;
+    //     }
 
-        std::cout << "Setting filename..." << std::endl;
-        wav.set_filename(filename);
-        std::cout << "Opening file..." << std::endl;
-        wav.open();
-        armed = true;
-        std::cout << "File opened" << std::endl;
-    }
-    else if (sdcard && recStopButton && recording && armed)
-    {
-        std::cout << "Disarming..." << std::endl;
-        armed = false;
-    }
+    //     /* Save timecode in filename */
+    //     timecodeValues = wav.get_timecode();
+    //     sprintf(
+    //             timecodeStr,
+    //             "%02u%02u%02u%02u",
+    //             timecodeValues[0],
+    //             timecodeValues[1],
+    //             timecodeValues[2],
+    //             timecodeValues[3]
+    //         );
+    //     timecodeStr[8] = '\0';
 
-    {
-        /* Blocks while waiting for I2S input buffer */
-        // sampleIndex += ingestor.step();
+    //     /* Add a three-digit counter to filename */
+    //     sprintf(filename, "%s_dishrec_%03d", timecodeStr, takeNumber);
 
-        /* This check is not needed if externally connected
-        timecode clock is keeping time (e.g. dish.tc) */
-        // if (is_frame_boundary()) wav.tick();
-    }
+    //     std::cout << "Setting filename..." << std::endl;
+    //     wav.set_filename(filename);
+        
+    //     std::cout << "Opening file " << wav.get_filename() << "..." << std::endl;
+        
+    //     /* Arm for record */
+    //     if (wav.open())
+    //     {
+    //         armed = true;
+    //         ++takeNumber;
+    //         std::cout << "File opened" << std::endl;
+    //     }
+    //     else
+    //     {
+    //         std::cerr << "Could not open file" << std::endl;
+    //     }
 
-    {
-        // if (recording && ingestor.buffered() > 0)
-        if (recording)
-        {
-            static const size_t ingestorSize(ingestor.size());
-            // wav.write(ingestor.read(), ingestorSize);
-            wav.write(ingestor._read_raw(), ingestorSize);
-        }
-        // else if (recording) std::cerr << "Ring buffer is empty!" << std::endl;
-    }
+    //     /* Unset the button to avoid erroneous rapid file creation */
+    //     recStopButton.set(false, true);
+    // }
+    // else if (sdcard && recStopButton && recording && armed)
+    // {
+    //     /* Disarm */
+    //     std::cout << "Disarming..." << std::endl;
+    //     armed = false;
+    //     recStopButton.set(false, true);
+    // }
 
-    {
-        if (!recording && armed)
-        {
-            /* Wait for frame boundary */
-            // while (!is_frame_boundary()) vTaskDelay(1);
-            recording = true;
-            std::cout << "Started record..." << std::endl;
-        }
-        else if (recording && !armed)
-        {
-            /* Wait for frame boundary */
-            // while (!is_frame_boundary()) vTaskDelay(1);
-            std::cout << "Stopping record..." << std::endl;
-            recording = false;
-            wav.close();
-            std::cout << "Unmounting SD card..." << std::endl;
-            sdcard.unmount();
-            std::cout << "Unmounted SD card" << std::endl;
-        }
-    }
+    // /* Set recording state if armed */
+    // set_recording_flags();
 
-    SKIP:;
+    // /* Skip to here if SD card could not be mounted */
+    // SKIP:;
 
-    {
-        if (recStopButton.read())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
-    }
+    // /* Read button for change in state */
+    // recStopButton.read();
 
+    // /* Reset FreeRTOS watchdog to avoid timeouts */
+    reset_wdt_1();
 }
 
-void read_from_i2s()
+void read_from_i2s(void* pvParameters)
 {
+    // static const size_t ingestorSize(ingestor.size());
+
+    static const size_t ingestorSize = (wav.samples_per_frame() / 4) * 4;
+    uint8_t buff[ingestorSize], *ptr;
+    memset(buff, 0, ingestorSize);
+
     while (true)
     {
         /* Blocks while waiting for I2S input buffer */
         sampleIndex += ingestor.step();
-
-        /* This check is not needed if external
-        timecode clock is ticking (e.g. dish.tc) */
-        if (is_frame_boundary()) wav.tick();
         
-        // vTaskDelay(10);
-        std::this_thread::yield();
+        /* Write buffered samples to card */
+        // if (recording) wav.write(ingestor.read_raw(), ingestorSize);
+        
+        ptr = ingestor.read();
+        ingestor.write(ptr, ingestorSize);
+        // visualize<int_audio>(ptr, ingestorSize, 3, 70, false);
+
+        // read_from_i2s_input(buff, ingestorSize);
+        // write_to_i2s_input(ptr, ingestorSize);
+        // if (recording) wav.write(buff, ingestorSize);
+
+        // /* This check is not needed if external
+        // timecode clock is keeping time (e.g. dish.tc) */
+        // if (is_frame_boundary()) wav.tick();
+
+        /* Reset FreeRTOS watchdog to avoid timeouts */
+        reset_wdt_0();
     }
 }
 
-void save_to_storage()
-{
-    while (true)
-    {
-        // vTaskDelay(1);
-        std::this_thread::yield();
-        if (!recording) continue;
-        wav.write(ingestor.read(), ingestor.size());
-    }
-}
+// void save_to_storage(void* pvParameters)
+// {
+//     static const size_t ingestorSize(ingestor.size());
 
-void set_recording_flags()
-{
-    while (true)
-    {
-        if (!recording && armed)
-        {
-            /* Wait for frame boundary */
-            // while (!is_frame_boundary()) vTaskDelay(1);
-            recording = true;
-            std::cout << "Started record..." << std::endl;
-        }
-        else if (recording && !armed)
-        {
-            /* Wait for frame boundary */
-            // while (!is_frame_boundary()) vTaskDelay(1);
-            std::cout << "Stopping record..." << std::endl;
-            recording = false;
-            wav.close();
-            // vTaskDelay(10);
-            std::this_thread::yield();
-            std::cout << "Unmounting SD card..." << std::endl;
-            sdcard.unmount();
-            std::cout << "Unmounted SD card" << std::endl;
-        }
-        // vTaskDelay(50);
-        std::this_thread::yield();
-    }
-}
+//     while (true)
+//     {
+//         /* This check is not needed if external
+//         timecode clock is ticking (e.g. dish.tc) */
+//         if (is_frame_boundary()) wav.tick();
 
-void check_rec_button()
+//         /* Check if samples are buffered */
+//         if (!recording || !ingestor.buffered())
+//         {
+//             std::this_thread::yield();
+//             continue;
+//         };
+
+//         /* Write buffered samples to card */
+//         wav.write(ingestor.read(), ingestorSize);
+//         std::this_thread::yield();
+//     }
+// }
+
+inline void set_recording_flags()
 {
-    while (true)
+    /* Start recording */
+    if (!recording && armed)
     {
-        /* Soft debounce when button is pressed */
-        if (recStopButton.read())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
-        // vTaskDelay(100);
-        std::this_thread::yield();
+        /* Wait for frame boundary */
+        // while (!is_frame_boundary()) std::this_thread::yield();
+
+        recording = true;
+        std::cout << "Started record..." << std::endl;
+    }
+
+    /* Stop recording */
+    else if (recording && !armed)
+    {
+        /* Wait for frame boundary */
+        // while (!is_frame_boundary()) std::this_thread::yield();
+
+        std::cout << "Stopping record..." << std::endl;
+        
+        recording = false;
+
+        std::cout << "Closing file..." << std::endl;
+
+        /* Close file */
+        wav.close();
+        
+        std::cout << "Closed file " << wav.get_filename() << std::endl;
+        std::cout << "File size: " << wav.get_file_size() << std::endl;
+        std::cout << "Unmounting SD card..." << std::endl;
+        
+        /* Unmount SD card when not recording */
+        sdcard.unmount();
+
+        std::cout << "Unmounted SD card" << std::endl;
     }
 }
 
 inline bool is_frame_boundary()
 {
     /* Will never return true if samples per frame
-    is not a multiple of I2S input buffer */
+    is not a multiple of I2S input buffer size */
     return (!(sampleIndex % wav.samples_per_frame()));
+}
+
+
+
+
+
+
+
+
+
+void setup_i2s()
+{
+    i2s_config_t config;
+    config.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX);
+    config.sample_rate = currentFormat.sampleRate;
+    config.bits_per_sample = (i2s_bits_per_sample_t)(32);
+    config.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
+    config.communication_format = I2S_COMM_FORMAT_I2S_MSB; // 0x01 or 0x03
+    config.intr_alloc_flags = 0;
+    config.dma_buf_count = 8;
+    config.dma_buf_len = (wav.samples_per_frame() / 8) * 2; // double the ring buffer length
+    config.use_apll = true;
+    config.tx_desc_auto_clear = true;
+
+    i2s_pin_config_t pinconfig;
+    pinconfig.ws_io_num = (GPIO_NUM_26);
+    pinconfig.bck_io_num = (GPIO_NUM_14);
+    pinconfig.data_in_num = (GPIO_NUM_35);
+    pinconfig.data_out_num = (GPIO_NUM_22);
+
+    i2s_driver_install(I2S_NUM_0, &config, 0, NULL);
+
+    i2s_set_pin(I2S_NUM_0, &pinconfig);
+
+    REG_WRITE(PIN_CTRL, 0xFF0);
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
+}
+
+inline void read_from_i2s_input(uint8_t* buff, size_t numBytes)
+{
+    static size_t numBytesRead(0);
+    esp_err_t status = i2s_read(
+            I2S_NUM_0, buff, numBytes, &numBytesRead, portMAX_DELAY
+        );
+    if ((status != ESP_OK) || (numBytesRead != numBytes))
+    {
+        std::cerr << "Error reading from I2S; " << numBytesRead;
+        std::cerr << " of " << numBytes << " bytes read!" << std::endl;
+    }
+}
+
+inline void write_to_i2s_output(uint8_t* buff, size_t numBytes)
+{
+    static size_t numBytesWritten(0);
+    esp_err_t status = i2s_write(
+            I2S_NUM_0, buff, numBytes, &numBytesWritten, portMAX_DELAY
+        );
+    if ((status != ESP_OK) || (numBytesWritten != numBytes))
+    {
+        std::cerr << "Error writing to I2S; " << numBytesWritten;
+        std::cerr << " of " << numBytes << " bytes read!" << std::endl;
+    }
 }

@@ -41,10 +41,10 @@ public:
     ~Packer();
 
     template <typename T>
-    void unpack(T* padded, uint8_t* packed);
+    void unpack_sample(T* padded, uint8_t* packed);
     
     template <typename T>
-    void pack(uint8_t* pack, T* padded);
+    void pack_sample(uint8_t* pack, T* padded);
 
     template <typename T>
     void unpack(std::vector<T>* padded, uint8_t* packed);
@@ -56,5 +56,4 @@ public:
 };
 
 #endif
-
 

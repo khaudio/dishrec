@@ -125,7 +125,7 @@ bool RingBuffer<T>::is_writable()
 }
 
 template <typename T>
-void RingBuffer<T>::rotate_read_buffer()
+void RingBuffer<T>::rotate_read_buffer(bool force)
 {
     /* Rotates read buffer and forces write buffer forward if overrun */
     if (++this->readIndex >= this->ringLength)
@@ -134,7 +134,7 @@ void RingBuffer<T>::rotate_read_buffer()
     }
     this->_buffered -= this->bufferLength;
     this->_buffered = (this->_buffered < 0) ? 0 : this->_buffered;
-    if (!is_writable())
+    if (force && !is_writable())
     {
         rotate_write_buffer();
     }
@@ -194,7 +194,7 @@ inline const std::vector<T> RingBuffer<T>::_read() const
 }
 
 template <typename T>
-const std::vector<T> RingBuffer<T>::read()
+const std::vector<T> RingBuffer<T>::read(bool force)
 {
     /* Returns current read buffer and rotates */
     #ifdef _DEBUG
@@ -202,7 +202,7 @@ const std::vector<T> RingBuffer<T>::read()
     #endif
 
     std::vector<T> output(_read());
-    rotate_read_buffer();
+    rotate_read_buffer(force);
     return output;
 }
 

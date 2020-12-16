@@ -238,38 +238,6 @@ int main_dev_test()
 
     wav.close();
 
-    std::cout << "Creating button" << std::endl;
-
-    bool buttonTrigger(false);
-    Esp32Button::DualActionButton button(27);
-    button.set_trigger(&buttonTrigger);
-    buttonTrigger = !buttonTrigger;
-    std::cout << "Button is " << (button.read() ? "active" : "inactive") << std::endl;
-
-    #ifdef ESP32
-    std::cout << "Starting I2S" << std::endl;
-
-    I2S::Bus bus(0, true, true, true);
-    bus.set_sample_rate(48000);
-    bus.set_bit_depth(24);
-    bus.set_channels(1);
-    bus.set_buffer_size(128);
-    bus.set_pins(
-            GPIO_NUM_32, // Word (LR) Select
-            GPIO_NUM_33, // Serial (bit) clock
-            GPIO_NUM_39, // Data Input
-            GPIO_NUM_25  // Data Output
-        );
-    bus.config();
-    bus.start();
-
-    std::cout << "I2S Started" << std::endl;
-    #endif
-
-    #ifdef ESP32
-    bus.stop();
-    #endif
-
     std::cout << "Done" << std::endl;
 
     std::cout << std::endl << std::endl;

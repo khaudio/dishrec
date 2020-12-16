@@ -33,7 +33,7 @@ protected:
     size_t _bufferLength;
 
     virtual i2s_bits_per_sample_t _get_i2s_bit_depth() const;
-    virtual i2s_channel_fmt_t _get_i2s_channel_format() const;
+    // virtual i2s_channel_fmt_t _get_i2s_channel_format() const;
     virtual void _check_format();
     virtual void _stop();
 
@@ -64,15 +64,15 @@ public:
     virtual void reload();
     virtual bool is_running() const;
 
-    virtual bool read(uint8_t* buff, size_t numBytes);
+    virtual size_t read(uint8_t* buff, size_t numBytes);
 
     template <typename T>
-    bool read(std::vector<T>* buff);
+    size_t read(std::vector<T>* buff);
     
-    virtual bool write(const uint8_t* data, size_t numBytes);
+    virtual size_t write(const uint8_t* data, size_t numBytes);
 
     template <typename T>
-    bool write(std::vector<T>* data);
+    size_t write(std::vector<T>* data);
 
     template <typename T>
     void operator<<(std::vector<T>* data);

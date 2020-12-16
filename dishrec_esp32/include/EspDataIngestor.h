@@ -28,7 +28,7 @@ public:
     uint8_t* _packedOutput;
 
     virtual void _create_packed_buffers();
-    virtual uint8_t* _read_raw();
+    
     virtual void _unpack_from_i2s();
 
 public:
@@ -66,6 +66,7 @@ public:
     int buffered();
 
     virtual uint8_t* read();
+    virtual uint8_t* read_raw();
 };
 
 #endif

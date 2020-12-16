@@ -50,6 +50,7 @@ void DataIngestor::_create_packed_buffers()
 
 void DataIngestor::set_size(int bufferSize, uint8_t ringSize)
 {
+    if (bufferSize > 1000) throw std::out_of_range("Must be <= 1000 samples");
     this->_buff.set_size(bufferSize, ringSize);
     I2S::Bus::set_buffer_size(bufferSize);
     _create_packed_buffers();
@@ -133,17 +134,25 @@ void DataIngestor::reload()
     start();
 }
 
-inline uint8_t* DataIngestor::_read_raw()
-{
-    I2S::Bus::read(this->_packedInput, this->_size);
-    return this->_packedInput;
-}
-
 inline void DataIngestor::_unpack_from_i2s()
 {
     /* Read to ring buffer from I2S input */
-    I2S::Bus::read(this->_packedInput, this->_size);
-    unpack<int_audio>(this->_buff.get_write_buffer(), this->_packedInput);
+    // I2S::Bus::read(this->_packedInput, this->_size);
+
+    /* Pad samples */
+    // unpack<int_audio>(this->_buff.get_write_buffer(), this->_packedInput);
+
+
+
+
+
+    I2S::Bus::read(this->_buff.get_write_byte(), this->_buff.bufferLength * 4);
+
+
+
+
+
+    /* Force rotate buffer, regardless of whether it has been read */
     this->_buff.rotate_write_buffer(true);
 }
 
@@ -151,23 +160,21 @@ size_t DataIngestor::step()
 {
     /* Return number of samples read */
     _unpack_from_i2s();
-    return this->_size;
+    return this->_buff.bufferLength;
 }
 
 int DataIngestor::buffered()
 {
+    /* Return number of samples buffered */
     return this->_buff.buffered();
 }
 
 uint8_t* DataIngestor::read()
 {
     /* Output buffered data */
-    if (is_pcm())
-    {
-        pack<int_audio>(this->_packedOutput, this->_buff.get_read_buffer());
-    }
     if (is_floating_point())
     {
+        /* Convert buffered integer data to floating point */
         int_to_float<int_audio, float>(
                 reinterpret_cast<std::vector<float>*>(this->_packedOutput),
                 this->_buff.get_read_buffer()
@@ -175,8 +182,36 @@ uint8_t* DataIngestor::read()
     }
     else if (!is_padded())
     {
-        return this->_buff.get_read_byte();
+        /* Don't bother re-packing data if it isn't padded */
+        uint8_t* out = this->_buff.get_read_byte();
+        this->_buff.rotate_read_buffer(false);
+        return out;
     }
-    this->_buff.rotate_read_buffer();
+    else
+    {
+        /* Re-pack data */
+        // pack<int_audio>(this->_packedOutput, this->_buff.get_read_buffer());
+
+
+        uint8_t* readByte = this->_buff.get_read_byte();
+        this->_buff.rotate_read_buffer(false);
+        return readByte;
+
+
+
+    }
+
+    /* Rotate buffer read position, since it has been read */
+    this->_buff.rotate_read_buffer(false);
+
     return this->_packedOutput;
+}
+
+inline uint8_t* DataIngestor::read_raw()
+{
+    /* Return data without unpacking to ring buffer
+    Do not call this if using read().
+    Use either read() or read_raw(). */
+    I2S::Bus::read(this->_packedInput, this->_size);
+    return this->_packedInput;
 }

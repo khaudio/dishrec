@@ -59,7 +59,7 @@ public:
     virtual int sub_buffers_full();
     virtual bool is_writable();
 
-    virtual void rotate_read_buffer();
+    virtual void rotate_read_buffer(bool force = false);
     virtual void rotate_write_buffer(bool force = false);
 
     virtual std::vector<T>* get_read_buffer();
@@ -74,7 +74,7 @@ protected:
     virtual const std::vector<T> _read() const;
 
 public:
-    virtual const std::vector<T> read();
+    virtual const std::vector<T> read(bool force = false);
 
 /*                               Write                              */
 

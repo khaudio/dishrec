@@ -379,6 +379,7 @@ std::array<int, 4> Base::get_timecode()
     #ifdef _DEBUG
     _check_initialization();
     #endif
+    
     std::array<int, 4> output;
     for (uint8_t i(0); i < 4; ++i)
     {

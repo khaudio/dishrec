@@ -15,7 +15,7 @@ _bufferLength(0)
     this->numChannels = 0;
     this->sampleWidth = 0;
 
-    // Default to PCM
+    /* Default to PCM */
     this->formatCode = WavMeta::FORMAT_PCM;
 }
 
@@ -50,18 +50,18 @@ i2s_bits_per_sample_t Bus::_get_i2s_bit_depth() const
     }
 }
 
-i2s_channel_fmt_t Bus::_get_i2s_channel_format() const
-{
-    switch (this->numChannels)
-    {
-        case (2):
-            return I2S_CHANNEL_FMT_RIGHT_LEFT;
-        case (1):
-            return I2S_CHANNEL_FMT_ONLY_LEFT;
-        default:
-            throw std::out_of_range("Unsupported number of channels");
-    }
-}
+// i2s_channel_fmt_t Bus::_get_i2s_channel_format() const
+// {
+//     switch (this->numChannels)
+//     {
+//         case (2):
+//             return I2S_CHANNEL_FMT_RIGHT_LEFT;
+//         case (1):
+//             return I2S_CHANNEL_FMT_ONLY_LEFT;
+//         default:
+//             throw std::out_of_range("Unsupported number of channels");
+//     }
+// }
 
 inline void Bus::_check_format()
 {
@@ -139,12 +139,14 @@ void Bus::config()
 
     this->_i2sConfig.mode = static_cast<i2s_mode_t>(this->_mode);
     this->_i2sConfig.sample_rate = this->sampleRate;
-    this->_i2sConfig.bits_per_sample = _get_i2s_bit_depth();
-    this->_i2sConfig.channel_format = _get_i2s_channel_format();
+    // this->_i2sConfig.bits_per_sample = _get_i2s_bit_depth();
+    this->_i2sConfig.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT; // Ingest as padded data regardless of actual bit depth
+    this->_i2sConfig.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT;
     this->_i2sConfig.communication_format = I2S_COMM_FORMAT_I2S_MSB;
-    this->_i2sConfig.intr_alloc_flags = ESP_INTR_FLAG_LEVEL1;
-    this->_i2sConfig.dma_buf_count = 4;
-    this->_i2sConfig.dma_buf_len = this->_bufferLength;
+    // this->_i2sConfig.intr_alloc_flags = ESP_INTR_FLAG_LEVEL1;
+    this->_i2sConfig.intr_alloc_flags = 0; // Low interrupt priority
+    this->_i2sConfig.dma_buf_count = 8;
+    this->_i2sConfig.dma_buf_len = (this->_bufferLength * 2); // Double buffer length in case the DMA is being overrun
     this->_i2sConfig.use_apll = true;
     this->_i2sConfig.tx_desc_auto_clear = true;
 }
@@ -155,13 +157,13 @@ void Bus::start()
     _check_format();
     #endif
 
-    // Start the I2S Bus
+    /* Start the I2S Bus */
     i2s_driver_install(this->_i2sNum, &this->_i2sConfig, 0, NULL);
 
-    // Set GPIO pins
+    /* Set GPIO pins */
     i2s_set_pin(this->_i2sNum, &this->_pinConfig);
 
-    // Enable MCK output
+    /* Enable MCK output */
     if (this->_mode & I2S_MODE_MASTER)
     {
         REG_WRITE(PIN_CTRL, 0xFF0);
@@ -210,25 +212,26 @@ bool Bus::is_running() const
     return this->_running;
 }
 
-inline bool Bus::read(uint8_t* buff, size_t numBytes)
+inline size_t Bus::read(uint8_t* buff, size_t numBytes)
 {
     static size_t numBytesRead(0);
-    esp_err_t status = i2s_read(
+    static esp_err_t status;
+    status = i2s_read(
             this->_i2sNum, buff, numBytes, &numBytesRead, portMAX_DELAY
         );
     #ifdef _DEBUG
-    if (status != ESP_OK)
+    if ((status != ESP_OK) || (numBytesRead != numBytes))
     {
         std::cerr << "Error reading from I2S; ";
         std::cerr << numBytesRead << " of ";
         std::cerr << numBytes << " bytes read" << std::endl;
     }
     #endif
-    return (status == ESP_OK);
+    return numBytesRead;
 }
 
 template <typename T>
-inline bool Bus::read(std::vector<T>* buff)
+inline size_t Bus::read(std::vector<T>* buff)
 {
     constexpr size_t datatypeSize(sizeof(T));
     return read(
@@ -237,25 +240,26 @@ inline bool Bus::read(std::vector<T>* buff)
         );
 }
 
-inline bool Bus::write(const uint8_t* data, size_t numBytes)
+inline size_t Bus::write(const uint8_t* data, size_t numBytes)
 {
     static size_t numBytesWritten(0);
-    esp_err_t status = i2s_write(
+    static esp_err_t status;
+    status = i2s_write(
             this->_i2sNum, data, numBytes, &numBytesWritten, portMAX_DELAY
         );
     #ifdef _DEBUG
-    if (status != ESP_OK)
+    if ((status != ESP_OK) || (numBytesWritten != numBytes))
     {
         std::cerr << "Error writing to I2S; ";
         std::cerr << numBytesWritten << " of ";
         std::cerr << numBytes << " bytes written" << std::endl;
     }
     #endif
-    return (status == ESP_OK);
+    return numBytesWritten;
 }
 
 template <typename T>
-inline bool Bus::write(std::vector<T>* data)
+inline size_t Bus::write(std::vector<T>* data)
 {
     constexpr size_t datatypeSize(sizeof(T));
     return write(
@@ -277,23 +281,23 @@ void Bus::operator>>(std::vector<T>* buff)
 }
 
 
-template bool Bus::read<int8_t>(std::vector<int8_t>*);
-template bool Bus::read<uint8_t>(std::vector<uint8_t>*);
-template bool Bus::read<int16_t>(std::vector<int16_t>*);
-template bool Bus::read<uint16_t>(std::vector<uint16_t>*);
-template bool Bus::read<int32_t>(std::vector<int32_t>*);
-template bool Bus::read<uint32_t>(std::vector<uint32_t>*);
-template bool Bus::read<int64_t>(std::vector<int64_t>*);
-template bool Bus::read<uint64_t>(std::vector<uint64_t>*);
+template size_t Bus::read<int8_t>(std::vector<int8_t>*);
+template size_t Bus::read<uint8_t>(std::vector<uint8_t>*);
+template size_t Bus::read<int16_t>(std::vector<int16_t>*);
+template size_t Bus::read<uint16_t>(std::vector<uint16_t>*);
+template size_t Bus::read<int32_t>(std::vector<int32_t>*);
+template size_t Bus::read<uint32_t>(std::vector<uint32_t>*);
+template size_t Bus::read<int64_t>(std::vector<int64_t>*);
+template size_t Bus::read<uint64_t>(std::vector<uint64_t>*);
 
-template bool Bus::write<int8_t>(std::vector<int8_t>*);
-template bool Bus::write<uint8_t>(std::vector<uint8_t>*);
-template bool Bus::write<int16_t>(std::vector<int16_t>*);
-template bool Bus::write<uint16_t>(std::vector<uint16_t>*);
-template bool Bus::write<int32_t>(std::vector<int32_t>*);
-template bool Bus::write<uint32_t>(std::vector<uint32_t>*);
-template bool Bus::write<int64_t>(std::vector<int64_t>*);
-template bool Bus::write<uint64_t>(std::vector<uint64_t>*);
+template size_t Bus::write<int8_t>(std::vector<int8_t>*);
+template size_t Bus::write<uint8_t>(std::vector<uint8_t>*);
+template size_t Bus::write<int16_t>(std::vector<int16_t>*);
+template size_t Bus::write<uint16_t>(std::vector<uint16_t>*);
+template size_t Bus::write<int32_t>(std::vector<int32_t>*);
+template size_t Bus::write<uint32_t>(std::vector<uint32_t>*);
+template size_t Bus::write<int64_t>(std::vector<int64_t>*);
+template size_t Bus::write<uint64_t>(std::vector<uint64_t>*);
 
 template void Bus::operator<<<int8_t>(std::vector<int8_t>*);
 template void Bus::operator<<<uint8_t>(std::vector<uint8_t>*);

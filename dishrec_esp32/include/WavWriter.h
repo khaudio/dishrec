@@ -54,6 +54,8 @@ public:
     void set_filename(const char* filename) override;
     void set_filename(std::string filename) override;
 
+    const char* get_filename() const override;
+
     /* Total file size (header + data) */
     size_t size() override;
 
